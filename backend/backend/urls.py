@@ -21,6 +21,8 @@ from django.urls import path, re_path
 
 def index(request):
     return render(request, 'index.html')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^(?!api/).*$', index),
