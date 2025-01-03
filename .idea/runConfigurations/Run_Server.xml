@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Server" type="CompoundRunConfigurationType">
+    <toRun name="Django" type="Python.DjangoServer" />
+    <toRun name="npm serve" type="NodeJSConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

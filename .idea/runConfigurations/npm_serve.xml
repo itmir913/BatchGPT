@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="npm serve" type="NodeJSConfigurationType" application-parameters="serve" path-to-js-file="node_modules/@vue/cli-service/bin/vue-cli-service.js" working-dir="$PROJECT_DIR$/frontend">
+    <EXTENSION ID="com.intellij.lang.javascript.buildTools.npm.rc.StartBrowserRunConfigurationExtension">
+      <browser start="true" url="http://localhost:8080/" />
+    </EXTENSION>
     <method v="2" />
   </configuration>
 </component>
