@@ -43,11 +43,10 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+        const response = await axios.post('/api/auth/register/', {
           username: this.username,
           email: this.email,
           password: this.password,
-          password_confirm: this.passwordConfirm,
         });
         this.success = response.data.message;
         this.error = null;

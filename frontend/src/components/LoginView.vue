@@ -33,6 +33,8 @@ export default {
         });
         console.log('Login successful:', response.data);
         // 로그인 성공 후 처리 (예: 토큰 저장, 페이지 이동 등)
+        await this.$router.push('/home');
+
       } catch (error) {
         console.error('Login failed:', error.response?.data || error.message);
         // 에러 처리 (예: 사용자에게 알림 표시)
