@@ -1,6 +1,6 @@
 import logging
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -44,3 +44,10 @@ def login_view(request):
     else:
         # 인증 실패
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'message': 'Logged out successfully.'}, status=200)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
