@@ -4,19 +4,19 @@
     <form @submit.prevent="register">
       <div>
         <label for="username">아이디:</label>
-        <input v-model="username" id="username" required/>
+        <input id="username" v-model="username" required/>
       </div>
       <div>
         <label for="email">이메일:</label>
-        <input v-model="email" id="email" type="email" required/>
+        <input id="email" v-model="email" required type="email"/>
       </div>
       <div>
         <label for="password">비밀번호:</label>
-        <input v-model="password" id="password" type="password" required/>
+        <input id="password" v-model="password" required type="password"/>
       </div>
       <div>
         <label for="passwordConfirm">비밀번호 확인:</label>
-        <input v-model="passwordConfirm" id="passwordConfirm" type="password" required/>
+        <input id="passwordConfirm" v-model="passwordConfirm" required type="password"/>
       </div>
       <button type="submit">회원가입</button>
       <p v-if="error">{{ error }}</p>

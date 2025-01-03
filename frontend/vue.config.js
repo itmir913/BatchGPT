@@ -1,4 +1,4 @@
-const { defineConfig } = require('@vue/cli-service');
+const {defineConfig} = require('@vue/cli-service');
 module.exports = defineConfig({
   transpileDependencies: true,
   outputDir: '../backend/dist', // 빌드 파일 경로를 Django 정적 파일 디렉토리로 지정
