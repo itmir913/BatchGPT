@@ -25,6 +25,7 @@ class UserAccountManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    user_id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True, verbose_name="Email Address")  # 로그인 ID로 사용
     username = models.CharField(max_length=255, verbose_name="Name")
     balance = models.IntegerField(default=0, verbose_name="Account Balance")  # 사용자 잔액
