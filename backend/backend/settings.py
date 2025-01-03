@@ -122,3 +122,33 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+# settings.py
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # 기존 로거 비활성화 여부
+    'formatters': {  # 로그 메시지 형식 정의
+        'simple': {
+            'format': '%(levelname)s %(message)s',
+        },
+        'detailed': {
+            'format': '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {  # 로그 처리 방식 정의
+        'console': {
+            'level': 'DEBUG',  # 콘솔에 출력할 최소 로그 레벨
+            'class': 'logging.StreamHandler',
+            'formatter': 'detailed',  # 사용할 포맷터
+        },
+    },
+    'loggers': {  # 로거 정의
+        'django': {
+            'handlers': ['console'],  # 핸들러 연결
+            'level': 'DEBUG',  # 최소 로그 레벨
+            'propagate': True,  # 상위 로거로 전파 여부
+        },
+    },
+}
