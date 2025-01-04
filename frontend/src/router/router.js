@@ -15,6 +15,10 @@ const routes = [
     ...authRoutes,
     ...homeRoutes,
     ...BatchjobRoutes,
+    {
+        path: '/:pathMatch(.*)*', // 모든 정의되지 않은 경로에 대해
+        redirect: '/home', // /home으로 리디렉션
+    },
 ];
 
 const router = createRouter({
