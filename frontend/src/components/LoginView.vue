@@ -38,7 +38,7 @@
         </div>
 
         <!-- 로그인 버튼 -->
-        <button class="btn btn-primary w-100" type="submit">로그인</button>
+        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">로그인</button>
       </form>
 
       <!-- 회원가입 링크 -->
@@ -61,12 +61,14 @@ export default {
     return {
       email: '',
       password: '',
-      message: ''
+      message: '',
+      isButtonDisabled: false,
     };
   },
   methods: {
     async login() {
       try {
+        this.isButtonDisabled = true;
         const response = await axios.post('/api/auth/login/', {
           email: this.email,
           password: this.password
@@ -74,6 +76,7 @@ export default {
         console.log('Login successful:', response.data);
         await this.$router.push('/home');
       } catch (error) {
+        this.isButtonDisabled = false;
         // 오류 처리
         if (error.response && error.response.data) {
           // 서버에서 반환된 오류 메시지 처리

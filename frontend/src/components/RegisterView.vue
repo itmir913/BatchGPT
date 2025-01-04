@@ -59,7 +59,7 @@
         </div>
 
         <!-- 회원가입 버튼 -->
-        <button class="btn btn-primary w-100" type="submit">회원가입</button>
+        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">회원가입</button>
 
         <!-- 에러 메시지 -->
         <div v-if="error" class="alert alert-danger mt-3">
@@ -89,11 +89,13 @@ export default {
       passwordConfirm: '',
       error: null,
       success: null,
+      isButtonDisabled: false,
     };
   },
   methods: {
     async register() {
       try {
+        this.isButtonDisabled = true;
         if (this.password !== this.passwordConfirm) {
           this.error = "비밀번호를 올바르게 입력하세요.";
           return
@@ -110,9 +112,10 @@ export default {
         // 3초 후 로그인 페이지로 이동
         setTimeout(() => {
           this.$router.push("/login");
-        }, 3000);
+        }, 1000);
 
       } catch (error) {
+        this.isButtonDisabled = false;
         this.error = error.response.data.errors;
         this.success = null;
       }
