@@ -67,7 +67,7 @@
           </div>
 
           <!-- 다음 버튼 (오른쪽) -->
-          <button class="btn btn-success" @click="goToNextStep">Next</button>
+          <button :disabled="isNextButtonDisabled" class="btn btn-success" @click="goToNextStep">Next</button>
         </div>
 
       </div>
@@ -94,6 +94,7 @@ export default {
       error: null, // 에러 메시지
       selectedFile: null, // 업로드할 파일
       uploading: false, // 업로드 상태
+      isNextButtonDisabled: true,
     };
   },
   methods: {
@@ -104,6 +105,9 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
+        if (this.batchJob.file_name != null) {
+          this.isNextButtonDisabled = false;
+        }
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
