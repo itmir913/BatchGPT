@@ -30,7 +30,7 @@ class BatchJobCreateSerializer(serializers.ModelSerializer):
         fields = ['title', 'description']  # 필요한 필드만 포함
 
 
-class BatchJobPreviewSerializer(serializers.ModelSerializer):
+class BatchJobConfigSerializer(serializers.ModelSerializer):
     file_name = serializers.SerializerMethodField()  # 파일 이름을 위한 커스텀 필드
     total_size = serializers.SerializerMethodField()  # total_size 필드 추가
 
@@ -38,7 +38,7 @@ class BatchJobPreviewSerializer(serializers.ModelSerializer):
         model = BatchJob
         # fields = "__all__"
         fields = ['id', 'created_at', 'updated_at', 'title', 'description',
-                  'file_name', 'file_type', 'total_size']
+                  'file_name', 'file_type', 'total_size', 'config']
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
     def get_total_size(self, obj):
@@ -46,6 +46,9 @@ class BatchJobPreviewSerializer(serializers.ModelSerializer):
         try:
             if obj.file_type == BatchJob.FILE_TYPES['CSV']:
                 return count_rows_in_csv(obj.file)
+            elif obj.file_type == BatchJob.FILE_TYPES['PDF']:
+                # TODO
+                return 1
             return 0
         except Exception as e:
             return {'error': str(e)}

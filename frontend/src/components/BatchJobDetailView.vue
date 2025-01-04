@@ -189,7 +189,7 @@ export default {
         alert("The uploaded file is missing. Please select a file to upload.");
         return
       }
-      this.$router.push(`/batch-jobs/${this.batch_id}/prompt`);
+      this.$router.push(`/batch-jobs/${this.batch_id}/configs`);
       console.log("Go to Next Step");
     },
 

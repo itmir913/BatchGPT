@@ -6,7 +6,8 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 
-from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobPreviewSerializer
+from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
+from api.utils.pd import count_rows_in_csv
 from job.models import BatchJob
 
 
@@ -52,9 +53,9 @@ class BatchJobDetailView(APIView):
     """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
-    def get(self, request, id):
+    def get(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
-        batch_job = get_object_or_404(BatchJob, id=id)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
@@ -67,9 +68,9 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
-    def patch(self, request, id):
+    def patch(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
-        batch_job = get_object_or_404(BatchJob, id=id)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
@@ -86,8 +87,8 @@ class BatchJobDetailView(APIView):
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, id):
-        batch_job = get_object_or_404(BatchJob, id=id)
+    def delete(self, request, batch_id):
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
             return Response(
@@ -107,9 +108,9 @@ class BatchJobFileUploadView(APIView):
     """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
-    def patch(self, request, id):
+    def patch(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
-        batch_job = get_object_or_404(BatchJob, id=id)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
@@ -136,22 +137,11 @@ class BatchJobFileUploadView(APIView):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        # 응답 데이터 직렬화 및 반환
-        return Response(
-            {
-                "id": batch_job.id,
-                "title": batch_job.title,
-                "description": batch_job.description,
-                "file": batch_job.file.url if batch_job.file else None,
-                "file_type": batch_job.file_type,
-                "created_at": batch_job.created_at,
-                "updated_at": batch_job.updated_at,
-            },
-            status=HTTP_200_OK,
-        )
+        serializer = BatchJobSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
-class BatchJobPreviewView(APIView):
+class BatchJobConfigView(APIView):
     """
     API 엔드포인트: 특정 BatchJob 정보를 반환
     - URL: /api/batch-jobs/<int:id>/preview/
@@ -159,9 +149,9 @@ class BatchJobPreviewView(APIView):
     """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
-    def get(self, request, id):
+    def get(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
-        batch_job = get_object_or_404(BatchJob, id=id)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
@@ -170,21 +160,43 @@ class BatchJobPreviewView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        serializer = BatchJobPreviewSerializer(batch_job)
+        serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
-    def post(self, request):
+    def patch(self, request, batch_id):
+        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
+
         # 클라이언트로부터 JSON 데이터 받기
-        prompt = request.data.get('prompt', None)
+        data = request.data
+        workUnit = data.get('workUnit', 1)
+        prompt = data.get('prompt', None)
 
         if prompt is None:
-            return Response({'error': 'No prompt provided'}, status=HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
 
-        processed_result = self.process_prompt(prompt)
+        total_size = 0
+        if batch_job.file_type == BatchJob.FILE_TYPES['CSV']:
+            total_size = count_rows_in_csv(batch_job.file)
+        elif batch_job.file_type == BatchJob.FILE_TYPES['PDF']:
+            # TODO
+            pass
 
-        return Response({'result': processed_result}, status=HTTP_200_OK)
+        if workUnit > total_size:
+            return Response({'error': 'the work unit exceed the total size.'}, status=HTTP_400_BAD_REQUEST)
 
-    def process_prompt(self, prompt):
-        # 여기에 prompt 처리 로직을 구현합니다.
-        # 예를 들어, 간단히 문자열을 변환하는 작업을 할 수 있습니다.
-        return f"Processed: {prompt}"
+        # 기존 config 데이터 가져오기
+        current_config = batch_job.config or {}
+
+        # 새로운 설정 추가 또는 업데이트
+        current_config['workUnit'] = workUnit
+        current_config['prompt'] = prompt
+
+        # 수정된 config 저장
+        batch_job.config = current_config
+
+        # BatchJob 인스턴스 저장
+        batch_job.save()
+
+        serializer = BatchJobSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
