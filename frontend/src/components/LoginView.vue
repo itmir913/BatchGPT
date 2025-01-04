@@ -4,6 +4,11 @@
       <!-- 제목 -->
       <h2 class="text-center mb-4">로그인</h2>
 
+      <!-- 오류 메시지 -->
+      <div v-if="message" class="alert alert-danger text-center">
+        {{ message }}
+      </div>
+
       <!-- 로그인 폼 -->
       <form @submit.prevent="login">
         <!-- 이메일 입력 -->
@@ -55,7 +60,8 @@ export default {
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
+      message: ''
     };
   },
   methods: {
@@ -68,6 +74,14 @@ export default {
         console.log('Login successful:', response.data);
         await this.$router.push('/home');
       } catch (error) {
+        // 오류 처리
+        if (error.response && error.response.data) {
+          // 서버에서 반환된 오류 메시지 처리
+          this.message = '존재하지 않는 계정입니다.';
+        } else {
+          // 네트워크 또는 기타 오류 처리
+          this.message = '서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.';
+        }
         console.error('Login failed:', error.response?.data || error.message);
       }
     }
