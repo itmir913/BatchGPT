@@ -1,12 +1,20 @@
 <template>
-  <div>
-    <p v-if="isAuthenticated">Welcome, {{ email }}!</p>
-    <p v-else>Please log in.</p>
+  <div class="container mt-5">
+    <!-- 인증된 사용자 -->
+    <div v-if="isAuthenticated" class="alert alert-success text-center">
+      <p>Welcome, {{ email }}!</p>
+      <button class="btn btn-primary mt-3" @click="logout">Logout</button>
+    </div>
+
+    <!-- 인증되지 않은 사용자 -->
+    <div v-else class="alert alert-warning text-center">
+      <p>Please log in.</p>
+    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from '@/configs/axios';
 
 export default {
   data() {
@@ -24,6 +32,20 @@ export default {
       console.error('Error checking authentication:', error);
       this.isAuthenticated = false;
     }
+  },
+  methods: {
+    async logout() {
+      try {
+        await axios.post('/api/auth/logout/', {}, {withCredentials: true});
+        this.isAuthenticated = false;
+        this.email = '';
+        alert('You have been logged out.');
+        await this.$router.push('/login');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        alert('Logout failed. Please try again.');
+      }
+    },
   },
 };
 </script>

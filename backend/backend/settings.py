@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-8g4(1o%l!dz7u@&v++ktyf4s@@&p#li0d3#$ryt*7k$0^#7ooq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 
 # Application definition
 
@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'api',
     'users',
 ]
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -152,3 +154,12 @@ LOGGING = {
         },
     },
 }
+
+# Vue.js의 로컬 개발 서버 정규식을 사용하여 허용
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',  # Vue.js 개발 서버
+]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",  # localhost의 모든 포트를 허용
+]
+CORS_ALLOW_CREDENTIALS = True
