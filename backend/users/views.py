@@ -51,3 +51,11 @@ def logout_view(request):
         logout(request)
         return JsonResponse({'message': 'Logged out successfully.'}, status=200)
     return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+
+def user_info():
+    return None
+
+
+def user_batch_job():
+    return None
