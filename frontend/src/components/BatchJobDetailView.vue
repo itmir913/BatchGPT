@@ -14,7 +14,6 @@
     </div>
 
     <!-- 5단계 워크플로우 표시 -->
-    <!-- 진행 상태 표시 -->
     <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 배치 작업 상세 정보 -->

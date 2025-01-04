@@ -1,5 +1,8 @@
 <template>
   <div class="container mt-5">
+    <!-- 5단계 워크플로우 표시 -->
+    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="id" :currentStep="currentStep"/>
+
     <h2 class="mb-4">Create a New Batch Job</h2>
     <div class="card">
       <div class="card-body">
@@ -49,11 +52,14 @@
 </template>
 
 <script>
-import axios from "@/configs/axios"; // Axios 설정 파일 가져오기
+import axios from "@/configs/axios";
+import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
+  components: {ProgressIndicator},
   data() {
     return {
+      currentStep: 0, // 현재 진행 중인 단계 (0부터 시작)
       batchJob: {
         title: "", // Title 초기값
         description: "", // Description 초기값
@@ -98,6 +104,6 @@ export default {
 <style scoped>
 /* 부트스트랩 스타일은 이미 포함되어 있다고 가정 */
 .container {
-  max-width: 600px;
+  max-width: 800px;
 }
 </style>
