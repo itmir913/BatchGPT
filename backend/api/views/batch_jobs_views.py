@@ -1,6 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
@@ -39,3 +40,27 @@ class UserBatchJobsView(APIView):
                 status=HTTP_201_CREATED
             )
         return Response({"message": serializer.errors}, status=HTTP_400_BAD_REQUEST)
+
+
+class BatchJobDetailView(APIView):
+    """
+    API 엔드포인트: 특정 BatchJob 정보를 반환
+    - URL: /api/batch-jobs/<int:id>/
+    - 메서드: GET
+    """
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, id):
+        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
+        batch_job = get_object_or_404(BatchJob, id=id)
+
+        # 현재 요청한 사용자가 소유자인지 확인
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to access this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        # 직렬화하여 응답 반환
+        serializer = BatchJobSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
