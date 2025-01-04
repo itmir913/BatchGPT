@@ -105,7 +105,7 @@
         <!-- 버튼을 별도의 div로 감싸고 정렬 -->
         <div class="text-end mb-4 mt-3">
           <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
-          <button class="btn btn-success" @click="goToNextStep">Next</button>
+          <button :disabled="isDisabledNext" class="btn btn-success" @click="goToNextStep">Next</button>
         </div>
 
       </div>
@@ -133,6 +133,7 @@ export default {
       workUnit: 1,
       prompt: '',
       loadingSave: false,
+      isDisabledNext: true,
     };
   },
   computed: {
@@ -151,9 +152,16 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
+
         const config = this.batchJob.config ?? {}
+
         this.workUnit = config.workUnit ?? 1
         this.prompt = config.prompt ?? ''
+
+        if (this.prompt !== '') {
+          this.isDisabledNext = false;
+        }
+
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
@@ -187,6 +195,7 @@ export default {
         await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
         // 성공적인 응답 처리
         alert('Configuration updated successfully.');
+        this.isDisabledNext = false;
       } catch (err) {
         // 오류 처리
         this.error = err.response ? err.response.data : 'An error occurred';
