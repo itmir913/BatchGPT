@@ -142,7 +142,7 @@ LOGGING = {
     },
     'handlers': {  # 로그 처리 방식 정의
         'console': {
-            'level': 'DEBUG',  # 콘솔에 출력할 최소 로그 레벨
+            'level': 'INFO',  # 콘솔에 출력할 최소 로그 레벨
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',  # 사용할 포맷터
         },
@@ -150,7 +150,7 @@ LOGGING = {
     'loggers': {  # 로거 정의
         'django': {
             'handlers': ['console'],  # 핸들러 연결
-            'level': 'DEBUG',  # 최소 로그 레벨
+            'level': 'INFO',  # 최소 로그 레벨
             'propagate': True,  # 상위 로거로 전파 여부
         },
     },
