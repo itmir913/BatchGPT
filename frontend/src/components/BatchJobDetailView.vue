@@ -105,8 +105,9 @@ export default {
         this.batchJob = response.data; // 업데이트된 데이터 반영
         alert("File uploaded successfully!");
       } catch (error) {
-        console.error("Error uploading file:", error);
-        alert("Failed to upload file. Please try again.");
+        const errorMessage = error.response.data?.error || "Unknown error occurred.";
+        console.error("Error uploading file:", errorMessage);
+        alert(`Error uploading file: ${errorMessage}`);
       } finally {
         this.uploading = false;
         this.selectedFile = null;

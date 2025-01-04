@@ -1,18 +1,11 @@
 import hashlib
+import os
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from users.models import User
-
-
-def validate_file_type(self, file):
-    """파일 형식 검증"""
-    valid_extensions = self.FILE_TYPES.values()  # 상수에서 유효 확장자 가져오기
-    if not file.name.split('.')[-1].lower() in valid_extensions:
-        raise ValidationError(
-            f"Unsupported file type. Only {', '.join(valid_extensions).upper()} files are allowed.")
 
 
 def get_upload_path(instance, filename):
@@ -84,6 +77,46 @@ class BatchJob(TimestampedModel):
 
     def __str__(self):
         return f"BatchJob {self.id} - {self.user.email}"
+
+    def clean(self):
+        """
+        유효성 검사: 파일 확장자 확인
+        """
+        if self.file:
+            valid_extensions = self.FILE_TYPES.values()
+            file_extension = self.file.name.split('.')[-1].lower()
+            if file_extension not in valid_extensions:
+                raise ValidationError(
+                    f"Unsupported file type: {file_extension}. "
+                    f"Only {', '.join(valid_extensions).upper()} files are allowed."
+                )
+
+    def delete_old_file(self):
+        """
+        기존 파일 삭제
+        """
+        if self.pk:  # 객체가 이미 존재하는 경우
+            try:
+                old_instance = BatchJob.objects.get(pk=self.pk)
+                if old_instance.file and old_instance.file != self.file:
+                    # 기존 파일 삭제
+                    if os.path.isfile(old_instance.file.path):
+                        os.remove(old_instance.file.path)
+            except BatchJob.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        """
+        기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장
+        """
+        # 기존 파일 삭제
+        self.delete_old_file()
+
+        # 유효성 검사 수행
+        self.clean()
+
+        # 새 파일 저장
+        super().save(*args, **kwargs)
 
 
 class TaskUnitStatus:

@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -94,8 +95,15 @@ class BatchJobFileUploadView(APIView):
             )
 
         # 파일 저장
-        batch_job.file = file
-        batch_job.save()
+        try:
+
+            batch_job.file = file
+            batch_job.save()
+        except ValidationError as e:
+            return Response(
+                {"error": e.message},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
         # 응답 데이터 직렬화 및 반환
         return Response(
