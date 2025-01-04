@@ -44,7 +44,7 @@ export default {
       const stepLinks = {
         0: `/batch-jobs/create`,
         1: `/batch-jobs/${this.batch_id}`,
-        2: "/batch-jobs/${this.batch_id}/prompt",
+        2: "/batch-jobs/${this.batch_id}/configs",
         3: "/batch-jobs/${this.batch_id}/preview",
         4: "/batch-jobs/${this.batch_id}/run",
       };

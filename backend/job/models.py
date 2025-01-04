@@ -69,10 +69,10 @@ class BatchJob(TimestampedModel):
         verbose_name="File Type"
     )
 
-    prompt = models.TextField(
+    config = models.JSONField(
         null=True,
         blank=True,
-        verbose_name="Default Prompt for BatchJob"
+        verbose_name="Configurations for BatchJob"
     )
 
     class Meta:

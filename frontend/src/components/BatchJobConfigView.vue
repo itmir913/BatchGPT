@@ -2,14 +2,14 @@
   <div class="container mt-5">
 
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
+    <div v-if="loading" class="text-center mb-4">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
     <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center" role="alert">
+    <div v-if="error" class="alert alert-danger text-center mb-4" role="alert">
       {{ error }}
     </div>
 
@@ -19,12 +19,12 @@
     <!-- 파일 정보 표시 -->
     <div v-if="batchJob && !loading && !error" class="mb-4">
       <h5>Uploaded File</h5>
-      <div class="table-responsive">
+      <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
           <thead class="table-light">
           <tr>
-            <th style="width: 30%;">Item</th> <!-- 왼쪽 열 너비 조정 -->
-            <th style="width: 70%;">Information</th> <!-- 오른쪽 열 너비 조정 -->
+            <th style="width: 30%;">Item</th>
+            <th style="width: 70%;">Information</th>
           </tr>
           </thead>
           <tbody>
@@ -44,9 +44,9 @@
         </table>
 
         <!-- 작업 단위 설정 -->
-        <div v-if="batchJob && !loading && !error && batchJob.file_type === 'pdf'">
+        <div v-if="batchJob && !loading && !error">
           <div class="mb-4">
-            <h5 class="text-center">Select Task Unit</h5>
+            <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
             <div class="d-flex justify-content-center align-items-center mb-2">
               <div class="form-check me-3">
                 <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
@@ -66,17 +66,30 @@
               </div>
 
               <!-- 사용자 입력 필드 -->
-              <div class="input-group w-25"> <!-- 너비를 25%로 설정 -->
+              <div class="input-group w-25">
                 <span class="input-group-text">Custom Units:</span>
                 <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
               </div>
             </div>
+
+            <!-- 안내 메시지 -->
+            <div class="text-info">
+              Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+            </div>
+
+            <div class="text-info">
+              A total of {{ calculateCeil(batchJob.total_size, workUnit) }} requests will be processed.
+            </div>
+
+            <!-- 경고 메시지 -->
+            <div v-if="remainder !== 0" class="text-danger">
+              There are {{ remainder }} items left to process with the last request.
+            </div>
+            <div v-if="workUnit > batchJob.total_size" class="text-danger">
+              The {{ workUnit }} work unit cannot exceed the total size.
+            </div>
           </div>
 
-          <!-- 경고 메시지 -->
-          <div v-if="batchJob.total_size % workUnit !== 0" class="text-danger mt-2">
-            작업 단위에 따라 나누었을 때 남는 부분이 있습니다!
-          </div>
         </div>
 
       </div>
@@ -85,35 +98,13 @@
     <!-- 프롬프트 입력란 -->
     <div v-if="!loading && !error" class="mb-4">
       <h5>Input Prompt</h5>
-      <textarea v-model="promptInput" class="form-control" placeholder="Enter your prompt..." rows="3"></textarea>
+      <textarea v-model="prompt" class="form-control mb-2" placeholder="Enter your prompt..." rows="3"></textarea>
       <!-- 버튼을 별도의 div로 감싸고 정렬 -->
-      <div class="text-end mt-2">
-        <button :disabled="loadingPreview" class="btn btn-primary" @click="previewResult">Preview</button>
+      <div class="text-end mb-4 mt-3">
+        <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
+        <button class="btn btn-success" @click="goToNextStep">Next</button>
       </div>
     </div>
-
-    <!-- 미리보기 결과 -->
-    <div v-if="previewData.length > 0" class="mt-4">
-      <h5 class="mt-4">Preview Result</h5>
-      <table class="table table-bordered">
-        <thead>
-        <tr>
-          <th>Raw Data</th>
-          <th>Response</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="(item, index) in previewData.slice(0, 5)" :key="index">
-          <td>{{ item.raw }}</td>
-          <td class="animated-text">{{ item.response }}</td>
-        </tr>
-        </tbody>
-      </table>
-      <div class="text-end my-4">
-        <button :disabled="isNextButtonDisabled" class="btn btn-success" @click="goToNextStep">Next</button>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -135,22 +126,27 @@ export default {
       loading: true, // 로딩 상태
       error: null, // 에러 메시지
       workUnit: 1,
-      promptInput: '',
-      loadingPreview: false,
+      prompt: '',
+      loadingSave: false,
       previewData: [], // 미리보기 데이터
     };
+  },
+  computed: {
+    remainder() {
+      return this.batchJob.total_size % this.workUnit;
+    }
   },
   methods: {
     // 배치 작업 데이터 가져오기
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {
+        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {
           withCredentials: true,
         });
         this.batchJob = response.data;
-        if (this.batchJob.file_name != null) {
-          this.isNextButtonDisabled = false;
-        }
+        const config = this.batchJob.config
+        this.workUnit = config.workUnit || 1
+        this.prompt = config.prompt || ''
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
@@ -159,20 +155,49 @@ export default {
       }
     },
 
-    previewResult() {
-      this.loadingPreview = true;
-      // 프롬프트 입력과 작업 단위를 기반으로 미리보기 데이터를 생성하는 로직
-      // 예시 데이터
-      this.previewData = [
-        {raw: '예시 데이터 1', response: '응답 결과 1'},
-        {raw: '예시 데이터 2', response: '응답 결과 2'},
-        {raw: '예시 데이터 3', response: '응답 결과 3'},
-        {raw: '예시 데이터 4', response: '응답 결과 4'},
-        {raw: '예시 데이터 5', response: '응답 결과 5'},
-        // 필요에 따라 더 많은 데이터를 추가
-      ];
+    async configSave() {
+      this.loadingSave = true; // 로딩 상태 설정
+      this.error = null; // 이전 오류 초기화
+
+      if (this.workUnit > this.batchJob.total_size) {
+        alert('The work unit cannot exceed the total size.');
+        this.loadingSave = false;
+        return;
+      }
+
+      if (!this.prompt.trim()) {
+        alert('Prompt cannot be empty. Please enter a valid prompt.');
+        this.loadingSave = false;
+        return;
+      }
+
+      const payload = {
+        workUnit: this.workUnit,
+        prompt: this.prompt,
+      };
+
+      try {
+        await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
+        // 성공적인 응답 처리
+        alert('Configuration updated successfully.');
+      } catch (err) {
+        // 오류 처리
+        this.error = err.response ? err.response.data : 'An error occurred';
+        alert('Error updating configuration: ' + this.error);
+      } finally {
+        this.loadingSave = false; // 로딩 상태 해제
+      }
     },
 
+    goToNextStep() {
+      // 다음 단계로 이동하는 로직 구현
+      this.$router.push(`/batch-jobs/${this.batch_id}/preview`);
+      console.log("Go to Next Step");
+    },
+
+    calculateCeil(totalSize, workUnit) {
+      return Math.ceil(totalSize / workUnit);
+    },
   },
   async created() {
     await this.fetchBatchJob();
@@ -195,27 +220,5 @@ h5 {
 
 .table th, .table td {
   vertical-align: middle;
-}
-
-.animated-text {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
-  animation: blurAnimation 1s infinite; /* 애니메이션 적용 */
-}
-
-@keyframes blurAnimation {
-  0% {
-    filter: blur(5px); /* 시작 시 흐림 효과 */
-    opacity: 0.1;
-  }
-  50% {
-    filter: blur(8px); /* 중간에 선명하게 */
-    opacity: 0.3;
-  }
-  100% {
-    filter: blur(5px); /* 다시 흐림 효과 */
-    opacity: 0.1;
-  }
 }
 </style>
