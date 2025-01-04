@@ -19,10 +19,36 @@
     <h2 class="mb-4">Create a New Batch Job</h2>
     <div class="card">
       <div class="card-body">
-        <BatchJobForm
-            :batchJob="batchJob"
-            @submit="createBatchJob"
-        />
+        <!-- Form 시작 -->
+        <form @submit.prevent="createBatchJob">
+          <!-- Title 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="title">Title</label>
+            <input
+                id="title"
+                v-model="batchJob.title"
+                class="form-control"
+                placeholder="Enter the title of the batch job"
+                required
+                type="text"
+            />
+          </div>
+
+          <!-- Description 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea
+                id="description"
+                v-model="batchJob.description"
+                class="form-control"
+                placeholder="Enter a description (optional)"
+                rows="4"
+            ></textarea>
+          </div>
+
+          <!-- Submit 버튼 -->
+          <button class="btn btn-primary" type="submit">Create Batch Job</button>
+        </form>
       </div>
     </div>
 
@@ -42,12 +68,10 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
-import BatchJobForm from '@/components/BatchJobForm.vue'; // BatchJobForm 컴포넌트 임포트
 
 export default {
   components: {
     ProgressIndicator,
-    BatchJobForm, // 등록
   },
   data() {
     return {
@@ -64,9 +88,9 @@ export default {
     };
   },
   methods: {
-    async createBatchJob(batchData) { // batchData를 인자로 받음
+    async createBatchJob() { // batchData를 인자로 받음
       try {
-        const response = await axios.post('/api/batch-jobs/create/', batchData);
+        const response = await axios.post('/api/batch-jobs/create/', this.batchJob);
 
         this.id = response.data.id;
         this.successMessage = "Batch Job created successfully!";
@@ -75,10 +99,6 @@ export default {
         setTimeout(() => {
           this.$router.push(`/batch-jobs/${this.id}/`);
         }, 1000);
-
-        // 폼 초기화
-        this.batchJob.title = "";
-        this.batchJob.description = "";
 
       } catch (error) {
         console.error("Error creating Batch Job:", error);

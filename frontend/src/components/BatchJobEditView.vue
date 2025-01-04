@@ -19,11 +19,36 @@
     <h2 class="mb-4">Modify Batch Job</h2>
     <div class="card">
       <div v-if="batchJob && !loading && !error" class="card-body">
-        <BatchJobForm
-            :batchJob="batchJob"
-            v-model="batchJob"
-            @submit="modifyBatchJob"
-        />
+        <!-- Form 시작 -->
+        <form @submit.prevent="modifyBatchJob">
+          <!-- Title 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="title">Title</label>
+            <input
+                id="title"
+                v-model="batchJob.title"
+                class="form-control"
+                placeholder="Enter the title of the batch job"
+                required
+                type="text"
+            />
+          </div>
+
+          <!-- Description 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea
+                id="description"
+                v-model="batchJob.description"
+                class="form-control"
+                placeholder="Enter a description (optional)"
+                rows="4"
+            ></textarea>
+          </div>
+
+          <!-- Submit 버튼 -->
+          <button class="btn btn-primary" type="submit">Edit Batch Job</button>
+        </form>
       </div>
     </div>
 
@@ -42,12 +67,10 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
-import BatchJobForm from '@/components/BatchJobForm.vue'; // BatchJobForm 컴포넌트 임포트
 
 export default {
   components: {
     ProgressIndicator,
-    BatchJobForm, // 등록
   },
   props: ['batch_id'],
   data() {
@@ -77,18 +100,15 @@ export default {
 
     async modifyBatchJob() {
       try {
-        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
+        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
 
+        this.id = response.data.id;
         this.successMessage = "Batch Job modified successfully!";
         this.errorMessage = "";
 
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${this.batch_id}/`);
-        }, 500);
-
-        // 폼 초기화 (필요한 경우)
-        this.batchJob.title = "";
-        this.batchJob.description = "";
+          this.$router.push(`/batch-jobs/${this.id}/`);
+        }, 1000);
 
       } catch (error) {
         console.error("Error modifying Batch Job:", error);
