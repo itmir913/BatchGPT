@@ -95,6 +95,7 @@ export default {
     async register() {
       try {
         if (this.password !== this.passwordConfirm) {
+          this.error = "비밀번호를 올바르게 입력하세요.";
           return
         }
 
@@ -105,7 +106,12 @@ export default {
         });
         this.success = response.data.message;
         this.error = null;
-        await this.$router.push('/home');
+
+        // 3초 후 로그인 페이지로 이동
+        setTimeout(() => {
+          this.$router.push("/login");
+        }, 3000);
+
       } catch (error) {
         this.error = error.response.data.errors;
         this.success = null;
