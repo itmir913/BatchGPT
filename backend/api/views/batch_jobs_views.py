@@ -1,9 +1,9 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
-from api.serializers.BatchJobSerializer import BatchJobSerializer
+from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
 from job.models import BatchJob
 
 
@@ -24,17 +24,18 @@ class UserBatchJobsView(APIView):
         serializer = BatchJobSerializer(batch_jobs, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
-    # def post(self, request):
-    #     """
-    #     Create a new batch job for the authenticated user.
-    #     """
-    #     # 요청 데이터에 현재 사용자를 추가하여 새로운 BatchJob 생성
-    #     data = request.data.copy()
-    #     data['user'] = request.user.id  # 사용자 ID를 데이터에 포함
-    #     serializer = BatchJobSerializer(data=data)
-    #
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    """
+    BatchJob 생성 API 엔드포인트
+    """
+
+    def post(self, request, *args, **kwargs):
+        # 요청 데이터를 직렬화
+        serializer = BatchJobCreateSerializer(data=request.data)
+        if serializer.is_valid():  # 데이터 검증
+            # 현재 요청의 사용자와 함께 저장
+            batch_job = serializer.save(user=request.user)
+            return Response(
+                {"message": "BatchJob created successfully", "id": batch_job.id},
+                status=HTTP_201_CREATED
+            )
+        return Response({"message": serializer.errors}, status=HTTP_400_BAD_REQUEST)

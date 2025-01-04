@@ -142,7 +142,7 @@ LOGGING = {
     },
     'handlers': {  # 로그 처리 방식 정의
         'console': {
-            'level': 'INFO',  # 콘솔에 출력할 최소 로그 레벨
+            'level': 'DEBUG',  # 콘솔에 출력할 최소 로그 레벨
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',  # 사용할 포맷터
         },
@@ -164,3 +164,12 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",  # localhost의 모든 포트를 허용
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}

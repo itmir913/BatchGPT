@@ -2,6 +2,7 @@ import {createRouter, createWebHistory} from 'vue-router';
 
 import authRoutes from './auth';
 import homeRoutes from './home';
+import BatchjobRoutes from './batch-jobs';
 
 
 import axios from '@/configs/axios'; // Axios 설정 가져오기
@@ -13,6 +14,7 @@ const routes = [
     },
     ...authRoutes,
     ...homeRoutes,
+    ...BatchjobRoutes,
 ];
 
 const router = createRouter({

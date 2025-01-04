@@ -50,6 +50,19 @@ class BatchJob(TimestampedModel):
         verbose_name="User"
     )
 
+    title = models.CharField(
+        max_length=255,
+        verbose_name="Title",
+        default="New BatchJob",
+        help_text="배치 작업의 제목을 입력하세요."
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Description",
+        help_text="배치 작업에 대한 설명을 입력하세요. (선택 사항)"
+    )
+
     file = models.FileField(
         upload_to=user_upload_path,
         blank=True,
