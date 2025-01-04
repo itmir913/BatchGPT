@@ -36,7 +36,7 @@
 <script>
 export default {
   props: {
-    batchJob: {
+    batchJob: { // v-model을 위한 value prop
       type: Object,
       required: true,
     },
@@ -46,9 +46,17 @@ export default {
       localBatchJob: {...this.batchJob}, // 로컬 상태로 복사
     };
   },
+  watch: {
+    batchJob: {
+      handler(newVal) {
+        this.localBatchJob = {...newVal}; // 부모에서 전달된 값이 변경될 때 로컬 상태 업데이트
+      },
+      deep: true, // 객체의 깊은 변경 감지
+    },
+  },
   methods: {
     submitForm() {
-      this.$emit('submit', this.localBatchJob); // 부모에게 로컬 상태 전달
+      this.$emit('input', this.localBatchJob); // 부모에게 로컬 상태 전달 (v-model 동작)
     },
   },
 };

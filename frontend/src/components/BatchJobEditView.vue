@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -18,14 +18,14 @@
     <!-- 배치 작업 폼 -->
     <h2 class="mb-4">Modify Batch Job</h2>
     <div class="card">
-      <div class="card-body">
+      <div v-if="batchJob && !loading && !error" class="card-body">
         <BatchJobForm
             :batchJob="batchJob"
+            v-model="batchJob"
             @submit="modifyBatchJob"
         />
       </div>
     </div>
-
 
     <!-- 성공 메시지 -->
     <div v-if="successMessage" class="alert alert-success mt-4" role="alert">
@@ -45,11 +45,11 @@ import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 import BatchJobForm from '@/components/BatchJobForm.vue'; // BatchJobForm 컴포넌트 임포트
 
 export default {
-  props: ['batch_id'],
   components: {
     ProgressIndicator,
     BatchJobForm, // 등록
   },
+  props: ['batch_id'],
   data() {
     return {
       currentStep: 0, // 현재 진행 중인 단계 (0부터 시작)
@@ -63,12 +63,22 @@ export default {
       error: null, // 에러 메시지
     };
   },
-  methods: {
-    async modifyBatchJob(batchData) { // batchData를 인자로 받음
-      try {
-        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, batchData);
 
-        this.id = response.data.id;
+  methods: {
+    async fetchBatchJob() {
+      try {
+        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
+        this.batchJob = response.data; // API 응답으로 batchJob 데이터 설정
+      } catch (error) {
+        console.error("Error fetching Batch Job:", error);
+        this.error = "Failed to load Batch Job details. Please try again later.";
+      }
+    },
+
+    async modifyBatchJob() {
+      try {
+        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
+
         this.successMessage = "Batch Job modified successfully!";
         this.errorMessage = "";
 
@@ -76,7 +86,7 @@ export default {
           this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 500);
 
-        // 폼 초기화
+        // 폼 초기화 (필요한 경우)
         this.batchJob.title = "";
         this.batchJob.description = "";
 
@@ -91,6 +101,10 @@ export default {
         }
       }
     },
+  },
+
+  async created() {
+    await this.fetchBatchJob(); // 컴포넌트 생성 시 배치 작업 데이터 가져오기
   }
 };
 </script>
