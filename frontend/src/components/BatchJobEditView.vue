@@ -47,7 +47,7 @@
           </div>
 
           <!-- Submit 버튼 -->
-          <button class="btn btn-primary" type="submit">Edit Batch Job</button>
+          <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
         </form>
       </div>
     </div>
@@ -84,6 +84,7 @@ export default {
       errorMessage: "", // 에러 메시지 상태
       loading: false, // 로딩 상태
       error: null, // 에러 메시지
+      isButtonDisabled: true,
     };
   },
 
@@ -92,14 +93,17 @@ export default {
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
         this.batchJob = response.data; // API 응답으로 batchJob 데이터 설정
+        this.isButtonDisabled = false
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
+        this.isButtonDisabled = true
         this.error = "Failed to load Batch Job details. Please try again later.";
       }
     },
 
     async modifyBatchJob() {
       try {
+        this.isButtonDisabled = true
         const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
 
         this.id = response.data.id;
@@ -112,6 +116,7 @@ export default {
 
       } catch (error) {
         console.error("Error modifying Batch Job:", error);
+        this.isButtonDisabled = false
         this.successMessage = "";
 
         if (error.response && error.response.data) {
