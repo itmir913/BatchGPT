@@ -18,9 +18,9 @@
               id="email"
               v-model="email"
               class="form-control"
-              type="email"
               placeholder="이메일을 입력하세요"
               required
+              type="email"
           />
         </div>
 
@@ -31,9 +31,9 @@
               id="password"
               v-model="password"
               class="form-control"
-              type="password"
               placeholder="비밀번호를 입력하세요"
               required
+              type="password"
           />
         </div>
 
