@@ -46,8 +46,11 @@
             ></textarea>
           </div>
 
-          <!-- Submit 버튼 -->
-          <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+          <!-- 버튼 -->
+          <div>
+            <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
+            <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+          </div>
         </form>
       </div>
     </div>
@@ -126,6 +129,11 @@ export default {
         }
       }
     },
+
+    cancelButton() {
+      this.$router.push(`/batch-jobs/${this.batch_id}`);
+      console.log("Go to Next Step");
+    }
   },
 
   async created() {
