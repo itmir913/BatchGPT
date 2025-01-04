@@ -77,7 +77,7 @@
               Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
             </div>
 
-            <div class="text-info">
+            <div class="text-dark">
               A total of {{ calculateCeil(batchJob.total_size, workUnit) }} requests will be processed.
             </div>
 
@@ -85,7 +85,7 @@
             <div v-if="remainder !== 0" class="text-danger">
               There are {{ remainder }} items left to process with the last request.
             </div>
-            <div v-if="workUnit > batchJob.total_size" class="text-danger">
+            <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
               The {{ workUnit }} work unit cannot exceed the total size.
             </div>
           </div>
