@@ -45,8 +45,23 @@
         >
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="card-title">{{ job.name }}</h5>
+              <!-- 제목 표시 및 링크 -->
+              <h5 class="card-title">
+                <a
+                    :href="`/batch-job/${job.id}`"
+                    class="text-decoration-none text-primary"
+                >
+                  {{ job.title }}
+                </a>
+              </h5>
+
+              <!-- 설명 표시 -->
               <p class="card-text">
+                {{ job.description || "No description provided." }}
+              </p>
+
+              <!-- 생성 및 수정 날짜 표시 -->
+              <p class="card-text text-muted">
                 Created At: {{ formatDate(job.created_at) }}<br/>
                 Updated At: {{ formatDate(job.updated_at) }}
               </p>
