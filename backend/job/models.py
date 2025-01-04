@@ -69,6 +69,12 @@ class BatchJob(TimestampedModel):
         verbose_name="File Type"
     )
 
+    prompt = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Default Prompt for BatchJob"
+    )
+
     class Meta:
         db_table = 'batch_job'  # 테이블 이름 지정
         verbose_name = 'Batch Job'
@@ -223,10 +229,10 @@ class TaskUnitResponse(TimestampedModel):
         verbose_name="Task Unit"
     )
 
-    prompt = models.TextField(
+    request_data = models.TextField(
         null=True,
         blank=True,
-        verbose_name="Prompt"
+        verbose_name="Prompt Data per TaskUnit"
     )
 
     response_data = models.JSONField(
@@ -273,7 +279,6 @@ class TaskUnitResponse(TimestampedModel):
         indexes = [
             models.Index(fields=['task_unit']),  # 작업 단위별 응답 조회 최적화
             models.Index(fields=['status']),  # 상태별 조회 최적화
-            models.Index(fields=['prompt']),  # 프롬프트별 응답 조회 최적화
         ]
 
     def __str__(self):
