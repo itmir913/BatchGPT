@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -87,6 +87,11 @@ export default {
       error: null, // 에러 메시지
       isButtonDisabled: false,
     };
+  },
+  computed: {
+    isReady() {
+      return !this.loading && !this.error;
+    },
   },
   methods: {
     async createBatchJob() { // batchData를 인자로 받음

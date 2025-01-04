@@ -14,10 +14,10 @@
     </div>
 
     <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 파일 정보 표시 -->
-    <div v-if="batchJob && !loading && !error" class="mb-4">
+    <div v-if="batchJob && isReady" class="mb-4">
       <h5>Uploaded File</h5>
       <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
@@ -44,7 +44,7 @@
         </table>
 
         <!-- 프롬프트 입력란 -->
-        <div v-if="!loading && !error" class="mb-4">
+        <div v-if="isReady" class="mb-4">
           <h5>Input Prompt</h5>
           <textarea
               v-model="prompt"
@@ -55,7 +55,7 @@
         </div>
 
         <!-- 작업 단위 설정 -->
-        <div v-if="batchJob && !loading && !error">
+        <div v-if="batchJob && isReady">
           <div class="mb-4">
             <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
             <div class="d-flex justify-content-center align-items-center mb-2">
@@ -120,7 +120,6 @@ import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
-  name: 'BlurAnimation',
   props: ['batch_id'],  // URL 파라미터를 props로 받음
   components: {
     ProgressIndicator, // 등록
@@ -134,13 +133,15 @@ export default {
       workUnit: 1,
       prompt: '',
       loadingSave: false,
-      previewData: [], // 미리보기 데이터
     };
   },
   computed: {
     remainder() {
       return this.batchJob.total_size % this.workUnit;
-    }
+    },
+    isReady() {
+      return !this.loading && !this.error;
+    },
   },
   methods: {
     // 배치 작업 데이터 가져오기
@@ -198,7 +199,6 @@ export default {
     goToNextStep() {
       // 다음 단계로 이동하는 로직 구현
       this.$router.push(`/batch-jobs/${this.batch_id}/preview`);
-      console.log("Go to Next Step");
     },
 
     calculateCeil(totalSize, workUnit) {
