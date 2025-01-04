@@ -43,6 +43,17 @@
           </tbody>
         </table>
 
+        <!-- 프롬프트 입력란 -->
+        <div v-if="!loading && !error" class="mb-4">
+          <h5>Input Prompt</h5>
+          <textarea
+              v-model="prompt"
+              class="form-control"
+              placeholder="Enter your prompt..."
+              rows="5"
+          ></textarea>
+        </div>
+
         <!-- 작업 단위 설정 -->
         <div v-if="batchJob && !loading && !error">
           <div class="mb-4">
@@ -89,22 +100,17 @@
               The {{ workUnit }} work unit cannot exceed the total size.
             </div>
           </div>
+        </div>
 
+        <!-- 버튼을 별도의 div로 감싸고 정렬 -->
+        <div class="text-end mb-4 mt-3">
+          <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
+          <button class="btn btn-success" @click="goToNextStep">Next</button>
         </div>
 
       </div>
     </div>
 
-    <!-- 프롬프트 입력란 -->
-    <div v-if="!loading && !error" class="mb-4">
-      <h5>Input Prompt</h5>
-      <textarea v-model="prompt" class="form-control mb-2" placeholder="Enter your prompt..." rows="3"></textarea>
-      <!-- 버튼을 별도의 div로 감싸고 정렬 -->
-      <div class="text-end mb-4 mt-3">
-        <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
-        <button class="btn btn-success" @click="goToNextStep">Next</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -208,14 +214,6 @@ export default {
 <style scoped>
 .container {
   max-width: 1000px;
-}
-
-.mb-4 {
-  margin-bottom: 1.5rem;
-}
-
-h5 {
-  margin-bottom: .5rem;
 }
 
 .table th, .table td {
