@@ -105,6 +105,7 @@ export default {
         });
         this.success = response.data.message;
         this.error = null;
+        await this.$router.push('/home');
       } catch (error) {
         this.error = error.response.data.errors;
         this.success = null;
