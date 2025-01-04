@@ -6,7 +6,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 
-from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
+from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobPreviewSerializer
 from job.models import BatchJob
 
 
@@ -150,3 +150,26 @@ class BatchJobFileUploadView(APIView):
             },
             status=HTTP_200_OK,
         )
+
+
+class BatchJobPreviewView(APIView):
+    """
+    API 엔드포인트: 특정 BatchJob 정보를 반환
+    - URL: /api/batch-jobs/<int:id>/preview/
+    - 메서드: GET
+    """
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, id):
+        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
+        batch_job = get_object_or_404(BatchJob, id=id)
+
+        # 현재 요청한 사용자가 소유자인지 확인
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to access this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        serializer = BatchJobPreviewSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
