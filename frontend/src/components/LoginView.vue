@@ -1,35 +1,46 @@
 <template>
-  <div id="login" class="wrapper">
-    <div class="container">
-      <h2>로그인</h2>
+  <div id="login" class="wrapper d-flex align-items-center justify-content-center vh-100">
+    <div class="container" style="max-width: 400px;">
+      <!-- 제목 -->
+      <h2 class="text-center mb-4">로그인</h2>
+
+      <!-- 로그인 폼 -->
       <form @submit.prevent="login">
-        <div class="form-group">
-          <label for="email">이메일</label>
+        <!-- 이메일 입력 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="email">이메일</label>
           <input
               id="email"
               v-model="email"
+              class="form-control"
+              type="email"
               placeholder="이메일을 입력하세요"
               required
-              type="email"
           />
         </div>
-        <div class="form-group">
-          <label for="password">비밀번호</label>
+
+        <!-- 비밀번호 입력 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="password">비밀번호</label>
           <input
               id="password"
               v-model="password"
+              class="form-control"
+              type="password"
               placeholder="비밀번호를 입력하세요"
               required
-              type="password"
           />
         </div>
-        <button class="submit-button" type="submit">로그인</button>
+
+        <!-- 로그인 버튼 -->
+        <button class="btn btn-primary w-100" type="submit">로그인</button>
       </form>
 
-      <!-- 회원가입 링크 추가 -->
-      <div class="register-link">
-        <p>계정이 없으신가요?
-          <router-link class="link" to="/register">회원가입</router-link>
+      <!-- 회원가입 링크 -->
+      <div class="register-link text-center mt-3">
+        <p>
+          계정이 없으신가요?
+          <router-link class="link text-primary" to="/register">회원가입</router-link>
         </p>
       </div>
     </div>
@@ -69,6 +80,8 @@ export default {
   display: flex;
   justify-content: center; /* 가로 중앙 */
   align-items: center; /* 세로 중앙 */
+  background-color: #f8f9fa; /* Bootstrap 기본 배경색 */
+  height: 100vh; /* 화면 전체 높이 */
 }
 
 /* 카드 스타일 */
@@ -96,16 +109,16 @@ label {
   margin-bottom: 5px;
 }
 
-input[type='email'],
-input[type='password'] {
+input[type="email"],
+input[type="password"] {
   width: calc(100% - 20px);
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
 }
 
-input[type='email']:focus,
-input[type='password']:focus {
+input[type="email"]:focus,
+input[type="password"]:focus {
   outline: none;
   border-color: #66a6ff;
 }

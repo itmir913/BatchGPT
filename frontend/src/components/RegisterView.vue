@@ -1,27 +1,75 @@
 <template>
-  <div class="wrapper">
-    <div class="container">
-      <h2 class="title">회원가입</h2>
+  <div class="wrapper d-flex align-items-center justify-content-center vh-100">
+    <div class="container" style="max-width: 500px;">
+      <!-- 제목 -->
+      <h2 class="text-center mb-4">회원가입</h2>
+
+      <!-- 회원가입 폼 -->
       <form @submit.prevent="register">
-        <div class="form-group">
-          <label for="username">아이디:</label>
-          <input id="username" v-model="username" placeholder="아이디를 입력하세요" required/>
+        <!-- 아이디 입력 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="username">아이디</label>
+          <input
+              id="username"
+              v-model="username"
+              class="form-control"
+              placeholder="아이디를 입력하세요"
+              required
+              type="text"
+          />
         </div>
-        <div class="form-group">
-          <label for="email">이메일:</label>
-          <input id="email" v-model="email" placeholder="이메일을 입력하세요" required type="email"/>
+
+        <!-- 이메일 입력 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="email">이메일</label>
+          <input
+              id="email"
+              v-model="email"
+              class="form-control"
+              placeholder="이메일을 입력하세요"
+              required
+              type="email"
+          />
         </div>
-        <div class="form-group">
-          <label for="password">비밀번호:</label>
-          <input id="password" v-model="password" placeholder="비밀번호를 입력하세요" required type="password"/>
+
+        <!-- 비밀번호 입력 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="password">비밀번호</label>
+          <input
+              id="password"
+              v-model="password"
+              class="form-control"
+              placeholder="비밀번호를 입력하세요"
+              required
+              type="password"
+          />
         </div>
-        <div class="form-group">
-          <label for="passwordConfirm">비밀번호 확인:</label>
-          <input id="passwordConfirm" v-model="passwordConfirm" placeholder="비밀번호를 다시 입력하세요" required type="password"/>
+
+        <!-- 비밀번호 확인 -->
+        <div class="form-group mb-3">
+          <label class="form-label" for="passwordConfirm">비밀번호 확인</label>
+          <input
+              id="passwordConfirm"
+              v-model="passwordConfirm"
+              class="form-control"
+              placeholder="비밀번호를 다시 입력하세요"
+              required
+              type="password"
+          />
         </div>
-        <button type="submit">회원가입</button>
-        <p v-if="error" class="error">{{ error }}</p>
-        <p v-if="success" class="success">{{ success }}</p>
+
+        <!-- 회원가입 버튼 -->
+        <button class="btn btn-primary w-100" type="submit">회원가입</button>
+
+        <!-- 에러 메시지 -->
+        <div v-if="error" class="alert alert-danger mt-3">
+          {{ error }}
+        </div>
+
+        <!-- 성공 메시지 -->
+        <div v-if="success" class="alert alert-success mt-3">
+          {{ success }}
+        </div>
       </form>
     </div>
   </div>
@@ -68,6 +116,7 @@ export default {
   display: flex;
   justify-content: center; /* 가로 중앙 */
   align-items: center; /* 세로 중앙 */
+  background-color: #f8f9fa; /* Bootstrap 기본 배경색 */
 }
 
 /* 카드 스타일 */

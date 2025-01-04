@@ -1,8 +1,15 @@
 <template>
-  <div>
-    <p v-if="isAuthenticated">Welcome, {{ email }}!</p>
-    <button v-if="isAuthenticated" @click="logout">Logout</button>
-    <p v-else>Please log in.</p>
+  <div class="container mt-5">
+    <!-- 인증된 사용자 -->
+    <div v-if="isAuthenticated" class="alert alert-success text-center">
+      <p>Welcome, {{ email }}!</p>
+      <button class="btn btn-primary mt-3" @click="logout">Logout</button>
+    </div>
+
+    <!-- 인증되지 않은 사용자 -->
+    <div v-else class="alert alert-warning text-center">
+      <p>Please log in.</p>
+    </div>
   </div>
 </template>
 
