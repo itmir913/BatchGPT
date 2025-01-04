@@ -20,7 +20,7 @@ class UserBatchJobsView(APIView):
         Retrieve all batch jobs for the authenticated user.
         """
         # 현재 로그인된 사용자와 연결된 BatchJob 가져오기
-        batch_jobs = BatchJob.objects.filter(user=request.user)
+        batch_jobs = BatchJob.objects.filter(user=request.user).order_by('-updated_at')
         serializer = BatchJobSerializer(batch_jobs, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
