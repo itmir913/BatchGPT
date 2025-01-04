@@ -58,6 +58,7 @@ export default {
         title: "", // Title 초기값
         description: "", // Description 초기값
       },
+      id: 0,
       successMessage: "", // 성공 메시지 상태
       errorMessage: "", // 에러 메시지 상태
     };
@@ -66,13 +67,19 @@ export default {
     async createBatchJob() {
       try {
         // API 요청 보내기
-        await axios.post("/api/batch-jobs/create/", this.batchJob);
+        const response = await axios.post('/api/batch-jobs/create/', this.batchJob);
 
         // 성공 시 메시지 표시 및 폼 초기화
+        this.id = response.data.id
         this.successMessage = "Batch Job created successfully!";
         this.errorMessage = "";
         this.batchJob.title = "";
         this.batchJob.description = "";
+
+        setTimeout(() => {
+          this.$router.push(`/batch-jobs/${this.id}/`);
+        }, 1000);
+
       } catch (error) {
         // 에러 처리
         console.error("Error creating Batch Job:", error);
