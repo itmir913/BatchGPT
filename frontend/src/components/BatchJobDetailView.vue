@@ -189,12 +189,13 @@ export default {
         alert("The uploaded file is missing. Please select a file to upload.");
         return
       }
+      this.$router.push(`/batch-jobs/${this.batch_id}/prompt`);
       console.log("Go to Next Step");
     },
 
     // 날짜 포맷팅 메서드
     formatDate(dateString) {
-      const options = {year: "numeric", month: "long", day: "numeric"};
+      const options = {year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "numeric"};
       return new Date(dateString).toLocaleDateString(undefined, options);
     },
   },
