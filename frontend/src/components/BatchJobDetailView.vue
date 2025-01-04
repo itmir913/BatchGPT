@@ -25,16 +25,22 @@
         <!-- 파일 업로드 섹션 -->
         <div class="mt-4">
           <h5>File Upload</h5>
-          <form @submit.prevent="uploadFile">
-            <div class="mb-3">
-              <input
-                  ref="fileInput"
-                  class="form-control"
-                  type="file"
-                  @change="handleFileChange"
-              />
-            </div>
-            <button :disabled="uploading" class="btn btn-primary" type="submit">
+          <form class="d-flex align-items-center gap-2" @submit.prevent="uploadFile">
+            <!-- 파일 선택 필드 -->
+            <input
+                ref="fileInput"
+                class="form-control flex-grow-1"
+                type="file"
+                @change="handleFileChange"
+            />
+
+            <!-- 업로드 버튼 -->
+            <button
+                :disabled="uploading"
+                class="btn btn-primary"
+                style="white-space: nowrap;"
+                type="submit"
+            >
               {{ uploading ? "Uploading..." : "Upload File" }}
             </button>
           </form>
@@ -49,6 +55,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";
