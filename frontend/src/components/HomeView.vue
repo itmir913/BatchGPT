@@ -143,7 +143,7 @@ export default {
       this.$router.push("/batch-jobs/create");
     },
     formatDate(dateString) {
-      const options = {year: "numeric", month: "long", day: "numeric"};
+      const options = {year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "numeric"};
       return new Date(dateString).toLocaleDateString(undefined, options);
     },
   },

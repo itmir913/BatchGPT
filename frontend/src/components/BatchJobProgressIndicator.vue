@@ -44,9 +44,9 @@ export default {
       const stepLinks = {
         0: `/batch-jobs/create`,
         1: `/batch-jobs/${this.batch_id}`,
-        2: "/workflow/prompt-config",
-        3: "/workflow/previews",
-        4: "/workflow/run-task",
+        2: "/batch-jobs/${this.batch_id}/prompt",
+        3: "/batch-jobs/${this.batch_id}/preview",
+        4: "/batch-jobs/${this.batch_id}/run",
       };
       return stepLinks[index] || `/`; // 기본값
     },
