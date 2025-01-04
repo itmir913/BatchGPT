@@ -94,6 +94,10 @@ export default {
   methods: {
     async register() {
       try {
+        if (this.password !== this.passwordConfirm) {
+          return
+        }
+
         const response = await axios.post('/api/auth/register/', {
           username: this.username,
           email: this.email,
