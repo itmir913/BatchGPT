@@ -125,7 +125,6 @@ label {
 
 input[type="email"],
 input[type="password"] {
-  width: calc(100% - 20px);
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -138,7 +137,6 @@ input[type="password"]:focus {
 }
 
 .submit-button {
-  width: calc(100% - 20px);
   background-color: #4caf50;
   color: white;
   padding: 10px;

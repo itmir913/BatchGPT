@@ -148,7 +148,6 @@ label {
 }
 
 input {
-  width: calc(100% - 20px);
   padding: 10px;
   border-radius: 5px;
   border: solid #ccc thin;
@@ -159,7 +158,6 @@ input::placeholder {
 }
 
 button {
-  width: calc(100% - 20px);
   background-color: #4caf50;
   color: white;
   border-radius: 5px;
