@@ -110,7 +110,8 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
-        if (this.batchJob.file_name != null) {
+        const file_name = this.batchJob.file_name ?? null;
+        if (file_name != null) {
           this.isNextButtonDisabled = false;
         }
       } catch (error) {
