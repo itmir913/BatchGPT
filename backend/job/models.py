@@ -106,6 +106,18 @@ class BatchJob(TimestampedModel):
             except BatchJob.DoesNotExist:
                 pass
 
+    def delete(self, *args, **kwargs):
+        """
+        객체 삭제 시 파일도 삭제
+        """
+        try:
+            if self.file and os.path.isfile(self.file.path):
+                self.file.delete()
+        except Exception as e:
+            pass
+
+        super().delete(*args, **kwargs)  # 부모 클래스의 delete 호출
+
     def save(self, *args, **kwargs):
         """
         기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장
