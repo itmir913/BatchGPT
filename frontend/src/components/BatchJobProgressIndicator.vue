@@ -1,5 +1,5 @@
 <template>
-  <div class="progress-indicator d-flex justify-content-between mb-4">
+  <div class="progress-indicator d-flex justify-content-between my-4">
     <div
         v-for="(step, index) in steps"
         :key="index"
