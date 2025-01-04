@@ -128,7 +128,6 @@ class BatchJobFileUploadView(APIView):
 
         # 파일 저장
         try:
-
             batch_job.file = file
             batch_job.save()
         except ValidationError as e:

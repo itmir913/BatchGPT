@@ -2,14 +2,14 @@
   <div class="container mt-5">
 
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
+    <div v-if="loading" class="text-center mb-4">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
     <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center" role="alert">
+    <div v-if="error" class="alert alert-danger text-center mb-4" role="alert">
       {{ error }}
     </div>
 
@@ -19,12 +19,12 @@
     <!-- 파일 정보 표시 -->
     <div v-if="batchJob && !loading && !error" class="mb-4">
       <h5>Uploaded File</h5>
-      <div class="table-responsive">
+      <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
           <thead class="table-light">
           <tr>
-            <th style="width: 30%;">Item</th> <!-- 왼쪽 열 너비 조정 -->
-            <th style="width: 70%;">Information</th> <!-- 오른쪽 열 너비 조정 -->
+            <th style="width: 30%;">Item</th>
+            <th style="width: 70%;">Information</th>
           </tr>
           </thead>
           <tbody>
@@ -44,9 +44,9 @@
         </table>
 
         <!-- 작업 단위 설정 -->
-        <div v-if="batchJob && !loading && !error && batchJob.file_type === 'pdf'">
+        <div v-if="batchJob && !loading && !error">
           <div class="mb-4">
-            <h5 class="text-center">Select Task Unit</h5>
+            <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
             <div class="d-flex justify-content-center align-items-center mb-2">
               <div class="form-check me-3">
                 <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
@@ -66,17 +66,23 @@
               </div>
 
               <!-- 사용자 입력 필드 -->
-              <div class="input-group w-25"> <!-- 너비를 25%로 설정 -->
+              <div class="input-group w-25">
                 <span class="input-group-text">Custom Units:</span>
                 <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
               </div>
             </div>
+
+            <!-- 안내 메시지 -->
+            <div class="text-info">
+              Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+            </div>
+
+            <!-- 경고 메시지 -->
+            <div v-if="remainder !== 0" class="text-danger">
+              There are {{ remainder }} items left to process with the last request.
+            </div>
           </div>
 
-          <!-- 경고 메시지 -->
-          <div v-if="batchJob.total_size % workUnit !== 0" class="text-danger mt-2">
-            작업 단위에 따라 나누었을 때 남는 부분이 있습니다!
-          </div>
         </div>
 
       </div>
@@ -85,7 +91,7 @@
     <!-- 프롬프트 입력란 -->
     <div v-if="!loading && !error" class="mb-4">
       <h5>Input Prompt</h5>
-      <textarea v-model="promptInput" class="form-control" placeholder="Enter your prompt..." rows="3"></textarea>
+      <textarea v-model="promptInput" class="form-control mb-2" placeholder="Enter your prompt..." rows="3"></textarea>
       <!-- 버튼을 별도의 div로 감싸고 정렬 -->
       <div class="text-end mt-2">
         <button :disabled="loadingPreview" class="btn btn-primary" @click="previewResult">Preview</button>
@@ -93,9 +99,9 @@
     </div>
 
     <!-- 미리보기 결과 -->
-    <div v-if="previewData.length > 0" class="mt-4">
-      <h5 class="mt-4">Preview Result</h5>
-      <table class="table table-bordered">
+    <div v-if="previewData.length > 0" class="">
+      <h5>Preview Result</h5>
+      <table class="table table-bordered mb-4">
         <thead>
         <tr>
           <th>Raw Data</th>
@@ -109,9 +115,13 @@
         </tr>
         </tbody>
       </table>
-      <div class="text-end my-4">
-        <button :disabled="isNextButtonDisabled" class="btn btn-success" @click="goToNextStep">Next</button>
+
+      <!-- 다음 단계로 가기 버튼 -->
+      <div class="">
+        <button :disabled="isNextButtonDisabled" class="btn btn-success float-end mb-4" @click="goToNextStep">Next
+        </button>
       </div>
+
     </div>
 
   </div>
@@ -139,6 +149,11 @@ export default {
       loadingPreview: false,
       previewData: [], // 미리보기 데이터
     };
+  },
+  computed: {
+    remainder() {
+      return this.batchJob.total_size % this.workUnit;
+    }
   },
   methods: {
     // 배치 작업 데이터 가져오기
