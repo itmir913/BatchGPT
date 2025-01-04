@@ -66,6 +66,25 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
+    def patch(self, request, id):
+        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
+        batch_job = get_object_or_404(BatchJob, id=id)
+
+        # 현재 요청한 사용자가 소유자인지 확인
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to access this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        # 직렬화하여 데이터 업데이트
+        serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
+        if serializer.is_valid():
+            serializer.save()  # 변경 사항 저장
+            return Response(serializer.data, status=HTTP_200_OK)
+
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
 
 class BatchJobFileUploadView(APIView):
     """

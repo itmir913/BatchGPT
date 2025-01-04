@@ -55,6 +55,16 @@
           <h5>Uploaded File</h5>
           <a :href="batchJob.file" target="_blank">{{ batchJob.file }}</a>
         </div>
+
+        <!-- 하단 버튼 추가 -->
+        <div class="d-flex justify-content-between mt-4">
+          <!-- 수정 버튼 (왼쪽) -->
+          <button class="btn btn-secondary" @click="editBatchJob">Edit</button>
+
+          <!-- 다음 버튼 (오른쪽) -->
+          <button class="btn btn-success" @click="goToNextStep">Next</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -132,6 +142,23 @@ export default {
           this.$refs.fileInput.value = ""; // 파일 입력 초기화
         }
       }
+    },
+
+    editBatchJob() {
+      // 수정 로직 구현 (예: 편집 페이지로 이동)
+      // /batch-jobs/:batch_id/edit
+      this.$router.push(`/batch-jobs/${this.batchJob.id}/edit`);
+      console.log("Edit Batch Job");
+    },
+
+    goToNextStep() {
+      // 다음 단계로 이동하는 로직 구현
+      if (this.batchJob.file == null) {
+        console.log("File Null");
+        alert("The uploaded file is missing. Please select a file to upload.");
+        return
+      }
+      console.log("Go to Next Step");
     },
 
     // 날짜 포맷팅 메서드

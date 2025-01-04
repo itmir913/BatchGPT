@@ -16,12 +16,12 @@
     </div>
 
     <!-- 배치 작업 폼 -->
-    <h2 class="mb-4">Create a New Batch Job</h2>
+    <h2 class="mb-4">Modify Batch Job</h2>
     <div class="card">
       <div class="card-body">
         <BatchJobForm
             :batchJob="batchJob"
-            @submit="createBatchJob"
+            @submit="modifyBatchJob"
         />
       </div>
     </div>
@@ -45,6 +45,7 @@ import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 import BatchJobForm from '@/components/BatchJobForm.vue'; // BatchJobForm 컴포넌트 임포트
 
 export default {
+  props: ['batch_id'],
   components: {
     ProgressIndicator,
     BatchJobForm, // 등록
@@ -56,7 +57,6 @@ export default {
         title: "", // Title 초기값
         description: "", // Description 초기값
       },
-      id: 0,
       successMessage: "", // 성공 메시지 상태
       errorMessage: "", // 에러 메시지 상태
       loading: false, // 로딩 상태
@@ -64,28 +64,28 @@ export default {
     };
   },
   methods: {
-    async createBatchJob(batchData) { // batchData를 인자로 받음
+    async modifyBatchJob(batchData) { // batchData를 인자로 받음
       try {
-        const response = await axios.post('/api/batch-jobs/create/', batchData);
+        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, batchData);
 
         this.id = response.data.id;
-        this.successMessage = "Batch Job created successfully!";
+        this.successMessage = "Batch Job modified successfully!";
         this.errorMessage = "";
 
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${this.id}/`);
-        }, 1000);
+          this.$router.push(`/batch-jobs/${this.batch_id}/`);
+        }, 500);
 
         // 폼 초기화
         this.batchJob.title = "";
         this.batchJob.description = "";
 
       } catch (error) {
-        console.error("Error creating Batch Job:", error);
+        console.error("Error modifying Batch Job:", error);
         this.successMessage = "";
 
         if (error.response && error.response.data) {
-          this.errorMessage = error.response.data.error || "Failed to create Batch Job.";
+          this.errorMessage = error.response.data.error || "Failed to modify Batch Job.";
         } else {
           this.errorMessage = "An unexpected error occurred.";
         }
