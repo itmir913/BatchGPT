@@ -151,9 +151,9 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
-        const config = this.batchJob.config
-        this.workUnit = config.workUnit || 1
-        this.prompt = config.prompt || ''
+        const config = this.batchJob.config ?? {}
+        this.workUnit = config.workUnit ?? 1
+        this.prompt = config.prompt ?? ''
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
