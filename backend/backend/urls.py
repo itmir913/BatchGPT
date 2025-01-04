@@ -26,5 +26,6 @@ def index(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^(?!api/).*$', index),
-    path('api/auth/', include('users.urls_auth'))
+
+    path('api/', include('api.urls')),
 ]
