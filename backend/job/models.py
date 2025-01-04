@@ -1,4 +1,3 @@
-import hashlib
 import os
 
 from django.core.exceptions import ValidationError
@@ -214,50 +213,7 @@ class TaskUnit(TimestampedModel):
         self.save()
 
 
-class Prompt(TimestampedModel):
-    """ChatGPT 요청 프롬프트 데이터"""
-    text = models.TextField(
-        verbose_name="Prompt Text",
-        help_text="ChatGPT에 보낸 프롬프트 텍스트"
-    )
-
-    hash = models.CharField(
-        max_length=64,
-        unique=True,
-        verbose_name="Prompt Hash",
-        help_text="프롬프트 텍스트의 고유 해시값"
-    )
-
-    class Meta:
-        db_table = 'prompt'
-        verbose_name = 'Prompt'
-        verbose_name_plural = 'Prompts'
-
-    def __str__(self):
-        return f"Prompt {self.id} - {self.text[:50]}"
-
-    @staticmethod
-    def generate_hash(text):
-        """프롬프트 텍스트의 고유 해시 생성"""
-        return hashlib.sha256(text.encode('utf-8')).hexdigest()
-
-    @classmethod
-    def get_or_create(cls, text):
-        """프롬프트를 생성하거나 기존 것을 반환"""
-        hash_value = cls.generate_hash(text)
-        prompt, created = cls.objects.get_or_create(hash=hash_value, defaults={'text': text})
-        return prompt
-
-    """
-    prompt_instance = Prompt.get_or_create("Explain AI in simple terms.")
-    response = TaskUnitResponse.objects.create(
-        task_unit=task_unit_instance,
-        prompt=prompt_instance,
-        status=TaskUnitStatus.IN_PROGRESS
-    )
-    """
-
-
+# TODO TaskUnitResponse가 삭제될 때, 남아있는 Prompt를 어떻게 할 것인지 고려해야 함.
 class TaskUnitResponse(TimestampedModel):
     """TaskUnit에 대한 ChatGPT 응답 저장"""
     task_unit = models.ForeignKey(
@@ -267,10 +223,9 @@ class TaskUnitResponse(TimestampedModel):
         verbose_name="Task Unit"
     )
 
-    prompt = models.ForeignKey(
-        Prompt,
-        on_delete=models.PROTECT,
-        related_name="responses",
+    prompt = models.TextField(
+        null=True,
+        blank=True,
         verbose_name="Prompt"
     )
 

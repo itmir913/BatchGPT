@@ -173,3 +173,19 @@ class BatchJobPreviewView(APIView):
 
         serializer = BatchJobPreviewSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
+
+    def post(self, request):
+        # 클라이언트로부터 JSON 데이터 받기
+        prompt = request.data.get('prompt', None)
+
+        if prompt is None:
+            return Response({'error': 'No prompt provided'}, status=HTTP_400_BAD_REQUEST)
+
+        processed_result = self.process_prompt(prompt)
+
+        return Response({'result': processed_result}, status=HTTP_200_OK)
+
+    def process_prompt(self, prompt):
+        # 여기에 prompt 처리 로직을 구현합니다.
+        # 예를 들어, 간단히 문자열을 변환하는 작업을 할 수 있습니다.
+        return f"Processed: {prompt}"
