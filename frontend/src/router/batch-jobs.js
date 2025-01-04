@@ -2,7 +2,8 @@
 import BatchJobCreateView from '@/components/BatchJobCreateView.vue';
 import BatchJobDetailView from "@/components/BatchJobDetailView.vue";
 import BatchJobEditView from "@/components/BatchJobEditView.vue";
-import BatchJobPromptView from "@/components/BatchJobConfigView.vue";
+import BatchJobConfigView from "@/components/BatchJobConfigView.vue";
+import BatchJobPreView from "@/components/BatchJobPreView.vue";
 
 export default [
     {
@@ -29,7 +30,13 @@ export default [
     {
         path: '/batch-jobs/:batch_id/configs', // 동적 경로 정의
         name: 'Configure Prompt',
-        component: BatchJobPromptView,
+        component: BatchJobConfigView,
+        props: true, // URL 파라미터를 컴포넌트의 props로 전달
+    },
+    {
+        path: '/batch-jobs/:batch_id/preview', // 동적 경로 정의
+        name: 'BatchJob Preview',
+        component: BatchJobPreView,
         props: true, // URL 파라미터를 컴포넌트의 props로 전달
     },
 ];
