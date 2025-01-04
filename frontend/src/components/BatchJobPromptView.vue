@@ -88,7 +88,7 @@
       <textarea v-model="promptInput" class="form-control" placeholder="Enter your prompt..." rows="3"></textarea>
       <!-- 버튼을 별도의 div로 감싸고 정렬 -->
       <div class="text-end mt-2">
-        <button class="btn btn-primary" @click="previewResult">Preview</button>
+        <button :disabled="loadingPreview" class="btn btn-primary" @click="previewResult">Preview</button>
       </div>
     </div>
 
@@ -105,7 +105,7 @@
         <tbody>
         <tr v-for="(item, index) in previewData.slice(0, 5)" :key="index">
           <td>{{ item.raw }}</td>
-          <td>{{ item.response }}</td>
+          <td class="animated-text">{{ item.response }}</td>
         </tr>
         </tbody>
       </table>
@@ -123,6 +123,7 @@ import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
+  name: 'BlurAnimation',
   props: ['batch_id'],  // URL 파라미터를 props로 받음
   components: {
     ProgressIndicator, // 등록
@@ -135,6 +136,7 @@ export default {
       error: null, // 에러 메시지
       workUnit: 1,
       promptInput: '',
+      loadingPreview: false,
       previewData: [], // 미리보기 데이터
     };
   },
@@ -158,6 +160,7 @@ export default {
     },
 
     previewResult() {
+      this.loadingPreview = true;
       // 프롬프트 입력과 작업 단위를 기반으로 미리보기 데이터를 생성하는 로직
       // 예시 데이터
       this.previewData = [
@@ -192,5 +195,27 @@ h5 {
 
 .table th, .table td {
   vertical-align: middle;
+}
+
+.animated-text {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  animation: blurAnimation 1s infinite; /* 애니메이션 적용 */
+}
+
+@keyframes blurAnimation {
+  0% {
+    filter: blur(5px); /* 시작 시 흐림 효과 */
+    opacity: 0.1;
+  }
+  50% {
+    filter: blur(8px); /* 중간에 선명하게 */
+    opacity: 0.3;
+  }
+  100% {
+    filter: blur(5px); /* 다시 흐림 효과 */
+    opacity: 0.1;
+  }
 }
 </style>
