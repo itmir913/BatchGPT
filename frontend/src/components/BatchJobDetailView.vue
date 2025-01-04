@@ -1,5 +1,6 @@
 <template>
   <div class="container mt-5">
+
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
@@ -11,6 +12,10 @@
     <div v-if="error" class="alert alert-danger text-center" role="alert">
       {{ error }}
     </div>
+
+    <!-- 5단계 워크플로우 표시 -->
+    <!-- 진행 상태 표시 -->
+    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 배치 작업 상세 정보 -->
     <div v-if="batchJob && !loading && !error" class="card">
@@ -59,11 +64,17 @@
 
 <script>
 import axios from "@/configs/axios";
+import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
   props: ['batch_id'],  // URL 파라미터를 props로 받음
+  components: {
+    ProgressIndicator, // 등록
+  },
   data() {
     return {
+      currentStep: 1, // 현재 진행 중인 단계 (0부터 시작)
+
       batchJob: null, // 배치 작업 데이터
       loading: true, // 로딩 상태
       error: null, // 에러 메시지
