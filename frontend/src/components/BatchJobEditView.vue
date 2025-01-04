@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -18,7 +18,7 @@
     <!-- 배치 작업 폼 -->
     <h2 class="mb-4">Modify Batch Job</h2>
     <div class="card">
-      <div v-if="batchJob && !loading && !error" class="card-body">
+      <div v-if="batchJob && isReady" class="card-body">
         <!-- Form 시작 -->
         <form @submit.prevent="modifyBatchJob">
           <!-- Title 입력 -->
@@ -46,8 +46,11 @@
             ></textarea>
           </div>
 
-          <!-- Submit 버튼 -->
-          <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+          <!-- 버튼 -->
+          <div>
+            <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
+            <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+          </div>
         </form>
       </div>
     </div>
@@ -87,7 +90,11 @@ export default {
       isButtonDisabled: true,
     };
   },
-
+  computed: {
+    isReady() {
+      return !this.loading && !this.error;
+    },
+  },
   methods: {
     async fetchBatchJob() {
       try {
@@ -126,6 +133,11 @@ export default {
         }
       }
     },
+
+    cancelButton() {
+      this.$router.push(`/batch-jobs/${this.batch_id}`);
+      console.log("Go to Next Step");
+    }
   },
 
   async created() {
@@ -136,6 +148,6 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 1000px;
 }
 </style>

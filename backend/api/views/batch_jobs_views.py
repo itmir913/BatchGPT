@@ -169,7 +169,7 @@ class BatchJobConfigView(APIView):
 
         # 클라이언트로부터 JSON 데이터 받기
         data = request.data
-        workUnit = data.get('workUnit', 1)
+        workUnit = int(data.get('workUnit', 1))
         prompt = data.get('prompt', None)
 
         if prompt is None:

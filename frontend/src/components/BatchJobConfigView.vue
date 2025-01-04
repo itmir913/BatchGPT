@@ -14,10 +14,10 @@
     </div>
 
     <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 파일 정보 표시 -->
-    <div v-if="batchJob && !loading && !error" class="mb-4">
+    <div v-if="batchJob && isReady" class="mb-4">
       <h5>Uploaded File</h5>
       <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
@@ -43,8 +43,19 @@
           </tbody>
         </table>
 
+        <!-- 프롬프트 입력란 -->
+        <div v-if="isReady" class="mb-4">
+          <h5>Input Prompt</h5>
+          <textarea
+              v-model="prompt"
+              class="form-control"
+              placeholder="Enter your prompt..."
+              rows="5"
+          ></textarea>
+        </div>
+
         <!-- 작업 단위 설정 -->
-        <div v-if="batchJob && !loading && !error">
+        <div v-if="batchJob && isReady">
           <div class="mb-4">
             <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
             <div class="d-flex justify-content-center align-items-center mb-2">
@@ -77,7 +88,7 @@
               Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
             </div>
 
-            <div class="text-info">
+            <div class="text-dark">
               A total of {{ calculateCeil(batchJob.total_size, workUnit) }} requests will be processed.
             </div>
 
@@ -85,26 +96,21 @@
             <div v-if="remainder !== 0" class="text-danger">
               There are {{ remainder }} items left to process with the last request.
             </div>
-            <div v-if="workUnit > batchJob.total_size" class="text-danger">
+            <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
               The {{ workUnit }} work unit cannot exceed the total size.
             </div>
           </div>
+        </div>
 
+        <!-- 버튼을 별도의 div로 감싸고 정렬 -->
+        <div class="text-end mb-4 mt-3">
+          <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
+          <button class="btn btn-success" @click="goToNextStep">Next</button>
         </div>
 
       </div>
     </div>
 
-    <!-- 프롬프트 입력란 -->
-    <div v-if="!loading && !error" class="mb-4">
-      <h5>Input Prompt</h5>
-      <textarea v-model="prompt" class="form-control mb-2" placeholder="Enter your prompt..." rows="3"></textarea>
-      <!-- 버튼을 별도의 div로 감싸고 정렬 -->
-      <div class="text-end mb-4 mt-3">
-        <button :disabled="loadingSave" class="btn btn-primary me-3" @click="configSave">Save</button>
-        <button class="btn btn-success" @click="goToNextStep">Next</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -114,7 +120,6 @@ import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
-  name: 'BlurAnimation',
   props: ['batch_id'],  // URL 파라미터를 props로 받음
   components: {
     ProgressIndicator, // 등록
@@ -128,13 +133,15 @@ export default {
       workUnit: 1,
       prompt: '',
       loadingSave: false,
-      previewData: [], // 미리보기 데이터
     };
   },
   computed: {
     remainder() {
       return this.batchJob.total_size % this.workUnit;
-    }
+    },
+    isReady() {
+      return !this.loading && !this.error;
+    },
   },
   methods: {
     // 배치 작업 데이터 가져오기
@@ -144,9 +151,9 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
-        const config = this.batchJob.config
-        this.workUnit = config.workUnit || 1
-        this.prompt = config.prompt || ''
+        const config = this.batchJob.config ?? {}
+        this.workUnit = config.workUnit ?? 1
+        this.prompt = config.prompt ?? ''
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
@@ -192,7 +199,6 @@ export default {
     goToNextStep() {
       // 다음 단계로 이동하는 로직 구현
       this.$router.push(`/batch-jobs/${this.batch_id}/preview`);
-      console.log("Go to Next Step");
     },
 
     calculateCeil(totalSize, workUnit) {
@@ -207,15 +213,7 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 800px;
-}
-
-.mb-4 {
-  margin-bottom: 1.5rem;
-}
-
-h5 {
-  margin-bottom: .5rem;
+  max-width: 1000px;
 }
 
 .table th, .table td {

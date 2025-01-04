@@ -14,10 +14,10 @@
     </div>
 
     <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && !loading && !error" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 배치 작업 상세 정보 -->
-    <div v-if="batchJob && !loading && !error" class="card">
+    <div v-if="batchJob && isReady" class="card">
       <div class="card-body">
         <h2 class="card-title">{{ batchJob.title }}</h2>
         <p class="card-text">{{ batchJob.description || "No description provided." }}</p>
@@ -97,6 +97,11 @@ export default {
       isNextButtonDisabled: true,
     };
   },
+  computed: {
+    isReady() {
+      return !this.loading && !this.error;
+    },
+  },
   methods: {
     // 배치 작업 데이터 가져오기
     async fetchBatchJob() {
@@ -105,7 +110,8 @@ export default {
           withCredentials: true,
         });
         this.batchJob = response.data;
-        if (this.batchJob.file_name != null) {
+        const file_name = this.batchJob.file_name ?? null;
+        if (file_name != null) {
           this.isNextButtonDisabled = false;
         }
       } catch (error) {
@@ -207,6 +213,6 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 1000px;
 }
 </style>

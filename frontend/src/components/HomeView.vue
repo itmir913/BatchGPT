@@ -151,5 +151,7 @@ export default {
 </script>
 
 <style scoped>
-/* 필요 시 스타일 추가 */
+.container {
+  max-width: 1000px;
+}
 </style>
