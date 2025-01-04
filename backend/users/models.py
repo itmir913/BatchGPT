@@ -25,10 +25,9 @@ class UserAccountManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    user_id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True, verbose_name="Email Address")  # 로그인 ID로 사용
     username = models.CharField(max_length=255, verbose_name="Name")
-    balance = models.IntegerField(default=0, verbose_name="Account Balance")  # 사용자 잔액
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Account Balance")
     is_active = models.BooleanField(default=True, verbose_name="Is Active")  # 계정 활성 상태
     is_staff = models.BooleanField(default=False, verbose_name="Is Staff")  # 관리자 여부
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
