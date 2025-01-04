@@ -1,4 +1,5 @@
 import hashlib
+import os
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
@@ -7,28 +8,15 @@ from django.db import models
 from users.models import User
 
 
-def user_upload_path(instance, filename):
+def get_upload_path(instance, filename):
     """사용자 ID별 파일 업로드 경로 설정"""
     """배치 작업을 생성 후 파일 업로드하기"""
     return f"uploads/user_{instance.user.id}/batch_{instance.id}/file_{filename}"
 
 
-def user_taskunit_path(instance, filename):
+def get_taskunit_path(instance, filename):
     """사용자 ID별 파일 업로드 경로 설정"""
     return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{filename}"
-
-
-FILE_TYPES = {
-    'CSV': 'csv',
-    'PDF': 'pdf',
-}
-
-
-def validate_file_type(file):
-    """파일 형식 검증"""
-    valid_extensions = FILE_TYPES.values()  # 상수에서 유효 확장자 가져오기
-    if not file.name.split('.')[-1].lower() in valid_extensions:
-        raise ValidationError(f"Unsupported file type. Only {', '.join(valid_extensions).upper()} files are allowed.")
 
 
 class TimestampedModel(models.Model):
@@ -41,6 +29,11 @@ class TimestampedModel(models.Model):
 
 class BatchJob(TimestampedModel):
     """사용자가 생성한 배치 작업"""
+    FILE_TYPES = {
+        'CSV': 'csv',
+        'PDF': 'pdf',
+    }
+
     FILE_TYPE_CHOICES = [(key, key) for key in FILE_TYPES.keys()]  # 상수를 기반으로 선택지 생성
 
     user = models.ForeignKey(
@@ -50,8 +43,21 @@ class BatchJob(TimestampedModel):
         verbose_name="User"
     )
 
+    title = models.CharField(
+        max_length=255,
+        verbose_name="Title",
+        default="New BatchJob",
+        help_text="배치 작업의 제목을 입력하세요."
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Description",
+        help_text="배치 작업에 대한 설명을 입력하세요. (선택 사항)"
+    )
+
     file = models.FileField(
-        upload_to=user_upload_path,
+        upload_to=get_upload_path,
         blank=True,
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=[key for key in FILE_TYPES.keys()])],
@@ -71,6 +77,46 @@ class BatchJob(TimestampedModel):
 
     def __str__(self):
         return f"BatchJob {self.id} - {self.user.email}"
+
+    def clean(self):
+        """
+        유효성 검사: 파일 확장자 확인
+        """
+        if self.file:
+            valid_extensions = self.FILE_TYPES.values()
+            file_extension = self.file.name.split('.')[-1].lower()
+            if file_extension not in valid_extensions:
+                raise ValidationError(
+                    f"Unsupported file type: {file_extension}. "
+                    f"Only {', '.join(valid_extensions).upper()} files are allowed."
+                )
+
+    def delete_old_file(self):
+        """
+        기존 파일 삭제
+        """
+        if self.pk:  # 객체가 이미 존재하는 경우
+            try:
+                old_instance = BatchJob.objects.get(pk=self.pk)
+                if old_instance.file and old_instance.file != self.file:
+                    # 기존 파일 삭제
+                    if os.path.isfile(old_instance.file.path):
+                        os.remove(old_instance.file.path)
+            except BatchJob.DoesNotExist:
+                pass
+
+    def save(self, *args, **kwargs):
+        """
+        기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장
+        """
+        # 기존 파일 삭제
+        self.delete_old_file()
+
+        # 유효성 검사 수행
+        self.clean()
+
+        # 새 파일 저장
+        super().save(*args, **kwargs)
 
 
 class TaskUnitStatus:
@@ -116,7 +162,7 @@ class TaskUnit(TimestampedModel):
         blank=True,
         verbose_name="Text Data")  # CSV 행 데이터
     file_data = models.FileField(
-        upload_to=user_taskunit_path,
+        upload_to=get_taskunit_path,
         null=True,
         blank=True,
         verbose_name="File Data"

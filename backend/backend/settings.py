@@ -142,7 +142,7 @@ LOGGING = {
     },
     'handlers': {  # 로그 처리 방식 정의
         'console': {
-            'level': 'INFO',  # 콘솔에 출력할 최소 로그 레벨
+            'level': 'DEBUG',  # 콘솔에 출력할 최소 로그 레벨
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',  # 사용할 포맷터
         },
