@@ -47,7 +47,7 @@
           </div>
 
           <!-- Submit 버튼 -->
-          <button class="btn btn-primary" type="submit">Create Batch Job</button>
+          <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Create Batch Job</button>
         </form>
       </div>
     </div>
@@ -85,11 +85,13 @@ export default {
       errorMessage: "", // 에러 메시지 상태
       loading: false, // 로딩 상태
       error: null, // 에러 메시지
+      isButtonDisabled: false,
     };
   },
   methods: {
     async createBatchJob() { // batchData를 인자로 받음
       try {
+        this.isButtonDisabled = true
         const response = await axios.post('/api/batch-jobs/create/', this.batchJob);
 
         this.id = response.data.id;
@@ -102,6 +104,7 @@ export default {
 
       } catch (error) {
         console.error("Error creating Batch Job:", error);
+        this.isButtonDisabled = false
         this.successMessage = "";
 
         if (error.response && error.response.data) {
