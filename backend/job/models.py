@@ -90,6 +90,7 @@ class BatchJob(TimestampedModel):
                     f"Unsupported file type: {file_extension}. "
                     f"Only {', '.join(valid_extensions).upper()} files are allowed."
                 )
+            self.file_type = file_extension
 
     def delete_old_file(self):
         """
