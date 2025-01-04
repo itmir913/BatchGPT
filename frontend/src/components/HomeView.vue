@@ -48,7 +48,7 @@
               <!-- 제목 표시 및 링크 -->
               <h5 class="card-title">
                 <a
-                    :href="`/batch-job/${job.id}`"
+                    :href="`/batch-jobs/${job.id}`"
                     class="text-decoration-none text-primary"
                 >
                   {{ job.title }}
@@ -140,7 +140,7 @@ export default {
     },
     goToCreateBatchJob() {
       // /batch-job/create 경로로 이동
-      this.$router.push("/batch-job/create");
+      this.$router.push("/batch-jobs/create");
     },
     formatDate(dateString) {
       const options = {year: "numeric", month: "long", day: "numeric"};
