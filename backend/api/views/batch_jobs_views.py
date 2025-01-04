@@ -2,7 +2,8 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
+    HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
@@ -84,6 +85,18 @@ class BatchJobDetailView(APIView):
             return Response(serializer.data, status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        batch_job = get_object_or_404(BatchJob, id=id)
+
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to delete this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        batch_job.delete()  # BatchJob 객체 삭제
+        return Response(status=HTTP_204_NO_CONTENT)  # 성공적으로 삭제되었음을 알림
 
 
 class BatchJobFileUploadView(APIView):

@@ -58,8 +58,13 @@
 
         <!-- 하단 버튼 추가 -->
         <div class="d-flex justify-content-between mt-4">
-          <!-- 수정 버튼 (왼쪽) -->
-          <button class="btn btn-secondary" @click="editBatchJob">Edit</button>
+          <div>
+            <!-- DELETE 버튼 (왼쪽) -->
+            <button class="btn btn-danger" @click="deleteBatchJob">Delete</button>
+
+            <!-- 수정 버튼 (왼쪽) -->
+            <button class="btn btn-secondary ms-2" @click="editBatchJob">Edit</button> <!-- ms-2 클래스 추가 -->
+          </div>
 
           <!-- 다음 버튼 (오른쪽) -->
           <button class="btn btn-success" @click="goToNextStep">Next</button>
@@ -147,8 +152,29 @@ export default {
     editBatchJob() {
       // 수정 로직 구현 (예: 편집 페이지로 이동)
       // /batch-jobs/:batch_id/edit
-      this.$router.push(`/batch-jobs/${this.batchJob.id}/edit`);
+      this.$router.push(`/batch-jobs/${this.batch_id}/edit`);
       console.log("Edit Batch Job");
+    },
+
+    async deleteBatchJob() {
+      // 사용자에게 삭제 확인 알림 띄우기
+      if (confirm("Are you sure you want to delete this batch job?")) {
+        // DELETE 요청 보내기
+        try {
+          await axios.delete(
+              `/api/batch-jobs/${this.batch_id}/`,
+              {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
+          );
+          alert("BatchJob Deleted successfully!");
+          this.$router.push(`/home`);
+        } catch (error) {
+          const errorMessage = error.response.data?.error || "Unknown error occurred.";
+          console.error("Error uploading file:", errorMessage);
+          alert(`Error uploading file: ${errorMessage}`);
+        }
+      } else {
+        console.log("Delete action canceled.");
+      }
     },
 
     goToNextStep() {
