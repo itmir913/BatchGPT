@@ -1,8 +1,8 @@
 import {createRouter, createWebHistory} from 'vue-router';
 
-import HomeView from '@/components/HomeView.vue';
-import LoginView from '@/components/LoginView.vue';
-import RegisterView from '@/components/RegisterView.vue';
+import authRoutes from './auth';
+import homeRoutes from './home';
+
 
 import axios from '@/configs/axios'; // Axios 설정 가져오기
 
@@ -11,22 +11,8 @@ const routes = [
         path: '/',
         redirect: '/home', // 기본 경로를 /home으로 리디렉션
     },
-    {
-        path: '/home',
-        name: 'Home',
-        component: HomeView,
-        meta: {requiresAuth: true}, // 인증이 필요한 경로
-    },
-    {
-        path: '/login',
-        name: 'Login',
-        component: LoginView,
-    },
-    {
-        path: '/register',
-        name: 'Register',
-        component: RegisterView,
-    },
+    ...authRoutes,
+    ...homeRoutes,
 ];
 
 const router = createRouter({
