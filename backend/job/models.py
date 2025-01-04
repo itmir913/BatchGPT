@@ -7,28 +7,23 @@ from django.db import models
 from users.models import User
 
 
-def user_upload_path(instance, filename):
+def validate_file_type(self, file):
+    """파일 형식 검증"""
+    valid_extensions = self.FILE_TYPES.values()  # 상수에서 유효 확장자 가져오기
+    if not file.name.split('.')[-1].lower() in valid_extensions:
+        raise ValidationError(
+            f"Unsupported file type. Only {', '.join(valid_extensions).upper()} files are allowed.")
+
+
+def get_upload_path(instance, filename):
     """사용자 ID별 파일 업로드 경로 설정"""
     """배치 작업을 생성 후 파일 업로드하기"""
     return f"uploads/user_{instance.user.id}/batch_{instance.id}/file_{filename}"
 
 
-def user_taskunit_path(instance, filename):
+def get_taskunit_path(instance, filename):
     """사용자 ID별 파일 업로드 경로 설정"""
     return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{filename}"
-
-
-FILE_TYPES = {
-    'CSV': 'csv',
-    'PDF': 'pdf',
-}
-
-
-def validate_file_type(file):
-    """파일 형식 검증"""
-    valid_extensions = FILE_TYPES.values()  # 상수에서 유효 확장자 가져오기
-    if not file.name.split('.')[-1].lower() in valid_extensions:
-        raise ValidationError(f"Unsupported file type. Only {', '.join(valid_extensions).upper()} files are allowed.")
 
 
 class TimestampedModel(models.Model):
@@ -41,6 +36,11 @@ class TimestampedModel(models.Model):
 
 class BatchJob(TimestampedModel):
     """사용자가 생성한 배치 작업"""
+    FILE_TYPES = {
+        'CSV': 'csv',
+        'PDF': 'pdf',
+    }
+
     FILE_TYPE_CHOICES = [(key, key) for key in FILE_TYPES.keys()]  # 상수를 기반으로 선택지 생성
 
     user = models.ForeignKey(
@@ -64,7 +64,7 @@ class BatchJob(TimestampedModel):
     )
 
     file = models.FileField(
-        upload_to=user_upload_path,
+        upload_to=get_upload_path,
         blank=True,
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=[key for key in FILE_TYPES.keys()])],
@@ -129,7 +129,7 @@ class TaskUnit(TimestampedModel):
         blank=True,
         verbose_name="Text Data")  # CSV 행 데이터
     file_data = models.FileField(
-        upload_to=user_taskunit_path,
+        upload_to=get_taskunit_path,
         null=True,
         blank=True,
         verbose_name="File Data"

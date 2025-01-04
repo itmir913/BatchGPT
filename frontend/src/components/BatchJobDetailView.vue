@@ -98,7 +98,7 @@ export default {
       try {
         this.uploading = true;
         const response = await axios.patch(
-            `/api/batch-jobs/${this.$route.params.id}/`,
+            `/api/batch-jobs/${this.batch_id}/upload/`,
             formData,
             {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
         );
