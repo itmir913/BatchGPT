@@ -51,9 +51,9 @@
         </div>
 
         <!-- 업로드된 파일 정보 -->
-        <div v-if="batchJob.file" class="mt-4">
+        <div v-if="batchJob.file_name" class="mt-4">
           <h5>Uploaded File</h5>
-          <a :href="batchJob.file" target="_blank">{{ batchJob.file }}</a>
+          <h6>{{ batchJob.file_name }}</h6>
         </div>
 
         <!-- 하단 버튼 추가 -->
@@ -146,6 +146,7 @@ export default {
         if (this.$refs.fileInput) {
           this.$refs.fileInput.value = ""; // 파일 입력 초기화
         }
+        window.location.reload()
       }
     },
 
@@ -179,7 +180,7 @@ export default {
 
     goToNextStep() {
       // 다음 단계로 이동하는 로직 구현
-      if (this.batchJob.file == null) {
+      if (this.batchJob.file_name == null) {
         console.log("File Null");
         alert("The uploaded file is missing. Please select a file to upload.");
         return
