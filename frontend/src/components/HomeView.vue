@@ -13,7 +13,16 @@
 
     <!-- 배치 작업 리스트 -->
     <div v-if="isAuthenticated" class="mt-5">
-      <h2 class="text-center mb-4">My Batch Jobs</h2>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Batch Jobs</h2>
+        <!-- 배치 작업 추가 버튼 -->
+        <button
+            class="btn btn-success"
+            @click="goToCreateBatchJob"
+        >
+          Add New Batch Job
+        </button>
+      </div>
 
       <!-- 로딩 상태 -->
       <div v-if="loading" class="text-center">
@@ -114,6 +123,10 @@ export default {
         alert("Logout failed. Please try again.");
       }
     },
+    goToCreateBatchJob() {
+      // /batch-job/create 경로로 이동
+      this.$router.push("/batch-job/create");
+    },
     formatDate(dateString) {
       const options = {year: "numeric", month: "long", day: "numeric"};
       return new Date(dateString).toLocaleDateString(undefined, options);
@@ -121,3 +134,7 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* 필요 시 스타일 추가 */
+</style>
