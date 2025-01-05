@@ -196,7 +196,7 @@ class BatchJobConfigView(APIView):
 
         # 클라이언트로부터 JSON 데이터 받기
         data = request.data
-        work_unit = int(data.get('workUnit', 1))
+        work_unit = int(data.get('work_unit', 1))
         prompt = data.get('prompt', None)
         gpt_model = data.get('gpt_model', 'gpt-4o-mini')
 
@@ -216,7 +216,7 @@ class BatchJobConfigView(APIView):
         current_config = batch_job.config or {}
 
         # 새로운 설정 추가 또는 업데이트
-        current_config['workUnit'] = work_unit
+        current_config['work_unit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
 
