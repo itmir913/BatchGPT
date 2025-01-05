@@ -45,6 +45,7 @@
                 :value="unit"
                 class="form-check-input"
                 type="radio"
+                disabled
             />
             <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
@@ -58,6 +59,7 @@
                 min="1"
                 placeholder="Unit"
                 type="number"
+                disabled
             />
           </div>
         </div>

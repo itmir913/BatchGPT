@@ -8,7 +8,7 @@
       </div>
     </div>
 
-    <div v-if="isReady" class="mb-4 g-4 p-3">
+    <div v-if="isReady" class="mb-4">
       <h3>Uploaded File</h3>
       <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
@@ -75,10 +75,10 @@
         </div>
 
         <!-- 모델 선택 섹션 추가 -->
-        <div v-if="isReady" class="mb-4">
-          <h3 class="text-center mt-4 mb-2">Select GPT Model</h3>
-          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 p-3">
-            <div v-for="(model, key) in models" :key="key" class="col">
+        <div v-if="isReady">
+          <h3 class="text-center">Select GPT Model</h3>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+            <div v-for="(model, key) in models" :key="key" class="col-md-4">
               <div
                   :class="{'border-primary': gpt_model === key}"
                   class="card shadow-sm clickable-card"
@@ -101,7 +101,7 @@
 
         <!-- 프롬프트 입력 섹션 -->
         <div v-if="isReady" class="mb-4 g-4 p-3">
-          <h5>Input Prompt</h5>
+          <h3>Input Prompt</h3>
           <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
         </div>
 
@@ -251,8 +251,14 @@ export default {
   max-width: 1000px;
 }
 
+.table-responsive {
+  overflow-x: auto;
+}
+
 .table th, .table td {
-  vertical-align: middle;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
 
@@ -277,11 +283,8 @@ export default {
 }
 
 .row {
-  padding: 15px; /* row에 여백 추가 */
-}
-
-.col {
-  padding-bottom: 15px; /* 각 카드 간 여백을 추가 */
+  padding: 20px; /* 여백을 줄여줍니다 */
+  overflow-x: hidden; /* 좌우 스크롤 방지 */
 }
 </style>
 
