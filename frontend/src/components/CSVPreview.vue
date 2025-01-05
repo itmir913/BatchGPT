@@ -1,19 +1,4 @@
 <template>
-  <div v-if="isReady" class="mb-4">
-    <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
-    <div>
-      <div v-if="selectedColumns.length > 0" class="text-dark">
-        <div>The following columns will be used in the GPT request,</div>
-        <div>You can use them in the prompt like this: {{
-            selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
-          }}
-        </div>
-      </div>
-      <div v-else class="text-dark">
-        <div>Select columns to be used for GPT requests.</div>
-        <div>You can use them in the prompt.</div>
-      </div>
-    </div>
     <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
            class="table table-hover table-bordered table-striped mt-3">
       <thead class="table-primary">
@@ -45,7 +30,6 @@
       </tr>
       </tbody>
     </table>
-  </div>
 </template>
 
 <script>
@@ -77,7 +61,8 @@ export default {
 
 .table th,
 .table td {
-  text-align: center;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .table th {

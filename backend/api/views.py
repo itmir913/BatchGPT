@@ -280,20 +280,33 @@ class BatchJobPreView(APIView):
                 )
 
             config = batch_job.config
-            work_unit = batch_job.config['work_unit']
-            gpt_model = batch_job.config['gpt_model']
+            work_unit = int(config['work_unit'])
+            gpt_model = config['gpt_model']
 
             preview = batch_job.get_file_preview()
             preview = json.loads(preview)
+
+            logger.error("preview")
+            logger.error(preview)
 
             filtered_preview = [
                 {key: str(value) for key, value in item.items() if key in selected_headers}
                 for item in preview
             ]
 
-            generate_prompt = [get_prompt(prompt, item) for item in filtered_preview]
+            logger.error("filtered_preview")
+            logger.error(filtered_preview)
 
-            return JsonResponse(generate_prompt, safe=False, status=HTTP_200_OK)
+            generate_prompt = [get_prompt(prompt, item) for item in filtered_preview]
+            json_formatted = [{
+                "prompt": item,
+                "result": "test"
+            } for item in generate_prompt]
+
+            logger.error("generate_prompt")
+            logger.error(generate_prompt)
+
+            return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"error": f"cannot retrive preview: {str(e)}"},

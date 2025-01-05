@@ -15,13 +15,29 @@
     <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
     <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
-    <!-- CSV 데이터 미리보기 -->
-    <CsvPreview
-        :isReady="isReady"
-        :previewData="filteredData"
-        :selectedColumns="selectedColumns"
-        @toggle-column="toggleColumnSelection"
-    />
+
+    <div v-if="isReady" class="mb-4">
+      <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
+      <div>
+        <div v-if="selectedColumns.length > 0" class="text-dark">
+          <div>The following columns will be used in the GPT request,</div>
+          <div>You can use them in the prompt like this: {{
+              selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
+            }}
+          </div>
+        </div>
+        <div v-else class="text-dark">
+          <div>Select columns to be used for GPT requests.</div>
+          <div>You can use them in the prompt.</div>
+        </div>
+      </div>
+      <CsvPreview
+          :isReady="isReady"
+          :previewData="filteredData"
+          :selectedColumns="selectedColumns"
+          @toggle-column="toggleColumnSelection"
+      />
+    </div>
 
     <!-- 프롬프트 입력란 -->
     <div v-if="isReady" class="mb-4">
@@ -82,8 +98,17 @@
       </div>
     </div>
 
+    <!-- 결과 미리보기 -->
+    <CsvPreview
+        :isReady="isPreviewRunning"
+        :previewData="previewFilteredResult"
+        :selectedColumns="previewResultSelectedColumns"
+        @toggle-column="toggleColumnSelection"
+    />
+
     <!-- 버튼들 -->
     <div class="text-end mb-4 mt-3">
+      <button class="btn btn-secondary me-3" @click="configSave">Save Prompt</button>
       <button :disabled="isPreviewRunning" class="btn btn-primary me-3" @click="previewRun">Preview</button>
       <button class="btn btn-success" @click="goToNextStep">Next</button>
     </div>
@@ -109,10 +134,15 @@ export default {
       loading: true,
       error: null,
       success: null,
+
       work_unit: 1,
       prompt: '',
+
       previewData: [],
       selectedColumns: [],
+
+      previewResult: [],
+      previewResultSelectedColumns: [],
       isPreviewRunning: false,
     };
   },
@@ -131,6 +161,9 @@ export default {
         return [];
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
+    },
+    previewFilteredResult() {
+      return this.previewResult;
     },
   },
   methods: {
@@ -182,6 +215,7 @@ export default {
           return;
         }
 
+        this.previewResult = response.data;
         this.handleSuccess("Preview loaded successfully!")
       } catch (error) {
         if (error.response && error.response.data) {
@@ -209,31 +243,75 @@ export default {
       }
     },
 
+    async configSave() {
+      this.clearMessages();
+      this.loadingSave = true;
+
+      if (this.work_unit > this.batchJob.total_size) {
+        this.error = "The work unit cannot exceed the total size.";
+        this.loadingSave = false;
+        return;
+      }
+
+      if (!this.prompt.trim()) {
+        this.error = "Prompt cannot be empty.";
+        this.loadingSave = false;
+        return;
+      }
+
+      const payload = {
+        work_unit: this.batchJob.work_unit,
+        prompt: this.prompt,
+        gpt_model: this.batchJob.gpt_model,
+      };
+
+      try {
+        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
+
+        if (!response.data) {
+          this.error = "No data received from Server.";
+          this.success = null;
+          this.batchJob = null;
+          return;
+        }
+
+        this.batchJob = response.data;
+        const config = this.batchJob.config ?? {};
+        this.prompt = config.prompt ?? '';
+
+        this.success = "Configuration updated successfully.";
+      } catch (err) {
+        this.error = `Error updating configuration: ${err.message}`;
+      } finally {
+        this.loadingSave = false;
+      }
+    },
+
     goToNextStep() {
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
 
-    clearMessage() {
+    clearMessages() {
       this.success = null;
       this.error = null;
     },
 
     handleSuccess(message) {
-      this.clearMessage();
+      this.clearMessages();
       this.success = message;
       this.error = null;
     },
 
     handleError(message) {
-      this.clearMessage();
+      this.clearMessages();
       this.success = null;
       this.error = message;
     }
   },
 
-  created() {
-    this.fetchBatchJob();
-    this.fetchPreviewData();
+  async created() {
+    await this.fetchBatchJob();
+    await this.fetchPreviewData();
   },
 };
 </script>

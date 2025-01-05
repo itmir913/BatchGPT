@@ -38,8 +38,9 @@
         <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
         <div class="d-flex justify-content-center align-items-center mb-2">
           <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
-            <input id="work_unit{{ unit }}" v-model.number="work_unit" :value="unit" class="form-check-input"
-                   type="radio"/>
+            <input id="work_unit{{ unit }}"
+                   v-model.number="work_unit" :value="unit"
+                   class="form-check-input" type="radio"/>
             <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
           <div class="input-group w-25">
