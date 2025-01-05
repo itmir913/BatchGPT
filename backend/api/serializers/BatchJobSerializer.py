@@ -37,7 +37,7 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
         model = BatchJob
         # fields = "__all__"
         fields = ['id', 'created_at', 'updated_at', 'title', 'description',
-                  'file_name', 'file_type', 'total_size', 'config']
+                  'file_name', 'total_size', 'config']
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
     def get_total_size(self, obj):

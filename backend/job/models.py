@@ -54,13 +54,6 @@ class BatchJob(TimestampedModel):
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=[key for key in FileSettings.FILE_TYPES.keys()])],
         verbose_name="Uploaded File")
-    file_type = models.CharField(
-        max_length=10,
-        choices=FileSettings.FILE_TYPE_CHOICES,
-        null=True,
-        blank=True,
-        verbose_name="File Type"
-    )
 
     """
         배치 작업 기본 설정
@@ -71,11 +64,8 @@ class BatchJob(TimestampedModel):
         verbose_name="Configurations for BatchJob"
     )
 
-    """
-        테이블 설정
-    """
-
     class Meta:
+        """테이블 설정"""
         db_table = 'batch_job'  # 테이블 이름 지정
         verbose_name = 'Batch Job'
         verbose_name_plural = 'Batch Jobs'
@@ -88,7 +78,6 @@ class BatchJob(TimestampedModel):
         if self.file and not FileSettings.is_valid_extension(self.file.name):
             raise ValidationError(f"Unsupported file type: {self.file.name}."
                                   f"Only {', '.join(FileSettings.FILE_TYPES.values()).upper()} files are allowed.")
-        self.file_type = self.file.name.split('.')[-1].lower() if self.file else None
 
     def delete_old_file(self):
         """기존 파일 삭제"""
@@ -119,15 +108,15 @@ class BatchJob(TimestampedModel):
 
     def process_file(self):
         """파일 타입에 맞는 처리 로직 실행"""
-        if self.file_type:
-            return FileSettings.process_file(self.file_type, self.file)
+        if self.file:
+            return FileSettings.process_file(FileSettings.get_file_extension(self.file.name), self.file)
         else:
             raise ValueError("File type not defined for processing.")
 
     def get_total_size(self):
         """파일 타입에 맞는 Total Size 로직 실행"""
-        if self.file_type:
-            return FileSettings.get_total_size(self.file_type, self.file)
+        if self.file:
+            return FileSettings.get_total_size(FileSettings.get_file_extension(self.file.name), self.file)
         else:
             raise ValueError("File type not defined for processing.")
 

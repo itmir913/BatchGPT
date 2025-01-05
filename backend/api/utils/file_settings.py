@@ -30,12 +30,16 @@ class FileSettings:
         """사용자 ID별 파일 업로드 경로 설정"""
         return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{filename}"
 
+    @staticmethod
+    def get_file_extension(file_name):
+        return file_name.split('.')[-1].lower()
+
     # 파일 확장자 검증
     @staticmethod
     def is_valid_extension(file_name):
         """파일 확장자 검사"""
         valid_extensions = list(FileSettings.FILE_TYPES.values())
-        file_extension = file_name.split('.')[-1].lower()
+        file_extension = FileSettings.get_file_extension(file_name)
         return file_extension in valid_extensions
 
     # 파일 처리 함수 (다형성 적용)
