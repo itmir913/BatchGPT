@@ -6,8 +6,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 
-from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
-from api.utils.pd import count_rows_in_csv
+from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
 from job.models import BatchJob
 
 
@@ -160,8 +159,20 @@ class BatchJobConfigView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        serializer = BatchJobConfigSerializer(batch_job)
-        return Response(serializer.data, status=HTTP_200_OK)
+        return Response(
+            {
+                "id": batch_job.id,
+                "title": batch_job.title,
+                "description": batch_job.description,
+                "file_name": batch_job.file.url if batch_job.file else None,
+                "file_type": batch_job.file_type if batch_job.file_type else None,
+                "total_size": batch_job.get_total_size() if batch_job.file else -1,
+                "config": batch_job.config if batch_job.config else None,
+                "created_at": batch_job.created_at,
+                "updated_at": batch_job.updated_at,
+            },
+            status=HTTP_200_OK,
+        )
 
     def patch(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
@@ -175,12 +186,7 @@ class BatchJobConfigView(APIView):
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
 
-        total_size = 0
-        if batch_job.file_type == BatchJob.FILE_TYPES['CSV']:
-            total_size = count_rows_in_csv(batch_job.file)
-        elif batch_job.file_type == BatchJob.FILE_TYPES['PDF']:
-            # TODO
-            pass
+        total_size = batch_job.get_total_size() or 0
 
         if workUnit > total_size:
             return Response({'error': 'the work unit exceed the total size.'}, status=HTTP_400_BAD_REQUEST)
@@ -221,3 +227,10 @@ class BatchJobPreView(APIView):
         # 직렬화하여 응답 반환
         serializer = BatchJobSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
+
+
+class BatchJobSupportFileType(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, batch_id):
+        pass

@@ -2,7 +2,6 @@ import os
 
 from rest_framework import serializers
 
-from api.utils.pd import count_rows_in_csv
 from job.models import BatchJob
 
 
@@ -42,16 +41,13 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
     def get_total_size(self, obj):
-        # TODO 비동기 가능 지역(Celery와 같은 작업 큐)
-        try:
-            if obj.file_type == BatchJob.FILE_TYPES['CSV']:
-                return count_rows_in_csv(obj.file)
-            elif obj.file_type == BatchJob.FILE_TYPES['PDF']:
-                # TODO
-                return 1
-            return 0
-        except Exception as e:
-            return {'error': str(e)}
+        if obj.file:
+            try:
+                total_size = obj.get_total_size()
+                return total_size
+            except ValueError as e:
+                raise ValueError("Unsupported File Type")
+        return 0
 
     def get_file_name(self, obj):
         if obj.file:
