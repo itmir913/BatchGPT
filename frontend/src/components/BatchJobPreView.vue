@@ -140,15 +140,18 @@ export default {
     return {
       currentStep: 3, // 현재 진행 중인 단계 (0부터 시작)
       batchJob: null, // 배치 작업 데이터
+
       loading: true, // 로딩 상태
       error: null, // 에러 메시지
       success: null,
+
       workUnit: 1,
       prompt: '',
-      isPreviewRunning: false,
 
       previewData: [], // 서버에서 가져온 CSV 데이터
       selectedColumn: null, // 선택된 열 이름
+
+      isPreviewRunning: false,
     };
   },
   computed: {
@@ -162,8 +165,11 @@ export default {
       return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
     },
     filteredData() {
+      if (!Array.isArray(this.previewData ?? {}))
+        return {};
+
       // eslint-disable-next-line no-unused-vars
-      return this.previewData.map(({index, ...rest}) => rest); // index는 사용되지 않지만 경고를 피함
+      return this.previewData.map(({index, ...rest}) => rest);
     },
   },
   methods: {
@@ -173,6 +179,7 @@ export default {
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {withCredentials: true});
         this.batchJob = response.data;
+
         const config = this.batchJob.config ?? {};
         this.workUnit = config.workUnit ?? 1;
         this.prompt = config.prompt ?? '';
@@ -183,34 +190,35 @@ export default {
       }
     },
 
-    // 미리보기 실행
-    // async previewRun() {
-    //   if (this.isPreviewRunning) return;
-    //
-    //   this.isPreviewRunning = true;
-    //   try {
-    //     const payload = {
-    //       prompt: this.prompt,
-    //     };
-    //
-    //     const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload, {withCredentials: true});
-    //     this.previewData = response.data;
-    //
-    //   } catch (error) {
-    //     this.handleError("Failed to run Batch Job preview. Please try again later.");
-    //   } finally {
-    //     this.isPreviewRunning = false;
-    //   }
-    // },
+    async fetchPreviewData() {
+      this.loading = true;
+      try {
+        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {withCredentials: true});
+
+        if (typeof response.data === 'string') {
+          this.previewData = JSON.parse(response.data);
+        } else {
+          this.previewData = response.data;
+        }
+
+      } catch (error) {
+        this.handleError("Failed to load Preview data. Please try again later.");
+      } finally {
+        this.loading = false;
+      }
+    },
 
     previewRun() {
-      // 샘플 데이터를 미리보기로 설정
-      this.previewData = [
-        {index: 1, id: "1", name: "John", age: "25"},
-        {index: 2, id: "2", name: "Jane", age: "30"},
-        {index: 3, id: "3", name: "Tom", age: "22"},
-      ];
-      this.success = "Preview loaded successfully!";
+      this.isPreviewRunning = true;
+
+      try {
+
+        this.success = "Preview loaded successfully!";
+      } catch (error) {
+        this.handleError("Failed to load Preview data. Please try again later.");
+      } finally {
+        this.isPreviewRunning = false;
+      }
     },
 
     selectColumn(key) {
@@ -232,6 +240,7 @@ export default {
   // 컴포넌트 생성 시 배치 작업 데이터 가져오기
   async created() {
     await this.fetchBatchJob();
+    await this.fetchPreviewData();
   },
 };
 </script>

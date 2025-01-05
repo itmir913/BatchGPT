@@ -60,8 +60,20 @@ class FileSettings:
         if processor_class:
             processor = processor_class()  # 클래스를 바로 인스턴스화
             try:
-                size = processor.get_size(file)
-                return size
+                return processor.get_size(file)
+            except ValueError as e:
+                raise ValueError(f"Unsupported file: {str(e)}")
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
+
+    @staticmethod
+    def get_preview_for_file_types(file):
+        file_type = FileSettings.get_file_extension(file.name)
+        processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
+        if processor_class:
+            processor = processor_class()  # 클래스를 바로 인스턴스화
+            try:
+                return processor.get_preview(file)
             except ValueError as e:
                 raise ValueError(f"Unsupported file: {str(e)}")
         else:

@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -203,7 +204,7 @@ class BatchJobConfigView(APIView):
 
         # 파일 존재 여부 및 사이즈 확인
         try:
-            total_size = batch_job.get_total_size() if batch_job.file else 0
+            total_size = batch_job.get_file_total_size() if batch_job.file else 0
         except ValueError as e:
             return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
 
@@ -240,11 +241,14 @@ class BatchJobPreView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        # batch_job.config
-
-        # 직렬화하여 응답 반환
-        serializer = BatchJobSerializer(batch_job)
-        return Response(serializer.data, status=HTTP_200_OK)
+        try:
+            preview = batch_job.get_file_preview()
+            return JsonResponse(preview, safe=False, status=HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"cannot retrive preview: {str(e)}"},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
 
 class BatchJobSupportFileType(APIView):
