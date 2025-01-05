@@ -21,7 +21,10 @@
       <div>
         <div v-if="selectedColumns.length > 0" class="text-dark">
           <div>The following columns will be used in the GPT request,</div>
-          <div>You can use them in the prompt like this: {{ selectedColumns.map(col => `{ ${col} }`).join(', ') }}</div>
+          <div>You can use them in the prompt like this: {{
+              selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
+            }}
+          </div>
         </div>
         <div v-else class="text-dark">
           <div>Select columns to be used for GPT requests.</div>
