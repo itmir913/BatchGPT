@@ -103,13 +103,13 @@ export default {
     async modifyBatchJob() {
       try {
         this.isButtonDisabled = true;
-        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
+        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
         this.success = "Batch Job modified successfully!";
         this.error = null;
 
         // 수정 후 자동으로 배치 작업 상세 페이지로 리다이렉트
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${response.data.id}/`);
+          this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 1000);
       } catch (error) {
         this.handleError(`Error modifying Batch Job: ${error.response?.data?.error || "An unexpected error occurred."}`);
