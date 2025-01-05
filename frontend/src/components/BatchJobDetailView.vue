@@ -93,6 +93,7 @@ export default {
       success: null,
       selectedFile: null,
       uploading: false,
+      allowedFileTypes: [],
     };
   },
   computed: {
@@ -104,6 +105,7 @@ export default {
     }
   },
   methods: {
+
     async fetchBatchJob() {
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
@@ -116,6 +118,15 @@ export default {
       }
     },
 
+    async fetchFileTypes() {
+      try {
+        const response = await axios.get('/api/batch-jobs/supported-file-types/');
+        this.allowedFileTypes = Object.values(response.data); // ['csv', 'pdf', ...]
+      } catch (error) {
+        this.handleError("Failed to retrieve the types of files supported by the server. Please try again later.");
+      }
+    },
+
     handleFileChange(event) {
       this.selectedFile = event.target.files[0];
     },
@@ -125,10 +136,19 @@ export default {
         return this.handleError("Please select a file to upload.");
       }
 
-      const formData = new FormData();
-      formData.append("file", this.selectedFile);
+      const fileExtension = this.selectedFile.name.split('.').pop().toLowerCase();
+      if (!this.allowedFileTypes.includes(fileExtension)) {
+        this.handleError(`Unsupported file type.
+        Please upload one of the following: ${this.allowedFileTypes.join(', ')}`)
+
+        this.selectedFile = null;
+        this.resetFileInput();
+        return;
+      }
 
       try {
+        const formData = new FormData();
+        formData.append("file", this.selectedFile);
         this.uploading = true;
         const response = await axios.patch(
             `/api/batch-jobs/${this.batch_id}/upload/`,
@@ -197,6 +217,7 @@ export default {
   },
   mounted() {
     this.fetchBatchJob();
+    this.fetchFileTypes();
   },
 };
 </script>

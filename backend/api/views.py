@@ -7,6 +7,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
 from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
+from api.utils.file_settings import FileSettings
 from job.models import BatchJob
 
 
@@ -232,5 +233,5 @@ class BatchJobPreView(APIView):
 class BatchJobSupportFileType(APIView):
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
-    def get(self, request, batch_id):
-        pass
+    def get(self, request):
+        return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
