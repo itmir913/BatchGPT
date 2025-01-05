@@ -1,0 +1,91 @@
+<template>
+  <div v-if="isReady" class="mb-4">
+    <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
+    <div>
+      <div v-if="selectedColumns.length > 0" class="text-dark">
+        <div>The following columns will be used in the GPT request,</div>
+        <div>You can use them in the prompt like this: {{
+            selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
+          }}
+        </div>
+      </div>
+      <div v-else class="text-dark">
+        <div>Select columns to be used for GPT requests.</div>
+        <div>You can use them in the prompt.</div>
+      </div>
+    </div>
+    <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
+           class="table table-hover table-bordered table-striped mt-3">
+      <thead class="table-primary">
+      <tr>
+        <!-- 각 열 이름 -->
+        <th
+            v-for="(value, key) in filteredData[0]"
+            :key="'header-' + key"
+            :class="{ 'selected-column': selectedColumns.includes(key) }"
+            style="cursor: pointer;"
+            @click="toggleColumnSelection(key)"
+        >
+          {{ key }}
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- 데이터 행 렌더링 -->
+      <tr v-for="row in filteredData" :key="'row-' + row.id">
+        <td
+            v-for="(value, key) in row"
+            :key="'cell-' + key"
+            :class="{ 'selected-column': selectedColumns.includes(key) }"
+            style="cursor: pointer;"
+            @click="toggleColumnSelection(key)"
+        >
+          {{ value }}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    previewData: Array,
+    selectedColumns: Array,
+    isReady: Boolean,
+  },
+  computed: {
+    filteredData() {
+      // eslint-disable-next-line no-unused-vars
+      return this.previewData.map(({index, ...rest}) => rest);
+    }
+  },
+  methods: {
+    toggleColumnSelection(column) {
+      this.$emit('toggle-column', column);
+    }
+  }
+};
+</script>
+
+<style scoped>
+.selected-column {
+  background-color: #d1ecf1 !important;
+  font-weight: bold;
+}
+
+.table th,
+.table td {
+  text-align: center;
+}
+
+.table th {
+  cursor: pointer;
+}
+
+.table th:hover,
+.table td:hover {
+  background-color: #f8d7da;
+}
+</style>

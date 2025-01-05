@@ -16,53 +16,12 @@
     <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- CSV 데이터 미리보기 -->
-    <div v-if="isReady" class="mb-4">
-      <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
-      <div>
-        <div v-if="selectedColumns.length > 0" class="text-dark">
-          <div>The following columns will be used in the GPT request,</div>
-          <div>You can use them in the prompt like this: {{
-              selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
-            }}
-          </div>
-        </div>
-        <div v-else class="text-dark">
-          <div>Select columns to be used for GPT requests.</div>
-          <div>You can use them in the prompt.</div>
-        </div>
-      </div>
-      <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
-             class="table table-hover table-bordered table-striped mt-3">
-        <thead class="table-primary">
-        <tr>
-          <!-- 각 열 이름 -->
-          <th
-              v-for="(value, key) in filteredData[0]"
-              :key="'header-' + key"
-              :class="{ 'selected-column': selectedColumns.includes(key) }"
-              style="cursor: pointer;"
-              @click="toggleColumnSelection(key)"
-          >
-            {{ key }}
-          </th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- 데이터 행 렌더링 -->
-        <tr v-for="row in filteredData" :key="'row-' + row.id">
-          <td
-              v-for="(value, key) in row"
-              :key="'cell-' + key"
-              :class="{ 'selected-column': selectedColumns.includes(key) }"
-              style="cursor: pointer;"
-              @click="toggleColumnSelection(key)"
-          >
-            {{ value }}
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+    <CsvPreview
+        :isReady="isReady"
+        :previewData="filteredData"
+        :selectedColumns="selectedColumns"
+        @toggle-column="toggleColumnSelection"
+    />
 
     <!-- 프롬프트 입력란 -->
     <div v-if="isReady" class="mb-4">
@@ -132,31 +91,28 @@
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+import CsvPreview from '@/components/CSVPreview.vue'; // 추가된 부분
 
 export default {
-  props: ['batch_id'],  // URL 파라미터를 props로 받음
+  props: ['batch_id'],
   components: {
-    ProgressIndicator, // 등록
+    ProgressIndicator,
+    CsvPreview, // 추가된 부분
   },
   data() {
     return {
-      currentStep: 3, // 현재 진행 중인 단계 (0부터 시작)
-      batchJob: null, // 배치 작업 데이터
-
-      loading: true, // 로딩 상태
-      error: null, // 에러 메시지
+      currentStep: 3,
+      batchJob: null,
+      loading: true,
+      error: null,
       success: null,
-
       work_unit: 1,
       prompt: '',
-
-      previewData: [], // 서버에서 가져온 CSV 데이터
-      selectedColumns: [], // 선택된 열 이름
-
+      previewData: [],
+      selectedColumns: [],
       isPreviewRunning: false,
     };
   },
@@ -173,35 +129,21 @@ export default {
     filteredData() {
       if (!Array.isArray(this.previewData ?? []))
         return [];
-
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
     },
   },
   methods: {
-    // 배치 작업 데이터 가져오기
     async fetchBatchJob() {
       this.loading = true;
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {withCredentials: true});
         this.batchJob = response.data;
-
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
       } catch (error) {
-        if (error.response && error.response.data) {
-          const errorData = error.response.data;
-
-          // Handle error if it's a JSON object
-          if (errorData && errorData.error) {
-            this.handleError(`Failed to load Batch Job details. Please try again later: ${errorData.error}`);
-          } else {
-            this.handleError(`Failed to load Batch Job details. Please try again later. Unknown error.`);
-          }
-        } else {
-          this.handleError(`Failed to load Batch Job details. Please try again later: ${error.message}`);
-        }
+        this.handleError(`Failed to load Batch Job details. ${error.message}`);
       } finally {
         this.loading = false;
       }
@@ -211,35 +153,22 @@ export default {
       this.loading = true;
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {withCredentials: true});
-
-        if (typeof response.data === 'string') {
-          this.previewData = JSON.parse(response.data);
-        } else {
-          this.previewData = response.data;
-        }
-
+        this.previewData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
       } catch (error) {
-        if (error.response && error.response.data) {
-          const errorData = error.response.data;
-
-          // Handle error if it's a JSON object
-          if (errorData && errorData.error) {
-            this.handleError(`Failed to load Preview data. Please try again later: ${errorData.error}`);
-          } else {
-            this.handleError(`Failed to load Preview data. Unknown error.`);
-          }
-        } else {
-          this.handleError(`Failed to load Preview data. Please try again later: ${error.message}`);
-        }
+        this.handleError(`Failed to load Preview data. ${error.message}`);
       } finally {
         this.loading = false;
       }
     },
 
     async previewRun() {
-      this.isPreviewRunning = true;
-
+      if (this.selectedColumns.length === 0) {
+        this.handleError("Please select the columns of the table.")
+        return;
+      }
       try {
+        this.isPreviewRunning = true;
+
         const payload = {
           prompt: this.prompt,
           'selected_headers': this.selectedColumns,
@@ -248,19 +177,12 @@ export default {
         const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload);
 
         if (!response.data) {
-          this.error = "No data received from Server.";
-          this.success = null;
+          this.handleError("No data received from Server.")
           this.batchJob = null;
           return;
         }
 
-        if (typeof response.data === 'string') {
-          // this.previewData = JSON.parse(response.data);
-        } else {
-          // this.previewData = response.data;
-        }
-
-        this.success = "Preview loaded successfully!";
+        this.handleSuccess("Preview loaded successfully!")
       } catch (error) {
         if (error.response && error.response.data) {
           const errorData = error.response.data;
@@ -281,33 +203,41 @@ export default {
 
     toggleColumnSelection(column) {
       if (this.selectedColumns.includes(column)) {
-        // 이미 선택된 열이면 제거
         this.selectedColumns = this.selectedColumns.filter(c => c !== column);
       } else {
-        // 선택되지 않은 열이면 추가
         this.selectedColumns.push(column);
       }
     },
 
-    // 다음 단계로 이동
     goToNextStep() {
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
 
-    // 에러 처리 공통 메서드
+    clearMessage() {
+      this.success = null;
+      this.error = null;
+    },
+
+    handleSuccess(message) {
+      this.clearMessage();
+      this.success = message;
+      this.error = null;
+    },
+
     handleError(message) {
+      this.clearMessage();
       this.success = null;
       this.error = message;
     }
   },
 
-  // 컴포넌트 생성 시 배치 작업 데이터 가져오기
-  async created() {
-    await this.fetchBatchJob();
-    await this.fetchPreviewData();
+  created() {
+    this.fetchBatchJob();
+    this.fetchPreviewData();
   },
 };
 </script>
+
 
 <style scoped>
 .container {

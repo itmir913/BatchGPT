@@ -278,8 +278,6 @@ class BatchJobPreView(APIView):
                     {"error": "The request is invalid as the prompt is empty or no headers were selected."},
                     status=HTTP_400_BAD_REQUEST,
                 )
-            logger.error("prompt")
-            logger.error(prompt)
 
             config = batch_job.config
             work_unit = batch_job.config['work_unit']
@@ -289,7 +287,7 @@ class BatchJobPreView(APIView):
             preview = json.loads(preview)
 
             filtered_preview = [
-                {key: value for key, value in item.items() if key in selected_headers}
+                {key: str(value) for key, value in item.items() if key in selected_headers}
                 for item in preview
             ]
 
