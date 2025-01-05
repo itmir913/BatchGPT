@@ -15,9 +15,52 @@
     <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
     <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
+    <!-- CSV 데이터 미리보기 -->
+    <div v-if="isReady" class="mb-4">
+      <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
+      <div>
+        <div v-if="selectedColumn" class="text-dark">
+          The "{{ selectedColumn }}" column will be used to send requests to GPT.
+        </div>
+        <div v-else class="text-dark">
+          Click on a column to select it for GPT requests.
+        </div>
+      </div>
+      <table v-if="previewData.length > 0" class="table table-hover table-bordered table-striped mt-3">
+        <thead class="table-primary">
+        <tr>
+          <!-- 각 열 이름 -->
+          <th
+              v-for="(value, key) in previewData[0]"
+              :key="'header-' + key"
+              :class="{ 'selected-column': selectedColumn === key }"
+              style="cursor: pointer;"
+              @click="selectColumn(key)"
+          >
+            {{ key }}
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 데이터 행 렌더링 -->
+        <tr v-for="row in previewData" :key="'row-' + row.index">
+          <td
+              v-for="(value, key) in row"
+              :key="'cell-' + key"
+              :class="{ 'selected-column': selectedColumn === key }"
+              style="cursor: pointer;"
+              @click="selectColumn(key)"
+          >
+            {{ value }}
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- 프롬프트 입력란 -->
     <div v-if="isReady" class="mb-4">
-      <h5>Input Prompt</h5>
+      <h3>Input Prompt</h3>
       <textarea
           v-model="prompt"
           class="form-control"
@@ -28,7 +71,7 @@
 
     <!-- 작업 단위 설정 -->
     <div v-if="batchJob && isReady">
-      <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
+      <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
       <div class="d-flex justify-content-center align-items-center mb-2">
         <!-- 라디오 버튼들 -->
         <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
@@ -103,7 +146,9 @@ export default {
       workUnit: 1,
       prompt: '',
       isPreviewRunning: false,
-      previewData: [], // 미리보기 데이터
+
+      previewData: [], // 서버에서 가져온 CSV 데이터
+      selectedColumn: null, // 선택된 열 이름
     };
   },
   computed: {
@@ -135,23 +180,37 @@ export default {
     },
 
     // 미리보기 실행
-    async previewRun() {
-      if (this.isPreviewRunning) return;
+    // async previewRun() {
+    //   if (this.isPreviewRunning) return;
+    //
+    //   this.isPreviewRunning = true;
+    //   try {
+    //     const payload = {
+    //       prompt: this.prompt,
+    //     };
+    //
+    //     const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload, {withCredentials: true});
+    //     this.previewData = response.data;
+    //
+    //   } catch (error) {
+    //     this.handleError("Failed to run Batch Job preview. Please try again later.");
+    //   } finally {
+    //     this.isPreviewRunning = false;
+    //   }
+    // },
 
-      this.isPreviewRunning = true;
-      try {
-        const payload = {
-          prompt: this.prompt,
-        };
+    previewRun() {
+      // 샘플 데이터를 미리보기로 설정
+      this.previewData = [
+        {index: 1, id: "1", name: "John", age: "25"},
+        {index: 2, id: "2", name: "Jane", age: "30"},
+        {index: 3, id: "3", name: "Tom", age: "22"},
+      ];
+      this.success = "Preview loaded successfully!";
+    },
 
-        const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload, {withCredentials: true});
-        this.previewData = response.data;
-
-      } catch (error) {
-        this.handleError("Failed to run Batch Job preview. Please try again later.");
-      } finally {
-        this.isPreviewRunning = false;
-      }
+    selectColumn(key) {
+      this.selectedColumn = key; // 클릭된 열을 선택
     },
 
     // 다음 단계로 이동
@@ -177,8 +236,27 @@ export default {
 .container {
   max-width: 1000px;
 }
+</style>
 
-.table th, .table td {
-  vertical-align: middle;
+<style scoped>
+/* 선택된 열 강조 */
+.selected-column {
+  background-color: #d1ecf1 !important; /* 밝은 파란색 배경 */
+  font-weight: bold; /* 텍스트 굵게 */
+}
+
+/* 테이블 스타일 */
+.table th,
+.table td {
+  text-align: center;
+}
+
+.table th {
+  cursor: pointer;
+}
+
+.table th:hover,
+.table td:hover {
+  background-color: #f8d7da; /* 마우스 오버 시 밝은 빨간색 */
 }
 </style>
