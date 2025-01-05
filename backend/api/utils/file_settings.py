@@ -54,7 +54,8 @@ class FileSettings:
             raise ValueError(f"Unsupported file type: {file_type}")
 
     @staticmethod
-    def get_total_size(file_type, file):
+    def get_total_size(file):
+        file_type = FileSettings.get_file_extension(file.name)
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
         if processor_class:
             processor = processor_class()  # 클래스를 바로 인스턴스화
