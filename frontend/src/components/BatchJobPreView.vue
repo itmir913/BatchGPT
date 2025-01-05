@@ -19,23 +19,24 @@
     <div v-if="isReady" class="mb-4">
       <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
       <div>
-        <div v-if="selectedColumn" class="text-dark">
-          The "{{ selectedColumn }}" column will be used to send requests to GPT.
+        <div v-if="selectedColumns.length > 0" class="text-dark">
+          The following columns will be used to send requests to GPT: {{ selectedColumns.join(', ') }}.
         </div>
         <div v-else class="text-dark">
-          Click on a column to select it for GPT requests.
+          Select columns to be used for GPT requests.
         </div>
       </div>
-      <table v-if="filteredData.length > 0" class="table table-hover table-bordered table-striped mt-3">
+      <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
+             class="table table-hover table-bordered table-striped mt-3">
         <thead class="table-primary">
         <tr>
           <!-- 각 열 이름 -->
           <th
               v-for="(value, key) in filteredData[0]"
               :key="'header-' + key"
-              :class="{ 'selected-column': selectedColumn === key }"
+              :class="{ 'selected-column': selectedColumns.includes(key) }"
               style="cursor: pointer;"
-              @click="selectColumn(key)"
+              @click="toggleColumnSelection(key)"
           >
             {{ key }}
           </th>
@@ -43,13 +44,13 @@
         </thead>
         <tbody>
         <!-- 데이터 행 렌더링 -->
-        <tr v-for="row in filteredData" :key="'row-' + row.id"> <!-- row.index에서 row.id로 수정 -->
+        <tr v-for="row in filteredData" :key="'row-' + row.id">
           <td
               v-for="(value, key) in row"
               :key="'cell-' + key"
-              :class="{ 'selected-column': selectedColumn === key }"
+              :class="{ 'selected-column': selectedColumns.includes(key) }"
               style="cursor: pointer;"
-              @click="selectColumn(key)"
+              @click="toggleColumnSelection(key)"
           >
             {{ value }}
           </td>
@@ -149,7 +150,7 @@ export default {
       prompt: '',
 
       previewData: [], // 서버에서 가져온 CSV 데이터
-      selectedColumn: null, // 선택된 열 이름
+      selectedColumns: [], // 선택된 열 이름
 
       isPreviewRunning: false,
     };
@@ -165,8 +166,8 @@ export default {
       return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
     },
     filteredData() {
-      if (!Array.isArray(this.previewData ?? {}))
-        return {};
+      if (!Array.isArray(this.previewData ?? []))
+        return [];
 
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
@@ -221,8 +222,14 @@ export default {
       }
     },
 
-    selectColumn(key) {
-      this.selectedColumn = key; // 클릭된 열을 선택
+    toggleColumnSelection(column) {
+      if (this.selectedColumns.includes(column)) {
+        // 이미 선택된 열이면 제거
+        this.selectedColumns = this.selectedColumns.filter(c => c !== column);
+      } else {
+        // 선택되지 않은 열이면 추가
+        this.selectedColumns.push(column);
+      }
     },
 
     // 다음 단계로 이동
