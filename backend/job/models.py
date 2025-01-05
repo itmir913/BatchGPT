@@ -116,7 +116,7 @@ class BatchJob(TimestampedModel):
     def get_total_size(self):
         """파일 타입에 맞는 Total Size 로직 실행"""
         if self.file:
-            return FileSettings.get_total_size(self.file)
+            return FileSettings.get_total_size_for_file_types(self.file)
         else:
             raise ValueError("File type not defined for processing.")
 

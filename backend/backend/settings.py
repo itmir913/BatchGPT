@@ -164,3 +164,4 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",  # localhost의 모든 포트를 허용
 ]
 CORS_ALLOW_CREDENTIALS = True
+

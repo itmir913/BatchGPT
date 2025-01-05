@@ -92,7 +92,7 @@
       <!-- Action Buttons -->
       <div class="text-end mb-4 mt-3">
         <button :disabled="loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">Save</button>
-        <button :disabled="isDisabledNext || loadingSave" class="btn btn-success" @click="goToNextStep">Next</button>
+        <button :disabled="loadingSave || canNext" class="btn btn-success" @click="goToNextStep">Next</button>
       </div>
     </div>
   </div>
@@ -112,16 +112,15 @@ export default {
     return {
       currentStep: 2,
       batchJob: null,
+
       loading: true,
       error: null,
       success: null,
 
       loadingSave: false,
-      isDisabledNext: true,
 
       workUnit: 1,
       prompt: '',
-
       gpt_model: 'gpt-4o-mini',  // 기본 모델
       models: { // 모델 딕셔너리
         'gpt-3.5-turbo': 'GPT-3.5 Turbo',
@@ -141,6 +140,10 @@ export default {
     totalRequests() {
       return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
     },
+    canNext() {
+      const config = this.batchJob.config ?? {};
+      return Object.keys(config).length === 0;
+    },
   },
   methods: {
     clearMessages() {
@@ -155,7 +158,7 @@ export default {
         });
 
         if (!response.data) {
-          this.error = "No data received.";
+          this.error = "No data received from Server.";
           this.success = null;
           this.batchJob = null;
           return;
@@ -167,9 +170,6 @@ export default {
         this.prompt = config.prompt ?? '';
         this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
 
-        if (this.prompt) {
-          this.isDisabledNext = false;
-        }
       } catch (error) {
         console.error("Error fetching Batch Job:", error);
         this.error = "Failed to load Batch Job details. Please try again later.";
@@ -202,11 +202,24 @@ export default {
       };
 
       try {
-        await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
+        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
+
+        if (!response.data) {
+          this.error = "No data received from Server.";
+          this.success = null;
+          this.batchJob = null;
+          return;
+        }
+
+        this.batchJob = response.data;
+        const config = this.batchJob.config ?? {};
+        this.workUnit = config.workUnit ?? 1;
+        this.prompt = config.prompt ?? '';
+        this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
+
         this.success = "Configuration updated successfully.";
-        this.isDisabledNext = false;
       } catch (err) {
-        this.error = `Error updating configuration.`;
+        this.error = `Error updating configuration: ${err.message}`;
       } finally {
         this.loadingSave = false;
       }

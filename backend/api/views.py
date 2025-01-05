@@ -6,7 +6,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 
-from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer
+from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from job.models import BatchJob
 
@@ -129,21 +129,26 @@ class BatchJobFileUploadView(APIView):
 
         # 파일 저장
         try:
-            batch_job.file = file
-
-            total_size = batch_job.get_total_size()
+            total_size = FileSettings.get_total_size_for_file_types(file)
             if total_size <= 0:
                 raise ValidationError(
-                    "The file cannot be read. It may be corrupted. Please try again with a different file.")
+                    "The file cannot be read because its size is 0 or less."
+                    "It seems to be an invalid file. Please try with a different file.")
 
+            batch_job.file = file
             batch_job.save()
         except ValidationError as e:
             return Response(
                 {"error": e.message},
                 status=HTTP_400_BAD_REQUEST,
             )
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
-        serializer = BatchJobSerializer(batch_job)
+        serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
 
@@ -166,20 +171,22 @@ class BatchJobConfigView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        return Response(
-            {
-                "id": batch_job.id,
-                "title": batch_job.title,
-                "description": batch_job.description,
-                "file_name": batch_job.file.name if batch_job.file else None,
-                "file_type": FileSettings.get_file_extension(batch_job.file.name) if batch_job.file.name else None,
-                "total_size": batch_job.get_total_size() if batch_job.file else -1,
-                "config": batch_job.config if batch_job.config else None,
-                "created_at": batch_job.created_at,
-                "updated_at": batch_job.updated_at,
-            },
-            status=HTTP_200_OK,
-        )
+        serializer = BatchJobConfigSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
+        # return Response(
+        #     {
+        #         "id": batch_job.id,
+        #         "title": batch_job.title,
+        #         "description": batch_job.description,
+        #         "file_name": batch_job.file.name if batch_job.file else None,
+        #         "file_type": FileSettings.get_file_extension(batch_job.file.name) if batch_job.file.name else None,
+        #         "total_size": batch_job.get_total_size() if batch_job.file else -1,
+        #         "config": batch_job.config if batch_job.config else None,
+        #         "created_at": batch_job.created_at,
+        #         "updated_at": batch_job.updated_at,
+        #     },
+        #     status=HTTP_200_OK,
+        # )
 
     def patch(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
@@ -187,33 +194,35 @@ class BatchJobConfigView(APIView):
 
         # 클라이언트로부터 JSON 데이터 받기
         data = request.data
-        workUnit = int(data.get('workUnit', 1))
+        work_unit = int(data.get('workUnit', 1))
         prompt = data.get('prompt', None)
         gpt_model = data.get('gpt_model', 'gpt-4o-mini')
 
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
 
-        total_size = batch_job.get_total_size() or 0
+        # 파일 존재 여부 및 사이즈 확인
+        try:
+            total_size = batch_job.get_total_size() if batch_job.file else 0
+        except ValueError as e:
+            return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
 
-        if workUnit > total_size:
-            return Response({'error': 'the work unit exceed the total size.'}, status=HTTP_400_BAD_REQUEST)
+        if work_unit > total_size:
+            return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
 
         # 기존 config 데이터 가져오기
         current_config = batch_job.config or {}
 
         # 새로운 설정 추가 또는 업데이트
-        current_config['workUnit'] = workUnit
+        current_config['workUnit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
 
         # 수정된 config 저장
         batch_job.config = current_config
-
-        # BatchJob 인스턴스 저장
         batch_job.save()
 
-        serializer = BatchJobSerializer(batch_job)
+        serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
 

@@ -54,7 +54,7 @@ class FileSettings:
             raise ValueError(f"Unsupported file type: {file_type}")
 
     @staticmethod
-    def get_total_size(file):
+    def get_total_size_for_file_types(file):
         file_type = FileSettings.get_file_extension(file.name)
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
         if processor_class:
@@ -63,6 +63,6 @@ class FileSettings:
                 size = processor.get_size(file)
                 return size
             except ValueError as e:
-                return -1
+                raise ValueError(f"Unsupported file: {str(e)}")
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
