@@ -11,11 +11,6 @@
       </div>
     </div>
 
-    <!-- 메시지 영역 -->
-    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
-
-
     <div v-if="isReady" class="mb-4">
       <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
       <div>
@@ -105,6 +100,10 @@
         :selectedColumns="previewResultSelectedColumns"
         @toggle-column="toggleColumnSelection"
     />
+
+    <!-- 메시지 영역 -->
+    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 버튼들 -->
     <div class="text-end mb-4 mt-3">
