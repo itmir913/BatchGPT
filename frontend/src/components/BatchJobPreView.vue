@@ -190,7 +190,18 @@ export default {
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
       } catch (error) {
-        this.handleError("Failed to load Batch Job details. Please try again later.");
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+
+          // Handle error if it's a JSON object
+          if (errorData && errorData.error) {
+            this.handleError(`Failed to load Batch Job details. Please try again later: ${errorData.error}`);
+          } else {
+            this.handleError(`Failed to load Batch Job details. Please try again later. Unknown error.`);
+          }
+        } else {
+          this.handleError(`Failed to load Batch Job details. Please try again later: ${error.message}`);
+        }
       } finally {
         this.loading = false;
       }
@@ -208,7 +219,18 @@ export default {
         }
 
       } catch (error) {
-        this.handleError("Failed to load Preview data. Please try again later.");
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+
+          // Handle error if it's a JSON object
+          if (errorData && errorData.error) {
+            this.handleError(`Failed to load Preview data. Please try again later: ${errorData.error}`);
+          } else {
+            this.handleError(`Failed to load Preview data. Unknown error.`);
+          }
+        } else {
+          this.handleError(`Failed to load Preview data. Please try again later: ${error.message}`);
+        }
       } finally {
         this.loading = false;
       }
@@ -221,7 +243,18 @@ export default {
 
         this.success = "Preview loaded successfully!";
       } catch (error) {
-        this.handleError("Failed to load Preview data. Please try again later.");
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+
+          // Handle error if it's a JSON object
+          if (errorData && errorData.error) {
+            this.handleError(`Failed to load Preview data. Please try again later: ${errorData.error}`);
+          } else {
+            this.handleError(`Failed to load Preview data. Unknown error.`);
+          }
+        } else {
+          this.handleError(`Failed to load Preview data. Please try again later: ${error.message}`);
+        }
       } finally {
         this.isPreviewRunning = false;
       }
