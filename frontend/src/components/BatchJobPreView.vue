@@ -236,10 +236,29 @@ export default {
       }
     },
 
-    previewRun() {
+    async previewRun() {
       this.isPreviewRunning = true;
 
       try {
+        const payload = {
+          prompt: this.prompt,
+          'selected_headers': this.selectedColumns,
+        };
+
+        const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload);
+
+        if (!response.data) {
+          this.error = "No data received from Server.";
+          this.success = null;
+          this.batchJob = null;
+          return;
+        }
+
+        if (typeof response.data === 'string') {
+          // this.previewData = JSON.parse(response.data);
+        } else {
+          // this.previewData = response.data;
+        }
 
         this.success = "Preview loaded successfully!";
       } catch (error) {
