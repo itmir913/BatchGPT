@@ -137,6 +137,7 @@ class BatchJobFileUploadView(APIView):
                     "It seems to be an invalid file. Please try with a different file.")
 
             batch_job.file = file
+            batch_job.file_name = file.name
             batch_job.save()
         except ValidationError as e:
             return Response(
