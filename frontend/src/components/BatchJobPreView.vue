@@ -26,12 +26,12 @@
           Click on a column to select it for GPT requests.
         </div>
       </div>
-      <table v-if="previewData.length > 0" class="table table-hover table-bordered table-striped mt-3">
+      <table v-if="filteredData.length > 0" class="table table-hover table-bordered table-striped mt-3">
         <thead class="table-primary">
         <tr>
           <!-- 각 열 이름 -->
           <th
-              v-for="(value, key) in previewData[0]"
+              v-for="(value, key) in filteredData[0]"
               :key="'header-' + key"
               :class="{ 'selected-column': selectedColumn === key }"
               style="cursor: pointer;"
@@ -43,7 +43,7 @@
         </thead>
         <tbody>
         <!-- 데이터 행 렌더링 -->
-        <tr v-for="row in previewData" :key="'row-' + row.index">
+        <tr v-for="row in filteredData" :key="'row-' + row.id"> <!-- row.index에서 row.id로 수정 -->
           <td
               v-for="(value, key) in row"
               :key="'cell-' + key"
@@ -160,6 +160,10 @@ export default {
     },
     totalRequests() {
       return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
+    },
+    filteredData() {
+      // eslint-disable-next-line no-unused-vars
+      return this.previewData.map(({index, ...rest}) => rest); // index는 사용되지 않지만 경고를 피함
     },
   },
   methods: {
