@@ -130,6 +130,12 @@ class BatchJobFileUploadView(APIView):
         # 파일 저장
         try:
             batch_job.file = file
+
+            total_size = batch_job.get_total_size()
+            if total_size <= 0:
+                raise ValidationError(
+                    "The file cannot be read. It may be corrupted. Please try again with a different file.")
+
             batch_job.save()
         except ValidationError as e:
             return Response(
