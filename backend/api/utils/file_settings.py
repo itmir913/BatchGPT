@@ -1,4 +1,7 @@
 # file_settings.py
+import hashlib
+import os
+
 from api.utils.file_processors import CSVProcessor, PDFProcessor
 
 
@@ -23,12 +26,20 @@ class FileSettings:
     @staticmethod
     def get_upload_path(instance, filename):
         """사용자 ID별 파일 업로드 경로 설정"""
-        return f"uploads/user_{instance.user.id}/batch_{instance.id}/file_{filename}"
+
+        name, ext = os.path.splitext(filename)
+        hashed_name = hashlib.sha256(name.encode('utf-8')).hexdigest()
+
+        return f"uploads/user_{instance.user.id}/batch_{instance.id}/{hashed_name}{ext}"
 
     @staticmethod
     def get_taskunit_path(instance, filename):
         """사용자 ID별 파일 업로드 경로 설정"""
-        return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{filename}"
+
+        name, ext = os.path.splitext(filename)
+        hashed_name = hashlib.sha256(name.encode('utf-8')).hexdigest()
+
+        return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{hashed_name}{ext}"
 
     @staticmethod
     def get_file_extension(file_name):

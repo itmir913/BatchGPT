@@ -55,6 +55,8 @@ class BatchJob(TimestampedModel):
         validators=[FileExtensionValidator(allowed_extensions=[key for key in FileSettings.FILE_TYPES.keys()])],
         verbose_name="Uploaded File")
 
+    file_name = models.CharField(max_length=255, default='default_filename')
+
     """
         배치 작업 기본 설정
     """
@@ -104,6 +106,7 @@ class BatchJob(TimestampedModel):
         """기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장"""
         self.delete_old_file()
         self.clean()
+
         super().save(*args, **kwargs)
 
     def process_file(self):
