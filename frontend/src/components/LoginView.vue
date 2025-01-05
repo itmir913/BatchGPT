@@ -4,9 +4,9 @@
       <!-- 제목 -->
       <h2 class="text-center mb-4">로그인</h2>
 
-      <!-- 오류 메시지 -->
-      <div v-if="message" class="alert alert-danger text-center">
-        {{ message }}
+      <!-- 메시지 -->
+      <div v-if="message" :class="`alert ${message.type} text-center mt-4`" role="alert">
+        {{ message.text }}
       </div>
 
       <!-- 로그인 폼 -->
@@ -21,7 +21,11 @@
               placeholder="이메일을 입력하세요"
               required
               type="email"
+              :class="{'is-invalid': email && !isEmailValid}"
           />
+          <div v-if="email && !isEmailValid" class="invalid-feedback">
+            올바른 이메일을 입력하세요.
+          </div>
         </div>
 
         <!-- 비밀번호 입력 -->
@@ -38,13 +42,14 @@
         </div>
 
         <!-- 로그인 버튼 -->
-        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">로그인</button>
+        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">
+          로그인
+        </button>
       </form>
 
       <!-- 회원가입 링크 -->
       <div class="register-link text-center mt-3">
-        <p>
-          계정이 없으신가요?
+        <p>계정이 없으신가요?
           <router-link class="link text-primary" to="/register">회원가입</router-link>
         </p>
       </div>
@@ -61,47 +66,71 @@ export default {
     return {
       email: '',
       password: '',
-      message: '',
+      error: null,
+      success: null,
       isButtonDisabled: false,
+      message: null,
     };
+  },
+  computed: {
+    isEmailValid() {
+      // 이메일 형식 유효성 검사
+      const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return regex.test(this.email);
+    },
   },
   methods: {
     async login() {
+      if (!this.isEmailValid) {
+        this.message = {type: 'alert-danger', text: '올바른 이메일을 입력하세요.'};
+        return;
+      }
+
+      this.isButtonDisabled = true;
+
       try {
-        this.isButtonDisabled = true;
         const response = await axios.post('/api/auth/login/', {
           email: this.email,
-          password: this.password
+          password: this.password,
         });
-        console.log('Login successful:', response.data);
-        await this.$router.push('/home');
+
+        if (!response.data) {
+          this.message = {type: 'alert-danget', text: "서버로부터 응답을 받지 못했습니다."};
+          return;
+        }
+
+        this.success = '로그인 성공!';
+        this.message = {type: 'alert-success', text: this.success};
+
+        // 로그인 성공 후 홈으로 리디렉션
+        setTimeout(() => {
+          this.$router.push('/home');
+        }, 1000);
       } catch (error) {
         this.isButtonDisabled = false;
-        // 오류 처리
+        // 서버 오류 처리
         if (error.response && error.response.data) {
-          // 서버에서 반환된 오류 메시지 처리
-          this.message = '존재하지 않는 계정입니다.';
+          this.error = '존재하지 않는 계정입니다.';
         } else {
-          // 네트워크 또는 기타 오류 처리
-          this.message = '서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.';
+          this.error = '서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.';
         }
+
+        this.message = {type: 'alert-danger', text: this.error};
         console.error('Login failed:', error.response?.data || error.message);
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
 .wrapper {
   display: flex;
-  justify-content: center; /* 가로 중앙 */
-  align-items: center; /* 세로 중앙 */
-  background-color: #f8f9fa; /* Bootstrap 기본 배경색 */
-  height: 100vh; /* 화면 전체 높이 */
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
 }
 
-/* 카드 스타일 */
 .container {
   max-width: 400px;
   width: 100%;
@@ -139,15 +168,33 @@ input[type="password"]:focus {
   border-color: #66a6ff;
 }
 
-.submit-button {
+input.is-invalid {
+  border-color: red;
+}
+
+.invalid-feedback {
+  font-size: 0.875em;
+  color: red;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button {
   background-color: #4caf50;
   color: white;
   padding: 10px;
-  border: none;
   border-radius: 5px;
+  border: none;
 }
 
-.submit-button:hover {
+button:hover {
   background-color: #45a049;
+}
+
+.alert {
+  margin-top: 15px;
 }
 </style>

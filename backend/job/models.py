@@ -4,18 +4,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from api.utils.file_settings import FileSettings
 from users.models import User
-
-
-def get_upload_path(instance, filename):
-    """사용자 ID별 파일 업로드 경로 설정"""
-    """배치 작업을 생성 후 파일 업로드하기"""
-    return f"uploads/user_{instance.user.id}/batch_{instance.id}/file_{filename}"
-
-
-def get_taskunit_path(instance, filename):
-    """사용자 ID별 파일 업로드 경로 설정"""
-    return f"uploads/user_{instance.user.id}/batch_{instance.batch_job.id}/index_{instance.unit_index}_{filename}"
 
 
 class TimestampedModel(models.Model):
@@ -28,13 +18,10 @@ class TimestampedModel(models.Model):
 
 class BatchJob(TimestampedModel):
     """사용자가 생성한 배치 작업"""
-    FILE_TYPES = {
-        'CSV': 'csv',
-        'PDF': 'pdf',
-    }
 
-    FILE_TYPE_CHOICES = [(key, key) for key in FILE_TYPES.keys()]  # 상수를 기반으로 선택지 생성
-
+    """
+        사용자 키
+    """
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -42,6 +29,9 @@ class BatchJob(TimestampedModel):
         verbose_name="User"
     )
 
+    """
+        배치 작업 기본 설명(제목, 설명)
+    """
     title = models.CharField(
         max_length=255,
         verbose_name="Title",
@@ -55,20 +45,19 @@ class BatchJob(TimestampedModel):
         help_text="배치 작업에 대한 설명을 입력하세요. (선택 사항)"
     )
 
+    """
+        업로드한 파일 설정
+    """
     file = models.FileField(
-        upload_to=get_upload_path,
+        upload_to=FileSettings.get_upload_path,
         blank=True,
         null=True,
-        validators=[FileExtensionValidator(allowed_extensions=[key for key in FILE_TYPES.keys()])],
+        validators=[FileExtensionValidator(allowed_extensions=[key for key in FileSettings.FILE_TYPES.keys()])],
         verbose_name="Uploaded File")
-    file_type = models.CharField(
-        max_length=10,
-        choices=FILE_TYPE_CHOICES,
-        null=True,
-        blank=True,
-        verbose_name="File Type"
-    )
 
+    """
+        배치 작업 기본 설정
+    """
     config = models.JSONField(
         null=True,
         blank=True,
@@ -76,6 +65,7 @@ class BatchJob(TimestampedModel):
     )
 
     class Meta:
+        """테이블 설정"""
         db_table = 'batch_job'  # 테이블 이름 지정
         verbose_name = 'Batch Job'
         verbose_name_plural = 'Batch Jobs'
@@ -84,37 +74,24 @@ class BatchJob(TimestampedModel):
         return f"BatchJob {self.id} - {self.user.email}"
 
     def clean(self):
-        """
-        유효성 검사: 파일 확장자 확인
-        """
-        if self.file:
-            valid_extensions = self.FILE_TYPES.values()
-            file_extension = self.file.name.split('.')[-1].lower()
-            if file_extension not in valid_extensions:
-                raise ValidationError(
-                    f"Unsupported file type: {file_extension}. "
-                    f"Only {', '.join(valid_extensions).upper()} files are allowed."
-                )
-            self.file_type = file_extension
+        """유효성 검사: 파일 확장자 확인"""
+        if self.file and not FileSettings.is_valid_extension(self.file.name):
+            raise ValidationError(f"Unsupported file type: {self.file.name}."
+                                  f"Only {', '.join(FileSettings.FILE_TYPES.values()).upper()} files are allowed.")
 
     def delete_old_file(self):
-        """
-        기존 파일 삭제
-        """
-        if self.pk:  # 객체가 이미 존재하는 경우
+        """기존 파일 삭제"""
+        if self.pk:
             try:
                 old_instance = BatchJob.objects.get(pk=self.pk)
                 if old_instance.file and old_instance.file != self.file:
-                    # 기존 파일 삭제
                     if os.path.isfile(old_instance.file.path):
                         os.remove(old_instance.file.path)
             except BatchJob.DoesNotExist:
                 pass
 
     def delete(self, *args, **kwargs):
-        """
-        객체 삭제 시 파일도 삭제
-        """
+        """객체 삭제 시 파일도 삭제"""
         try:
             if self.file and os.path.isfile(self.file.path):
                 self.file.delete()
@@ -124,17 +101,31 @@ class BatchJob(TimestampedModel):
         super().delete(*args, **kwargs)  # 부모 클래스의 delete 호출
 
     def save(self, *args, **kwargs):
-        """
-        기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장
-        """
-        # 기존 파일 삭제
+        """기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장"""
         self.delete_old_file()
-
-        # 유효성 검사 수행
         self.clean()
-
-        # 새 파일 저장
         super().save(*args, **kwargs)
+
+    def process_file(self):
+        """파일 타입에 맞는 처리 로직 실행"""
+        if self.file:
+            return FileSettings.process_file(FileSettings.get_file_extension(self.file.name), self.file)
+        else:
+            raise ValueError("File type not defined for processing.")
+
+    def get_file_total_size(self):
+        """파일 타입에 맞는 Total Size 로직 실행"""
+        if self.file:
+            return FileSettings.get_total_size_for_file_types(self.file)
+        else:
+            raise ValueError("File type not defined for processing.")
+
+    def get_file_preview(self):
+        """파일 타입에 맞는 Total Size 로직 실행"""
+        if self.file:
+            return FileSettings.get_preview_for_file_types(self.file)
+        else:
+            raise ValueError("File type not defined for processing.")
 
 
 class TaskUnitStatus:
@@ -180,7 +171,7 @@ class TaskUnit(TimestampedModel):
         blank=True,
         verbose_name="Text Data")  # CSV 행 데이터
     file_data = models.FileField(
-        upload_to=get_taskunit_path,
+        upload_to=FileSettings.get_taskunit_path,
         null=True,
         blank=True,
         verbose_name="File Data"

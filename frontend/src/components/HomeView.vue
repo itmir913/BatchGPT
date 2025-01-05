@@ -1,13 +1,13 @@
 <template>
   <div class="container mt-5">
     <!-- 인증된 사용자 -->
-    <div v-if="isAuthenticated" class="alert alert-success text-center">
+    <div v-if="!loading && isAuthenticated" class="alert alert-success text-center">
       <p>Welcome, {{ email }}!</p>
       <button class="btn btn-primary mt-3" @click="logout">Logout</button>
     </div>
 
     <!-- 인증되지 않은 사용자 -->
-    <div v-else class="alert alert-warning text-center">
+    <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center">
       <p>Please log in.</p>
     </div>
 
@@ -16,12 +16,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>My Batch Jobs</h2>
         <!-- 배치 작업 추가 버튼 -->
-        <button
-            class="btn btn-success"
-            @click="goToCreateBatchJob"
-        >
-          Add New Batch Job
-        </button>
+        <button class="btn btn-success" @click="goToCreateBatchJob">Add New Batch Job</button>
       </div>
 
       <!-- 로딩 상태 -->
@@ -45,12 +40,9 @@
         >
           <div class="card h-100">
             <div class="card-body">
-              <!-- 제목 표시 및 링크 -->
+              <!-- 제목 및 링크 -->
               <h5 class="card-title">
-                <a
-                    :href="`/batch-jobs/${job.id}`"
-                    class="text-decoration-none text-primary"
-                >
+                <a :href="`/batch-jobs/${job.id}`" class="text-decoration-none text-primary">
                   {{ job.title }}
                 </a>
               </h5>
@@ -60,7 +52,7 @@
                 {{ job.description || "No description provided." }}
               </p>
 
-              <!-- 생성 및 수정 날짜 표시 -->
+              <!-- 날짜 표시 -->
               <p class="card-text text-muted">
                 Created At: {{ formatDate(job.created_at) }}<br/>
                 Updated At: {{ formatDate(job.updated_at) }}
@@ -78,6 +70,7 @@
   </div>
 </template>
 
+
 <script>
 import axios from "@/configs/axios";
 
@@ -94,6 +87,7 @@ export default {
   async created() {
     try {
       // 인증 상태 확인
+      this.loading = true;
       const authResponse = await axios.get("/api/auth/check/", {
         withCredentials: true,
       });
@@ -102,11 +96,13 @@ export default {
 
       // 배치 작업 데이터 가져오기
       if (this.isAuthenticated) {
-        this.fetchBatchJobs();
+        await this.fetchBatchJobs();
       }
     } catch (error) {
       console.error("Error checking authentication:", error);
       this.isAuthenticated = false;
+    } finally {
+      this.loading = false;
     }
   },
   methods: {

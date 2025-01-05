@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -7,7 +8,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
 from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
-from api.utils.pd import count_rows_in_csv
+from api.utils.file_settings import FileSettings
 from job.models import BatchJob
 
 
@@ -83,7 +84,7 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
         if serializer.is_valid():
             serializer.save()  # 변경 사항 저장
-            return Response(serializer.data, status=HTTP_200_OK)
+            return Response(status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -129,6 +130,12 @@ class BatchJobFileUploadView(APIView):
 
         # 파일 저장
         try:
+            total_size = FileSettings.get_total_size_for_file_types(file)
+            if total_size <= 0:
+                raise ValidationError(
+                    "The file cannot be read because its size is 0 or less."
+                    "It seems to be an invalid file. Please try with a different file.")
+
             batch_job.file = file
             batch_job.save()
         except ValidationError as e:
@@ -136,8 +143,13 @@ class BatchJobFileUploadView(APIView):
                 {"error": e.message},
                 status=HTTP_400_BAD_REQUEST,
             )
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
-        serializer = BatchJobSerializer(batch_job)
+        serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
 
@@ -162,6 +174,20 @@ class BatchJobConfigView(APIView):
 
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
+        # return Response(
+        #     {
+        #         "id": batch_job.id,
+        #         "title": batch_job.title,
+        #         "description": batch_job.description,
+        #         "file_name": batch_job.file.name if batch_job.file else None,
+        #         "file_type": FileSettings.get_file_extension(batch_job.file.name) if batch_job.file.name else None,
+        #         "total_size": batch_job.get_total_size() if batch_job.file else -1,
+        #         "config": batch_job.config if batch_job.config else None,
+        #         "created_at": batch_job.created_at,
+        #         "updated_at": batch_job.updated_at,
+        #     },
+        #     status=HTTP_200_OK,
+        # )
 
     def patch(self, request, batch_id):
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
@@ -169,34 +195,64 @@ class BatchJobConfigView(APIView):
 
         # 클라이언트로부터 JSON 데이터 받기
         data = request.data
-        workUnit = int(data.get('workUnit', 1))
+        work_unit = int(data.get('workUnit', 1))
         prompt = data.get('prompt', None)
+        gpt_model = data.get('gpt_model', 'gpt-4o-mini')
 
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
 
-        total_size = 0
-        if batch_job.file_type == BatchJob.FILE_TYPES['CSV']:
-            total_size = count_rows_in_csv(batch_job.file)
-        elif batch_job.file_type == BatchJob.FILE_TYPES['PDF']:
-            # TODO
-            pass
+        # 파일 존재 여부 및 사이즈 확인
+        try:
+            total_size = batch_job.get_file_total_size() if batch_job.file else 0
+        except ValueError as e:
+            return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
 
-        if workUnit > total_size:
-            return Response({'error': 'the work unit exceed the total size.'}, status=HTTP_400_BAD_REQUEST)
+        if work_unit > total_size:
+            return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
 
         # 기존 config 데이터 가져오기
         current_config = batch_job.config or {}
 
         # 새로운 설정 추가 또는 업데이트
-        current_config['workUnit'] = workUnit
+        current_config['workUnit'] = work_unit
         current_config['prompt'] = prompt
+        current_config['gpt_model'] = gpt_model
 
         # 수정된 config 저장
         batch_job.config = current_config
-
-        # BatchJob 인스턴스 저장
         batch_job.save()
 
-        serializer = BatchJobSerializer(batch_job)
+        serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
+
+
+class BatchJobPreView(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request, batch_id):
+        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
+
+        # 현재 요청한 사용자가 소유자인지 확인
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to access this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            preview = batch_job.get_file_preview()
+            return JsonResponse(preview, safe=False, status=HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"cannot retrive preview: {str(e)}"},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+
+class BatchJobSupportFileType(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get(self, request):
+        return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)

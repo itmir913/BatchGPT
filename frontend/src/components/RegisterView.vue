@@ -55,11 +55,15 @@
               placeholder="비밀번호를 다시 입력하세요"
               required
               type="password"
+              :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
           />
+          <div v-if="passwordConfirm && passwordConfirm !== password" class="invalid-feedback">
+            비밀번호가 일치하지 않습니다.
+          </div>
         </div>
 
         <!-- 회원가입 버튼 -->
-        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">회원가입</button>
+        <button :disabled="isButtonDisabled || !isFormValid" class="btn btn-primary w-100" type="submit">회원가입</button>
 
         <!-- 에러 메시지 -->
         <div v-if="error" class="alert alert-danger mt-3">
@@ -92,14 +96,16 @@ export default {
       isButtonDisabled: false,
     };
   },
+  computed: {
+    isFormValid() {
+      // 비밀번호와 비밀번호 확인이 일치하는지 확인
+      return this.password && this.passwordConfirm && this.password === this.passwordConfirm;
+    }
+  },
   methods: {
     async register() {
       try {
         this.isButtonDisabled = true;
-        if (this.password !== this.passwordConfirm) {
-          this.error = "비밀번호를 올바르게 입력하세요.";
-          return
-        }
 
         const response = await axios.post('/api/auth/register/', {
           username: this.username,
@@ -113,7 +119,6 @@ export default {
         setTimeout(() => {
           this.$router.push("/login");
         }, 1000);
-
       } catch (error) {
         this.isButtonDisabled = false;
         this.error = error.response.data.errors;
@@ -125,15 +130,13 @@ export default {
 </script>
 
 <style scoped>
-/* 부모 컨테이너 중앙 정렬 */
 .wrapper {
   display: flex;
-  justify-content: center; /* 가로 중앙 */
-  align-items: center; /* 세로 중앙 */
-  background-color: #f8f9fa; /* Bootstrap 기본 배경색 */
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
 }
 
-/* 카드 스타일 */
 .container {
   max-width: 400px;
   width: 100%;
@@ -143,32 +146,9 @@ export default {
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* 제목 스타일 */
-.title {
+h2 {
   text-align: center;
-  color: #333;
   margin-bottom: 20px;
-}
-
-/* 입력 필드와 버튼 스타일 */
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-input {
-  padding: 10px;
-  border-radius: 5px;
-  border: solid #ccc thin;
-}
-
-input::placeholder {
-  color: #aaa;
 }
 
 button {
@@ -183,13 +163,12 @@ button:hover {
   background-color: #45a049;
 }
 
-/* 에러 및 성공 메시지 스타일 */
-.error {
-  color: red;
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-.success {
-  color: green;
+.alert {
+  margin-top: 15px;
 }
 </style>
-

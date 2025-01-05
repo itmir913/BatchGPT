@@ -1,24 +1,24 @@
 <template>
   <div>
+    <!-- 배치 GPT 타이틀 -->
     <h1 class="text-center cursor-pointer hover-effect" @click="goToHome">BatchGPT</h1>
+
+    <!-- 진행 상태 표시 -->
     <div class="progress-indicator d-flex justify-content-between my-4">
       <div
           v-for="(step, index) in steps"
           :key="index"
           :class="['step', getStepClass(index)]"
       >
-        <template v-if="index < currentStep">
-          <a :href="getStepLink(index)" class="text-decoration-none text-primary">
-            {{ step }}
-          </a>
-        </template>
-        <template v-else>
+        <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
           {{ step }}
-        </template>
+        </a>
+        <span v-else>{{ step }}</span>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 export default {
@@ -32,29 +32,30 @@ export default {
       required: true,
     },
   },
-  data() {
-    return {
-      steps: ["Create BatchJob", "Upload Files", "Prompt Config", "Previews", "Run Task"], // 워크플로우 단계
-    };
+  computed: {
+    steps() {
+      return ["Create BatchJob", "Upload File", "Prompt Configs", "Previews", "Run Tasks"];
+    },
   },
   methods: {
     goToHome() {
       this.$router.push('/home'); // Vue Router를 사용하여 /home으로 이동
     },
+
     getStepClass(index) {
-      if (index === this.currentStep) return "step-current"; // 현재 단계
-      if (index < this.currentStep) return "step-past"; // 이전 단계
-      return "step-future"; // 이후 단계
+      const stepClasses = ['step-future', 'step-past', 'step-current'];
+      return stepClasses[this.currentStep === index ? 2 : index < this.currentStep ? 1 : 0];
     },
+
     getStepLink(index) {
-      const stepLinks = {
-        0: `/batch-jobs/create`,
-        1: `/batch-jobs/${this.batch_id}`,
-        2: `/batch-jobs/${this.batch_id}/configs`,
-        3: `/batch-jobs/${this.batch_id}/preview`,
-        4: `/batch-jobs/${this.batch_id}/run`,
-      };
-      return stepLinks[index] || `/`; // 기본값
+      const stepLinks = [
+        `/batch-jobs/create`,
+        `/batch-jobs/${this.batch_id}`,
+        `/batch-jobs/${this.batch_id}/configs`,
+        `/batch-jobs/${this.batch_id}/preview`,
+        `/batch-jobs/${this.batch_id}/run`,
+      ];
+      return stepLinks[index] || '/';
     },
   },
 };

@@ -1,6 +1,9 @@
 <template>
   <div class="container mt-5">
 
+    <!-- 5단계 워크플로우 표시 -->
+    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
@@ -8,16 +11,12 @@
       </div>
     </div>
 
-    <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center" role="alert">
-      {{ error }}
-    </div>
-
-    <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <!-- 메시지 표시 -->
+    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
-    <div v-if="batchJob && isReady" class="card">
+    <div v-if="isReady" class="card">
       <div class="card-body">
         <h2 class="card-title">{{ batchJob.title }}</h2>
         <p class="card-text">{{ batchJob.description || "No description provided." }}</p>
@@ -30,15 +29,12 @@
         <div class="mt-4">
           <h5>File Upload</h5>
           <form class="d-flex align-items-center gap-2" @submit.prevent="uploadFile">
-            <!-- 파일 선택 필드 -->
             <input
                 ref="fileInput"
                 class="form-control flex-grow-1"
                 type="file"
                 @change="handleFileChange"
             />
-
-            <!-- 업로드 버튼 -->
             <button
                 :disabled="uploading"
                 class="btn btn-primary"
@@ -59,19 +55,20 @@
         <!-- 하단 버튼 추가 -->
         <div class="d-flex justify-content-between mt-4">
           <div>
-            <!-- DELETE 버튼 (왼쪽) -->
             <button class="btn btn-danger" @click="deleteBatchJob">Delete</button>
-
-            <!-- 수정 버튼 (왼쪽) -->
-            <button class="btn btn-secondary ms-2" @click="editBatchJob">Edit</button> <!-- ms-2 클래스 추가 -->
+            <button class="btn btn-secondary ms-2" @click="editBatchJob">Edit</button>
           </div>
-
-          <!-- 다음 버튼 (오른쪽) -->
-          <button :disabled="isNextButtonDisabled" class="btn btn-success" @click="goToNextStep">Next</button>
+          <button
+              :disabled="isNextButtonDisabled"
+              class="btn btn-success"
+              @click="goToNextStep"
+          >
+            Next
+          </button>
         </div>
-
       </div>
     </div>
+
   </div>
 </template>
 
@@ -81,132 +78,144 @@ import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
 export default {
-  props: ['batch_id'],  // URL 파라미터를 props로 받음
+  props: ['batch_id'],
   components: {
-    ProgressIndicator, // 등록
+    ProgressIndicator,
   },
   data() {
     return {
-      currentStep: 1, // 현재 진행 중인 단계 (0부터 시작)
-
-      batchJob: null, // 배치 작업 데이터
-      loading: true, // 로딩 상태
-      error: null, // 에러 메시지
-      selectedFile: null, // 업로드할 파일
-      uploading: false, // 업로드 상태
-      isNextButtonDisabled: true,
+      currentStep: 1,
+      batchJob: null,
+      loading: true,
+      error: null,
+      success: null,
+      selectedFile: null,
+      uploading: false,
+      allowedFileTypes: [],
     };
   },
   computed: {
     isReady() {
-      return !this.loading && !this.error;
+      return !this.loading;
     },
+    isNextButtonDisabled() {
+      return !this.batchJob || !this.batchJob.file_name;
+    }
   },
   methods: {
-    // 배치 작업 데이터 가져오기
+
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {
-          withCredentials: true,
-        });
+        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
         this.batchJob = response.data;
-        const file_name = this.batchJob.file_name ?? null;
-        if (file_name != null) {
-          this.isNextButtonDisabled = false;
-        }
+        this.clearMessage()
       } catch (error) {
-        console.error("Error fetching Batch Job:", error);
-        this.error = "Failed to load Batch Job details. Please try again later.";
+        this.handleError("Failed to load Batch Job details. Please try again later.");
       } finally {
         this.loading = false;
       }
     },
 
-    // 파일 선택 핸들러
+    async fetchFileTypes() {
+      try {
+        const response = await axios.get('/api/batch-jobs/supported-file-types/');
+        this.allowedFileTypes = Object.values(response.data); // ['csv', 'pdf', ...]
+      } catch (error) {
+        this.handleError("Failed to retrieve the types of files supported by the server. Please try again later.");
+      }
+    },
+
     handleFileChange(event) {
       this.selectedFile = event.target.files[0];
     },
 
-    // 파일 업로드 핸들러
     async uploadFile() {
       if (!this.selectedFile) {
-        alert("Please select a file to upload.");
+        return this.handleError("Please select a file to upload.");
+      }
+
+      const fileExtension = this.selectedFile.name.split('.').pop().toLowerCase();
+      if (!this.allowedFileTypes.includes(fileExtension)) {
+        this.handleError(`Unsupported file type.
+        Please upload one of the following: ${this.allowedFileTypes.join(', ')}`)
+
+        this.selectedFile = null;
+        this.resetFileInput();
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", this.selectedFile);
-
       try {
+        const formData = new FormData();
+        formData.append("file", this.selectedFile);
         this.uploading = true;
         const response = await axios.patch(
             `/api/batch-jobs/${this.batch_id}/upload/`,
             formData,
             {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
         );
-        this.batchJob = response.data; // 업데이트된 데이터 반영
-        alert("File uploaded successfully!");
+        this.batchJob = response.data;
+        this.handleSuccess("File uploaded successfully!")
       } catch (error) {
-        const errorMessage = error.response.data?.error || "Unknown error occurred.";
-        console.error("Error uploading file:", errorMessage);
-        alert(`Error uploading file: ${errorMessage}`);
+        this.handleError(`Error uploading file: ${error.response.data?.error || "Unknown error occurred."}`);
       } finally {
         this.uploading = false;
         this.selectedFile = null;
-        if (this.$refs.fileInput) {
-          this.$refs.fileInput.value = ""; // 파일 입력 초기화
-        }
-        window.location.reload()
+        this.resetFileInput();
+      }
+    },
+
+    clearMessage() {
+      this.error = null;
+      this.success = null;
+    },
+
+    handleError(message) {
+      this.error = message;
+      this.success = null;
+    },
+
+    handleSuccess(message) {
+      this.error = null;
+      this.success = message;
+    },
+
+    resetFileInput() {
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = "";
       }
     },
 
     editBatchJob() {
-      // 수정 로직 구현 (예: 편집 페이지로 이동)
-      // /batch-jobs/:batch_id/edit
       this.$router.push(`/batch-jobs/${this.batch_id}/edit`);
-      console.log("Edit Batch Job");
     },
 
     async deleteBatchJob() {
-      // 사용자에게 삭제 확인 알림 띄우기
       if (confirm("Are you sure you want to delete this batch job?")) {
-        // DELETE 요청 보내기
         try {
-          await axios.delete(
-              `/api/batch-jobs/${this.batch_id}/`,
-              {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
-          );
-          alert("BatchJob Deleted successfully!");
+          await axios.delete(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
+          alert("Batch Job deleted successfully!")
           this.$router.push(`/home`);
         } catch (error) {
-          const errorMessage = error.response.data?.error || "Unknown error occurred.";
-          console.error("Error uploading file:", errorMessage);
-          alert(`Error uploading file: ${errorMessage}`);
+          this.handleError(`Error deleting batch job: ${error.response.data?.error || "Unknown error occurred."}`);
         }
-      } else {
-        console.log("Delete action canceled.");
       }
     },
 
     goToNextStep() {
-      // 다음 단계로 이동하는 로직 구현
-      if (this.batchJob.file_name == null) {
-        console.log("File Null");
-        alert("The uploaded file is missing. Please select a file to upload.");
-        return
+      if (!this.batchJob.file_name) {
+        return this.handleError("The uploaded file is missing. Please select a file to upload.");
       }
       this.$router.push(`/batch-jobs/${this.batch_id}/configs`);
-      console.log("Go to Next Step");
     },
 
-    // 날짜 포맷팅 메서드
     formatDate(dateString) {
       const options = {year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "numeric"};
       return new Date(dateString).toLocaleDateString(undefined, options);
     },
   },
-  async created() {
-    await this.fetchBatchJob();
+  mounted() {
+    this.fetchBatchJob();
+    this.fetchFileTypes();
   },
 };
 </script>
