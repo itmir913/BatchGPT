@@ -7,6 +7,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from backend import settings
 
+CHUNK_SIZE = 1000
+
 
 class CSVProcessor:
     """CSV 파일 처리 클래스"""
@@ -18,30 +20,47 @@ class CSVProcessor:
 
     @staticmethod
     def get_size(file):
+        logger = logging.getLogger(__name__)
+
         try:
+            total_rows = 0
+
+            # 파일 경로 설정
             if isinstance(file, InMemoryUploadedFile):
-                df = pd.read_csv(file)
+                file_path = file  # InMemoryUploadedFile은 경로가 필요 없으므로 그대로 사용
             else:
-                absolute_file_path = os.path.join(settings.BASE_DIR, file.path)
-                df = pd.read_csv(absolute_file_path)
-            return len(df)
+                file_path = os.path.join(settings.BASE_DIR, file.path)
+
+            # 파일을 청크 단위로 읽기
+            chunks = pd.read_csv(file_path, chunksize=CHUNK_SIZE)
+            for chunk in chunks:
+                total_rows += len(chunk)
+
+            return total_rows
+
         except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error(str(file))
+            logger.error(f"Error reading file: {str(file)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
     @staticmethod
     def get_preview(file):
+        logger = logging.getLogger(__name__)
+
         try:
+
+            # 파일 경로 설정
             if isinstance(file, InMemoryUploadedFile):
-                df = pd.read_csv(file, nrows=5)
+                file_path = file  # InMemoryUploadedFile은 경로가 필요 없으므로 그대로 사용
             else:
-                absolute_file_path = os.path.join(settings.BASE_DIR, file.path)
-                df = pd.read_csv(absolute_file_path, nrows=5)
+                file_path = os.path.join(settings.BASE_DIR, file.path)
+
+            # 파일을 읽어 5행만 가져오기
+            df = pd.read_csv(file_path, nrows=5)
+
             return df.to_json(orient='records')
+
         except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error(str(file))
+            logger.error(f"Error reading file: {str(file)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
 
