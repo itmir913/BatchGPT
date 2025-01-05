@@ -20,10 +20,12 @@
       <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
       <div>
         <div v-if="selectedColumns.length > 0" class="text-dark">
-          The following columns will be used to send requests to GPT: {{ selectedColumns.join(', ') }}.
+          <div>The following columns will be used in the GPT request,</div>
+          <div>You can use them in the prompt like this: {{ selectedColumns.map(col => `{ ${col} }`).join(', ') }}</div>
         </div>
         <div v-else class="text-dark">
-          Select columns to be used for GPT requests.
+          <div>Select columns to be used for GPT requests.</div>
+          <div>You can use them in the prompt.</div>
         </div>
       </div>
       <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
