@@ -8,8 +8,8 @@
       </div>
     </div>
 
-    <div v-if="isReady" class="mb-4">
-      <h5>Uploaded File</h5>
+    <div v-if="isReady" class="mb-4 g-4 p-3">
+      <h3>Uploaded File</h3>
       <div class="table-responsive mb-4">
         <table class="table table-striped table-bordered">
           <thead class="table-light">
@@ -35,12 +35,7 @@
         </table>
 
         <div v-if="isReady" class="mb-4">
-          <h5>Input Prompt</h5>
-          <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
-        </div>
-
-        <div v-if="isReady" class="mb-4">
-          <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
+          <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
           <div class="d-flex justify-content-center align-items-center mb-2">
             <div class="form-check me-3">
               <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
@@ -79,10 +74,41 @@
           </div>
         </div>
 
+        <!-- 모델 선택 섹션 추가 -->
+        <div v-if="isReady" class="mb-4">
+          <h3 class="text-center mt-4 mb-2">Select GPT Model</h3>
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 p-3">
+            <div v-for="(model, key) in models" :key="key" class="col">
+              <div
+                  :class="{'border-primary': gpt_model === key}"
+                  class="card shadow-sm clickable-card"
+                  @click="gpt_model = key">
+                <div class="card-body d-flex flex-column justify-content-center text-center">
+                  <input
+                      id="model"
+                      v-model="gpt_model"
+                      :value="key"
+                      class="form-check-input"
+                      style="display: none;"
+                      type="radio"
+                  />
+                  <label :for="key" class="form-check-label">{{ model }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 프롬프트 입력 섹션 -->
+        <div v-if="isReady" class="mb-4 g-4 p-3">
+          <h5>Input Prompt</h5>
+          <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
+        </div>
+
+        <!-- 성공 실패 메시지 영역 -->
         <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
           {{ success }}
         </div>
-
         <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
           {{ error }}
         </div>
@@ -113,10 +139,20 @@ export default {
       loading: true,
       error: null,
       success: null,
-      workUnit: 1,
-      prompt: '',
+
       loadingSave: false,
       isDisabledNext: true,
+
+      workUnit: 1,
+      prompt: '',
+
+      gpt_model: 'gpt-4o-mini',  // 기본 모델
+      models: { // 모델 딕셔너리
+        'gpt-3.5-turbo': 'GPT-3.5 Turbo',
+        'gpt-4': 'GPT-4',
+        'gpt-4o': 'GPT-4o',
+        'gpt-4o-mini': 'GPT-4o Mini'
+      },
     };
   },
   computed: {
@@ -135,6 +171,7 @@ export default {
       this.success = null;
       this.error = null;
     },
+
     async fetchBatchJob() {
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {
@@ -152,6 +189,7 @@ export default {
         const config = this.batchJob.config ?? {};
         this.workUnit = config.workUnit ?? 1;
         this.prompt = config.prompt ?? '';
+        this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
 
         if (this.prompt) {
           this.isDisabledNext = false;
@@ -181,7 +219,11 @@ export default {
         return;
       }
 
-      const payload = {workUnit: this.workUnit, prompt: this.prompt};
+      const payload = {
+        workUnit: this.workUnit,
+        prompt: this.prompt,
+        gpt_model: this.gpt_model,
+      };
 
       try {
         await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
@@ -213,3 +255,34 @@ export default {
   vertical-align: middle;
 }
 </style>
+
+<!-- GPT 모델 선택 카드 -->
+<style scoped>
+.card {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  font-size: 0.9rem; /* 폰트 크기 조정 */
+}
+
+.card:hover {
+  transform: scale(1.05); /* 클릭 시 확대 효과 */
+}
+
+.card-body {
+  padding: 1.25rem; /* 카드 내부 여백 조정 */
+}
+
+.card.selected {
+  border: 2px solid #007bff; /* 선택된 카드 강조 */
+}
+
+.row {
+  padding: 15px; /* row에 여백 추가 */
+}
+
+.col {
+  padding-bottom: 15px; /* 각 카드 간 여백을 추가 */
+}
+</style>
+
+

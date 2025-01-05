@@ -83,7 +83,7 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
         if serializer.is_valid():
             serializer.save()  # 변경 사항 저장
-            return Response(serializer.data, status=HTTP_200_OK)
+            return Response(status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -143,8 +143,7 @@ class BatchJobFileUploadView(APIView):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        serializer = BatchJobSerializer(batch_job)
-        return Response(serializer.data, status=HTTP_200_OK)
+        return Response(status=HTTP_200_OK)
 
 
 class BatchJobConfigView(APIView):
@@ -189,6 +188,7 @@ class BatchJobConfigView(APIView):
         data = request.data
         workUnit = int(data.get('workUnit', 1))
         prompt = data.get('prompt', None)
+        gpt_model = data.get('gpt_model', 'gpt-4o-mini')
 
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
@@ -204,6 +204,7 @@ class BatchJobConfigView(APIView):
         # 새로운 설정 추가 또는 업데이트
         current_config['workUnit'] = workUnit
         current_config['prompt'] = prompt
+        current_config['gpt_model'] = gpt_model
 
         # 수정된 config 저장
         batch_job.config = current_config
@@ -211,8 +212,7 @@ class BatchJobConfigView(APIView):
         # BatchJob 인스턴스 저장
         batch_job.save()
 
-        serializer = BatchJobSerializer(batch_job)
-        return Response(serializer.data, status=HTTP_200_OK)
+        return Response(status=HTTP_200_OK)
 
 
 class BatchJobPreView(APIView):
