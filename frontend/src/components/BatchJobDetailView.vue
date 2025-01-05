@@ -12,12 +12,8 @@
     </div>
 
     <!-- 메시지 표시 -->
-    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">
-      {{ success }}
-    </div>
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
-      {{ error }}
-    </div>
+    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
     <div v-if="batchJob && isReady" class="card">
@@ -72,8 +68,10 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";

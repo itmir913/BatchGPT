@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- 배치 GPT 타이틀 -->
     <h1 class="text-center cursor-pointer hover-effect" @click="goToHome">BatchGPT</h1>
 
     <!-- 진행 상태 표시 -->
@@ -9,18 +10,15 @@
           :key="index"
           :class="['step', getStepClass(index)]"
       >
-        <template v-if="index < currentStep">
-          <a :href="getStepLink(index)" class="text-decoration-none text-primary">
-            {{ step }}
-          </a>
-        </template>
-        <template v-else>
+        <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
           {{ step }}
-        </template>
+        </a>
+        <span v-else>{{ step }}</span>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 export default {

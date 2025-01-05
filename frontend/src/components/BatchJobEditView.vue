@@ -1,6 +1,5 @@
 <template>
   <div class="container mt-5">
-
     <!-- 진행 상태 표시 -->
     <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
@@ -11,21 +10,14 @@
       </div>
     </div>
 
-    <!-- 성공 메시지 -->
-    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
-      {{ success }}
-    </div>
-
-    <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
-      {{ error }}
-    </div>
+    <!-- 메시지 표시 -->
+    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 배치 작업 폼 -->
     <h2 class="mb-4">Modify Batch Job</h2>
-    <div class="card">
-      <div v-if="batchJob && isReady" class="card-body">
-        <!-- Form 시작 -->
+    <div v-if="batchJob && isReady" class="card">
+      <div class="card-body">
         <form @submit.prevent="modifyBatchJob">
           <!-- Title 입력 -->
           <div class="mb-3">
@@ -53,7 +45,7 @@
           </div>
 
           <!-- 버튼 -->
-          <div>
+          <div class="d-flex justify-content-end">
             <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
             <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
           </div>
@@ -62,6 +54,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";

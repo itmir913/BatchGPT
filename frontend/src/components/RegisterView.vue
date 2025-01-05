@@ -55,7 +55,11 @@
               placeholder="비밀번호를 다시 입력하세요"
               required
               type="password"
+              :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
           />
+          <div v-if="passwordConfirm && passwordConfirm !== password" class="invalid-feedback">
+            비밀번호가 일치하지 않습니다.
+          </div>
         </div>
 
         <!-- 회원가입 버튼 -->
@@ -74,6 +78,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from '@/configs/axios';

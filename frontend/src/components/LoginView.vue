@@ -23,7 +23,9 @@
               type="email"
               :class="{'is-invalid': email && !isEmailValid}"
           />
-          <div v-if="email && !isEmailValid" class="invalid-feedback">올바른 이메일을 입력하세요.</div>
+          <div v-if="email && !isEmailValid" class="invalid-feedback">
+            올바른 이메일을 입력하세요.
+          </div>
         </div>
 
         <!-- 비밀번호 입력 -->
@@ -40,7 +42,9 @@
         </div>
 
         <!-- 로그인 버튼 -->
-        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">로그인</button>
+        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">
+          로그인
+        </button>
       </form>
 
       <!-- 회원가입 링크 -->
@@ -52,6 +56,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from '@/configs/axios';

@@ -10,118 +10,94 @@
 
     <div v-if="isReady" class="mb-4">
       <h3>Uploaded File</h3>
-      <div class="table-responsive mb-4">
-        <table class="table table-striped table-bordered">
-          <thead class="table-light">
-          <tr>
-            <th style="width: 30%;">Item</th>
-            <th style="width: 70%;">Information</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td>File Name</td>
-            <td>{{ batchJob.file_name }}</td>
-          </tr>
-          <tr>
-            <td>Total Size</td>
-            <td>{{ batchJob.total_size }}</td>
-          </tr>
-          <tr>
-            <td>File Type</td>
-            <td>{{ batchJob.file_type }}</td>
-          </tr>
-          </tbody>
-        </table>
+      <table class="table table-striped table-bordered table-responsive mb-4">
+        <thead class="table-light">
+        <tr>
+          <th style="width: 30%;">Item</th>
+          <th style="width: 70%;">Information</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>File Name</td>
+          <td>{{ batchJob.file_name }}</td>
+        </tr>
+        <tr>
+          <td>Total Size</td>
+          <td>{{ batchJob.total_size }}</td>
+        </tr>
+        <tr>
+          <td>File Type</td>
+          <td>{{ batchJob.file_type }}</td>
+        </tr>
+        </tbody>
+      </table>
 
-        <div v-if="isReady" class="mb-4">
-          <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
-          <div class="d-flex justify-content-center align-items-center mb-2">
-            <div class="form-check me-3">
-              <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
-              <label class="form-check-label" for="workUnit1">1</label>
-            </div>
-            <div class="form-check me-3">
-              <input id="workUnit2" v-model.number="workUnit" class="form-check-input" type="radio" value="2"/>
-              <label class="form-check-label" for="workUnit2">2</label>
-            </div>
-            <div class="form-check me-3">
-              <input id="workUnit4" v-model.number="workUnit" class="form-check-input" type="radio" value="4"/>
-              <label class="form-check-label" for="workUnit4">4</label>
-            </div>
-            <div class="form-check me-3">
-              <input id="workUnit8" v-model.number="workUnit" class="form-check-input" type="radio" value="8"/>
-              <label class="form-check-label" for="workUnit8">8</label>
-            </div>
-            <div class="input-group w-25">
-              <span class="input-group-text">Custom Units:</span>
-              <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
-            </div>
+      <!-- Work Unit Selection Section -->
+      <div class="mb-4">
+        <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
+        <div class="d-flex justify-content-center align-items-center mb-2">
+          <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
+            <input id="workUnit{{ unit }}" v-model.number="workUnit" :value="unit" class="form-check-input"
+                   type="radio"/>
+            <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
-
-          <div class="text-info">
-            Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
-          </div>
-          <div class="text-dark">
-            A total of {{ totalRequests }} requests will be processed.
-          </div>
-
-          <div v-if="remainder !== 0" class="text-danger">
-            There are {{ remainder }} items left to process with the last request.
-          </div>
-          <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
-            The {{ workUnit }} work unit cannot exceed the total size.
+          <div class="input-group w-25">
+            <span class="input-group-text">Custom Units:</span>
+            <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
           </div>
         </div>
 
-        <!-- 모델 선택 섹션 추가 -->
-        <div v-if="isReady">
-          <h3 class="text-center">Select GPT Model</h3>
-          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-            <div v-for="(model, key) in models" :key="key" class="col-md-4">
-              <div
-                  :class="{'border-primary': gpt_model === key}"
-                  class="card shadow-sm clickable-card"
-                  @click="gpt_model = key">
-                <div class="card-body d-flex flex-column justify-content-center text-center">
-                  <input
-                      id="model"
-                      v-model="gpt_model"
-                      :value="key"
-                      class="form-check-input"
-                      style="display: none;"
-                      type="radio"
-                  />
-                  <label :for="key" class="form-check-label">{{ model }}</label>
-                </div>
+        <div class="text-info">
+          Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+        </div>
+        <div class="text-dark">
+          A total of {{ totalRequests }} requests will be processed.
+        </div>
+        <div v-if="remainder !== 0" class="text-danger">
+          There are {{ remainder }} items left to process with the last request.
+        </div>
+        <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
+          The {{ workUnit }} work unit cannot exceed the total size.
+        </div>
+      </div>
+
+      <!-- GPT Model Selection -->
+      <div class="mb-4">
+        <h3 class="text-center">Select GPT Model</h3>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+          <div v-for="(model, key) in models" :key="key" class="col-md-4">
+            <div :class="{'border-primary': gpt_model === key}" class="card shadow-sm clickable-card"
+                 @click="gpt_model = key">
+              <div class="card-body d-flex flex-column justify-content-center text-center">
+                <input id="model" v-model="gpt_model" :value="key" class="form-check-input" style="display: none;"
+                       type="radio"/>
+                <label :for="key" class="form-check-label">{{ model }}</label>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 프롬프트 입력 섹션 -->
-        <div v-if="isReady" class="mb-4 g-4 p-3">
-          <h3>Input Prompt</h3>
-          <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
-        </div>
+      <!-- Prompt Input Section -->
+      <div class="mb-4 g-4 p-3">
+        <h3>Input Prompt</h3>
+        <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
+      </div>
 
-        <!-- 성공 실패 메시지 영역 -->
-        <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
-          {{ success }}
-        </div>
-        <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
-          {{ error }}
-        </div>
+      <!-- Success/Failure Message -->
+      <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+      <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
-        <div class="text-end mb-4 mt-3">
-          <button :disabled="loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">Save
-          </button>
-          <button :disabled="isDisabledNext || loadingSave" class="btn btn-success" @click="goToNextStep">Next</button>
-        </div>
+      <!-- Action Buttons -->
+      <div class="text-end mb-4 mt-3">
+        <button :disabled="loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">Save</button>
+        <button :disabled="isDisabledNext || loadingSave" class="btn btn-success" @click="goToNextStep">Next</button>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";

@@ -16,12 +16,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>My Batch Jobs</h2>
         <!-- 배치 작업 추가 버튼 -->
-        <button
-            class="btn btn-success"
-            @click="goToCreateBatchJob"
-        >
-          Add New Batch Job
-        </button>
+        <button class="btn btn-success" @click="goToCreateBatchJob">Add New Batch Job</button>
       </div>
 
       <!-- 로딩 상태 -->
@@ -45,12 +40,9 @@
         >
           <div class="card h-100">
             <div class="card-body">
-              <!-- 제목 표시 및 링크 -->
+              <!-- 제목 및 링크 -->
               <h5 class="card-title">
-                <a
-                    :href="`/batch-jobs/${job.id}`"
-                    class="text-decoration-none text-primary"
-                >
+                <a :href="`/batch-jobs/${job.id}`" class="text-decoration-none text-primary">
                   {{ job.title }}
                 </a>
               </h5>
@@ -60,7 +52,7 @@
                 {{ job.description || "No description provided." }}
               </p>
 
-              <!-- 생성 및 수정 날짜 표시 -->
+              <!-- 날짜 표시 -->
               <p class="card-text text-muted">
                 Created At: {{ formatDate(job.created_at) }}<br/>
                 Updated At: {{ formatDate(job.updated_at) }}
@@ -77,6 +69,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";

@@ -5,21 +5,15 @@
     <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
+    <div v-if="loading || isPreviewRunning" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- 성공 메시지 -->
-    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
-      {{ success }}
-    </div>
-
-    <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
-      {{ error }}
-    </div>
+    <!-- 메시지 영역 -->
+    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 프롬프트 입력란 -->
     <div v-if="isReady" class="mb-4">
@@ -34,70 +28,61 @@
 
     <!-- 작업 단위 설정 -->
     <div v-if="batchJob && isReady">
-      <div class="mb-4">
-        <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
-        <div class="d-flex justify-content-center align-items-center mb-2">
-          <!-- 라디오 버튼들 -->
-          <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
-            <input
-                :id="'workUnit' + unit"
-                v-model.number="workUnit"
-                :value="unit"
-                class="form-check-input"
-                type="radio"
-                disabled
-            />
-            <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
-          </div>
-
-          <!-- 사용자 입력 필드 -->
-          <div class="input-group w-25">
-            <span class="input-group-text">Custom Units:</span>
-            <input
-                v-model.number="workUnit"
-                class="form-control"
-                min="1"
-                placeholder="Unit"
-                type="number"
-                disabled
-            />
-          </div>
+      <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
+      <div class="d-flex justify-content-center align-items-center mb-2">
+        <!-- 라디오 버튼들 -->
+        <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
+          <input
+              :id="'workUnit' + unit"
+              v-model.number="workUnit"
+              :value="unit"
+              class="form-check-input"
+              disabled
+              type="radio"
+          />
+          <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
         </div>
 
-        <!-- 안내 메시지 -->
-        <div class="text-info">
-          Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+        <!-- 사용자 입력 필드 -->
+        <div class="input-group w-25">
+          <span class="input-group-text">Custom Units:</span>
+          <input
+              v-model.number="workUnit"
+              class="form-control"
+              disabled
+              min="1"
+              placeholder="Unit"
+              type="number"
+          />
         </div>
+      </div>
 
-        <div class="text-dark">
-          A total of {{ totalRequests }} requests will be processed.
-        </div>
+      <!-- 안내 메시지 -->
+      <div class="text-info">
+        Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+      </div>
+      <div class="text-dark">
+        A total of {{ totalRequests }} requests will be processed.
+      </div>
 
-        <!-- 경고 메시지 -->
-        <div v-if="remainder !== 0" class="text-danger">
-          There are {{ remainder }} items left to process with the last request.
-        </div>
-        <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
-          The {{ workUnit }} work unit cannot exceed the total size.
-        </div>
+      <!-- 경고 메시지 -->
+      <div v-if="remainder !== 0" class="text-danger">
+        There are {{ remainder }} items left to process with the last request.
+      </div>
+      <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
+        The {{ workUnit }} work unit cannot exceed the total size.
       </div>
     </div>
 
-    <!-- 버튼을 별도의 div로 감싸고 정렬 -->
+    <!-- 버튼들 -->
     <div class="text-end mb-4 mt-3">
       <button :disabled="isPreviewRunning" class="btn btn-primary me-3" @click="previewRun">Preview</button>
       <button class="btn btn-success" @click="goToNextStep">Next</button>
     </div>
 
-    <!-- 프리뷰 로딩 상태 -->
-    <div v-if="isPreviewRunning" class="text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-
   </div>
 </template>
+
 
 <script>
 import axios from "@/configs/axios";
