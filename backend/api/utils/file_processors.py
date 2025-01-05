@@ -68,12 +68,12 @@ class PDFProcessor:
     """PDF 파일 처리 클래스"""
 
     @staticmethod
-    def process(self, file):
+    def process(file):
         # PDF 파일을 처리하는 로직
         raise NotImplementedError(f"Not Implemented PDF")
 
     @staticmethod
-    def get_size(self, file):
+    def get_size(file):
         raise NotImplementedError(f"Not Implemented PDF")
 
     @staticmethod
