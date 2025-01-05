@@ -1,5 +1,6 @@
 <template>
   <div class="container mt-5">
+
     <!-- 진행 상태 표시 -->
     <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
 
@@ -10,8 +11,13 @@
       </div>
     </div>
 
+    <!-- 성공 메시지 -->
+    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
+      {{ success }}
+    </div>
+
     <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center" role="alert">
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
       {{ error }}
     </div>
 
@@ -54,16 +60,6 @@
         </form>
       </div>
     </div>
-
-    <!-- 성공 메시지 -->
-    <div v-if="successMessage" class="alert alert-success mt-4" role="alert">
-      {{ successMessage }}
-    </div>
-
-    <!-- 에러 메시지 -->
-    <div v-if="errorMessage" class="alert alert-danger mt-4" role="alert">
-      {{ errorMessage }}
-    </div>
   </div>
 </template>
 
@@ -78,71 +74,66 @@ export default {
   props: ['batch_id'],
   data() {
     return {
-      currentStep: 0, // 현재 진행 중인 단계 (0부터 시작)
-      batchJob: {
-        title: "", // Title 초기값
-        description: "", // Description 초기값
-      },
-      successMessage: "", // 성공 메시지 상태
-      errorMessage: "", // 에러 메시지 상태
+      currentStep: 0, // 현재 진행 중인 단계
+      batchJob: {title: "", description: ""}, // 배치 작업 초기값
+      success: null, // 성공 메시지 상태
+      error: null, // 에러 메시지 상태
       loading: false, // 로딩 상태
-      error: null, // 에러 메시지
-      isButtonDisabled: true,
+      isButtonDisabled: true, // 버튼 비활성화 여부
     };
   },
   computed: {
     isReady() {
-      return !this.loading && !this.error;
+      return !this.loading;
     },
   },
   methods: {
+    // 배치 작업 데이터를 가져오는 메서드
     async fetchBatchJob() {
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
-        this.batchJob = response.data; // API 응답으로 batchJob 데이터 설정
-        this.isButtonDisabled = false
+        this.batchJob = response.data;
+        this.isButtonDisabled = false; // 버튼 활성화
       } catch (error) {
-        console.error("Error fetching Batch Job:", error);
-        this.isButtonDisabled = true
-        this.error = "Failed to load Batch Job details. Please try again later.";
+        this.handleError("Failed to load Batch Job details. Please try again later.");
       }
     },
 
+    // 배치 작업 수정 처리
     async modifyBatchJob() {
       try {
-        this.isButtonDisabled = true
+        this.isButtonDisabled = true;
         const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
+        this.success = "Batch Job modified successfully!";
+        this.error = null;
 
-        this.id = response.data.id;
-        this.successMessage = "Batch Job modified successfully!";
-        this.errorMessage = "";
-
+        // 수정 후 자동으로 배치 작업 상세 페이지로 리다이렉트
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${this.id}/`);
+          this.$router.push(`/batch-jobs/${response.data.id}/`);
         }, 1000);
-
       } catch (error) {
-        console.error("Error modifying Batch Job:", error);
-        this.isButtonDisabled = false
-        this.successMessage = "";
-
-        if (error.response && error.response.data) {
-          this.errorMessage = error.response.data.error || "Failed to modify Batch Job.";
-        } else {
-          this.errorMessage = "An unexpected error occurred.";
-        }
+        this.handleError(`Error modifying Batch Job: ${error.response?.data?.error || "An unexpected error occurred."}`);
+      } finally {
+        this.isButtonDisabled = false; // 버튼 활성화
       }
     },
 
+    // 에러 처리 메서드
+    handleError(message) {
+      this.error = message;
+      this.success = null; // 성공 메시지 초기화
+    },
+
+    // 취소 버튼 처리
     cancelButton() {
       this.$router.push(`/batch-jobs/${this.batch_id}`);
-      console.log("Go to Next Step");
-    }
+    },
   },
 
-  async created() {
-    await this.fetchBatchJob(); // 컴포넌트 생성 시 배치 작업 데이터 가져오기
-  }
+  // 컴포넌트 마운트 후 배치 작업 데이터 가져오기
+  mounted() {
+    this.fetchBatchJob();
+  },
 };
 </script>
 

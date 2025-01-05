@@ -1,20 +1,25 @@
 <template>
   <div class="container mt-5">
 
+    <!-- 진행 상태 표시 -->
+    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center mb-4">
+    <div v-if="loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- 에러 메시지 -->
-    <div v-if="error" class="alert alert-danger text-center mb-4" role="alert">
-      {{ error }}
+    <!-- 성공 메시지 -->
+    <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">
+      {{ success }}
     </div>
 
-    <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <!-- 에러 메시지 -->
+    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">
+      {{ error }}
+    </div>
 
     <!-- 프롬프트 입력란 -->
     <div v-if="isReady" class="mb-4">
@@ -32,27 +37,28 @@
       <div class="mb-4">
         <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
         <div class="d-flex justify-content-center align-items-center mb-2">
-          <div class="form-check me-3">
-            <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
-            <label class="form-check-label" for="workUnit1">1</label>
-          </div>
-          <div class="form-check me-3">
-            <input id="workUnit2" v-model.number="workUnit" class="form-check-input" type="radio" value="2"/>
-            <label class="form-check-label" for="workUnit2">2</label>
-          </div>
-          <div class="form-check me-3">
-            <input id="workUnit4" v-model.number="workUnit" class="form-check-input" type="radio" value="4"/>
-            <label class="form-check-label" for="workUnit4">4</label>
-          </div>
-          <div class="form-check me-3">
-            <input id="workUnit8" v-model.number="workUnit" class="form-check-input" type="radio" value="8"/>
-            <label class="form-check-label" for="workUnit8">8</label>
+          <!-- 라디오 버튼들 -->
+          <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
+            <input
+                :id="'workUnit' + unit"
+                v-model.number="workUnit"
+                :value="unit"
+                class="form-check-input"
+                type="radio"
+            />
+            <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
 
           <!-- 사용자 입력 필드 -->
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
+            <input
+                v-model.number="workUnit"
+                class="form-control"
+                min="1"
+                placeholder="Unit"
+                type="number"
+            />
           </div>
         </div>
 
@@ -62,7 +68,7 @@
         </div>
 
         <div class="text-dark">
-          A total of {{ calculateCeil(batchJob.total_size, workUnit) }} requests will be processed.
+          A total of {{ totalRequests }} requests will be processed.
         </div>
 
         <!-- 경고 메시지 -->
@@ -84,7 +90,6 @@
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
@@ -100,6 +105,7 @@ export default {
       batchJob: null, // 배치 작업 데이터
       loading: true, // 로딩 상태
       error: null, // 에러 메시지
+      success: null,
       workUnit: 1,
       prompt: '',
       isPreviewRunning: false,
@@ -111,52 +117,59 @@ export default {
       return this.batchJob.total_size % this.workUnit;
     },
     isReady() {
-      return !this.loading && !this.error;
+      return !this.loading;
+    },
+    totalRequests() {
+      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
     },
   },
   methods: {
     // 배치 작업 데이터 가져오기
     async fetchBatchJob() {
+      this.loading = true;
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {
-          withCredentials: true,
-        });
+        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {withCredentials: true});
         this.batchJob = response.data;
-        const config = this.batchJob.config ?? {}
-        this.workUnit = config.workUnit ?? 1
-        this.prompt = config.prompt ?? ''
+        const config = this.batchJob.config ?? {};
+        this.workUnit = config.workUnit ?? 1;
+        this.prompt = config.prompt ?? '';
       } catch (error) {
-        console.error("Error fetching Batch Job:", error);
-        this.error = "Failed to load Batch Job details. Please try again later.";
+        this.handleError("Failed to load Batch Job details. Please try again later.");
       } finally {
         this.loading = false;
       }
     },
 
+    // 미리보기 실행
     async previewRun() {
+      if (this.isPreviewRunning) return;
+
+      this.isPreviewRunning = true;
       try {
-        // const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {
-        //   withCredentials: true,
-        // });
-        // this.batchJob = response.data;
+        // 미리보기 API 호출 예시
+        // const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, { withCredentials: true });
+        // this.previewData = response.data;
 
       } catch (error) {
-        console.error("Error running preview Job:", error);
-        this.error = "Failed to run Batch Job preview. Please try again later.";
+        this.handleError("Failed to run Batch Job preview. Please try again later.");
       } finally {
-        this.loading = false;
+        this.isPreviewRunning = false;
       }
     },
 
+    // 다음 단계로 이동
     goToNextStep() {
-      // 다음 단계로 이동하는 로직 구현
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
 
-    calculateCeil(totalSize, workUnit) {
-      return Math.ceil(totalSize / workUnit);
-    },
+    // 에러 처리 공통 메서드
+    handleError(message) {
+      this.success = null;
+      this.error = message;
+    }
   },
+
+  // 컴포넌트 생성 시 배치 작업 데이터 가져오기
   async created() {
     await this.fetchBatchJob();
   },
