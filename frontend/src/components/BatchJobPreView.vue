@@ -2,7 +2,7 @@
   <div class="container mt-5">
 
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading || isPreviewRunning" class="text-center">

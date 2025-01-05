@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-5">
-    <ProgressIndicator v-if="isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <div v-if="loading" class="text-center">
       <div class="spinner-border text-primary" role="status">

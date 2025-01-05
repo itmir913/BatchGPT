@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="isReady" :batch_id="null" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="null" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">

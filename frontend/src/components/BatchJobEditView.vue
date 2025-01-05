@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -105,9 +105,8 @@ export default {
           this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 1000);
       } catch (error) {
-        this.handleError(`Error modifying Batch Job: ${error.response?.data?.error || "An unexpected error occurred."}`);
-      } finally {
         this.isButtonDisabled = false; // 버튼 활성화
+        this.handleError(`Error modifying Batch Job: ${error.response?.data?.error || "An unexpected error occurred."}`);
       }
     },
 

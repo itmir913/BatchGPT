@@ -2,7 +2,7 @@
   <div class="container mt-5">
 
     <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator v-if="batchJob && isReady" :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -16,7 +16,7 @@
     <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
-    <div v-if="batchJob && isReady" class="card">
+    <div v-if="isReady" class="card">
       <div class="card-body">
         <h2 class="card-title">{{ batchJob.title }}</h2>
         <p class="card-text">{{ batchJob.description || "No description provided." }}</p>

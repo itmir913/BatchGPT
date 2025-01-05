@@ -143,7 +143,8 @@ class BatchJobFileUploadView(APIView):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        return Response(status=HTTP_200_OK)
+        serializer = BatchJobSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
 class BatchJobConfigView(APIView):
@@ -212,7 +213,8 @@ class BatchJobConfigView(APIView):
         # BatchJob 인스턴스 저장
         batch_job.save()
 
-        return Response(status=HTTP_200_OK)
+        serializer = BatchJobSerializer(batch_job)
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
 class BatchJobPreView(APIView):
