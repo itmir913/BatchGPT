@@ -24,3 +24,6 @@ class PDFProcessor:
     def process(self, file):
         # PDF 파일을 처리하는 로직
         return f"Processed PDF file: {file.name}"
+
+    def get_size(self, file):
+        return -1
