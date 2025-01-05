@@ -1,13 +1,13 @@
 <template>
   <div class="container mt-5">
     <!-- 인증된 사용자 -->
-    <div v-if="isAuthenticated" class="alert alert-success text-center">
+    <div v-if="!loading && isAuthenticated" class="alert alert-success text-center">
       <p>Welcome, {{ email }}!</p>
       <button class="btn btn-primary mt-3" @click="logout">Logout</button>
     </div>
 
     <!-- 인증되지 않은 사용자 -->
-    <div v-else class="alert alert-warning text-center">
+    <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center">
       <p>Please log in.</p>
     </div>
 
@@ -94,6 +94,7 @@ export default {
   async created() {
     try {
       // 인증 상태 확인
+      this.loading = true;
       const authResponse = await axios.get("/api/auth/check/", {
         withCredentials: true,
       });
@@ -102,11 +103,13 @@ export default {
 
       // 배치 작업 데이터 가져오기
       if (this.isAuthenticated) {
-        this.fetchBatchJobs();
+        await this.fetchBatchJobs();
       }
     } catch (error) {
       console.error("Error checking authentication:", error);
       this.isAuthenticated = false;
+    } finally {
+      this.loading = false;
     }
   },
   methods: {
