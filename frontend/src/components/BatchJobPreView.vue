@@ -22,7 +22,6 @@
       <textarea
           v-model="prompt"
           class="form-control"
-          disabled
           placeholder="Enter your prompt..."
           rows="5"
       ></textarea>
@@ -34,26 +33,26 @@
         <h5 class="text-center mt-4 mb-2">Select Number of Items per Task</h5>
         <div class="d-flex justify-content-center align-items-center mb-2">
           <div class="form-check me-3">
-            <input id="workUnit1" v-model.number="workUnit" class="form-check-input" disabled type="radio" value="1"/>
+            <input id="workUnit1" v-model.number="workUnit" class="form-check-input" type="radio" value="1"/>
             <label class="form-check-label" for="workUnit1">1</label>
           </div>
           <div class="form-check me-3">
-            <input id="workUnit2" v-model.number="workUnit" class="form-check-input" disabled type="radio" value="2"/>
+            <input id="workUnit2" v-model.number="workUnit" class="form-check-input" type="radio" value="2"/>
             <label class="form-check-label" for="workUnit2">2</label>
           </div>
           <div class="form-check me-3">
-            <input id="workUnit4" v-model.number="workUnit" class="form-check-input" disabled type="radio" value="4"/>
+            <input id="workUnit4" v-model.number="workUnit" class="form-check-input" type="radio" value="4"/>
             <label class="form-check-label" for="workUnit4">4</label>
           </div>
           <div class="form-check me-3">
-            <input id="workUnit8" v-model.number="workUnit" class="form-check-input" disabled type="radio" value="8"/>
+            <input id="workUnit8" v-model.number="workUnit" class="form-check-input" type="radio" value="8"/>
             <label class="form-check-label" for="workUnit8">8</label>
           </div>
 
           <!-- 사용자 입력 필드 -->
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="workUnit" class="form-control" disabled min="1" placeholder="Unit" type="number"/>
+            <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
           </div>
         </div>
 
@@ -136,7 +135,7 @@ export default {
 
     async previewRun() {
       try {
-        // const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {
+        // const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {
         //   withCredentials: true,
         // });
         // this.batchJob = response.data;

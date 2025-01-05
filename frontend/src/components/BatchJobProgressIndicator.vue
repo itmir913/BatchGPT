@@ -34,7 +34,7 @@ export default {
   },
   data() {
     return {
-      steps: ["Create BatchJob", "Upload Files", "Prompt Config", "Previews", "Run Task"], // 워크플로우 단계
+      steps: ["Create BatchJob", "Upload File", "Prompt Configs", "Previews", "Run Tasks"], // 워크플로우 단계
     };
   },
   methods: {
