@@ -89,6 +89,13 @@
       <button class="btn btn-success" @click="goToNextStep">Next</button>
     </div>
 
+    <!-- 프리뷰 로딩 상태 -->
+    <div v-if="isPreviewRunning" class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -148,9 +155,12 @@ export default {
 
       this.isPreviewRunning = true;
       try {
-        // 미리보기 API 호출 예시
-        // const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, { withCredentials: true });
-        // this.previewData = response.data;
+        const payload = {
+          prompt: this.prompt,
+        };
+
+        const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload, {withCredentials: true});
+        this.previewData = response.data;
 
       } catch (error) {
         this.handleError("Failed to run Batch Job preview. Please try again later.");
