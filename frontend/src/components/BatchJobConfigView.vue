@@ -38,18 +38,19 @@
         <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
         <div class="d-flex justify-content-center align-items-center mb-2">
           <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
-            <input id="workUnit{{ unit }}" v-model.number="workUnit" :value="unit" class="form-check-input"
-                   type="radio"/>
-            <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
+            <input id="work_unit{{ unit }}"
+                   v-model.number="work_unit" :value="unit"
+                   class="form-check-input" type="radio"/>
+            <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="workUnit" class="form-control" min="1" placeholder="Unit" type="number"/>
+            <input v-model.number="work_unit" class="form-control" min="1" placeholder="Unit" type="number"/>
           </div>
         </div>
 
         <div class="text-info">
-          Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+          Each time a request is made to GPT, it processes items in groups of {{ work_unit }} items.
         </div>
         <div class="text-dark">
           A total of {{ totalRequests }} requests will be processed.
@@ -57,8 +58,8 @@
         <div v-if="remainder !== 0" class="text-danger">
           There are {{ remainder }} items left to process with the last request.
         </div>
-        <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
-          The {{ workUnit }} work unit cannot exceed the total size.
+        <div v-if="work_unit > batchJob.total_size" class="text-bg-danger">
+          The {{ work_unit }} work unit cannot exceed the total size.
         </div>
       </div>
 
@@ -119,7 +120,7 @@ export default {
 
       loadingSave: false,
 
-      workUnit: 1,
+      work_unit: 1,
       prompt: '',
       gpt_model: 'gpt-4o-mini',  // 기본 모델
       models: { // 모델 딕셔너리
@@ -132,13 +133,13 @@ export default {
   },
   computed: {
     remainder() {
-      return this.batchJob?.total_size % this.workUnit;
+      return this.batchJob?.total_size % this.work_unit;
     },
     isReady() {
       return !this.loading && this.batchJob;
     },
     totalRequests() {
-      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
+      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
     },
     canNext() {
       const config = this.batchJob.config ?? {};
@@ -166,7 +167,7 @@ export default {
 
         this.batchJob = response.data;
         const config = this.batchJob.config ?? {};
-        this.workUnit = config.workUnit ?? 1;
+        this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
         this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
 
@@ -183,7 +184,7 @@ export default {
       this.clearMessages();
       this.loadingSave = true;
 
-      if (this.workUnit > this.batchJob.total_size) {
+      if (this.work_unit > this.batchJob.total_size) {
         this.error = "The work unit cannot exceed the total size.";
         this.loadingSave = false;
         return;
@@ -196,7 +197,7 @@ export default {
       }
 
       const payload = {
-        workUnit: this.workUnit,
+        work_unit: this.work_unit,
         prompt: this.prompt,
         gpt_model: this.gpt_model,
       };
@@ -213,7 +214,7 @@ export default {
 
         this.batchJob = response.data;
         const config = this.batchJob.config ?? {};
-        this.workUnit = config.workUnit ?? 1;
+        this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
         this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
 

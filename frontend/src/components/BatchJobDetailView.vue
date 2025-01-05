@@ -100,7 +100,7 @@ export default {
     },
     isNextButtonDisabled() {
       return !this.batchJob || !this.batchJob.file_name;
-    }
+    },
   },
   methods: {
 

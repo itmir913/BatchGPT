@@ -1,3 +1,6 @@
+import json
+import logging
+
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -9,6 +12,7 @@ from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
+from api.utils.generate_prompt import get_prompt
 from job.models import BatchJob
 
 
@@ -196,7 +200,7 @@ class BatchJobConfigView(APIView):
 
         # 클라이언트로부터 JSON 데이터 받기
         data = request.data
-        work_unit = int(data.get('workUnit', 1))
+        work_unit = int(data.get('work_unit', 1))
         prompt = data.get('prompt', None)
         gpt_model = data.get('gpt_model', 'gpt-4o-mini')
 
@@ -216,7 +220,7 @@ class BatchJobConfigView(APIView):
         current_config = batch_job.config or {}
 
         # 새로운 설정 추가 또는 업데이트
-        current_config['workUnit'] = work_unit
+        current_config['work_unit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
 
@@ -245,6 +249,64 @@ class BatchJobPreView(APIView):
         try:
             preview = batch_job.get_file_preview()
             return JsonResponse(preview, safe=False, status=HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"The preview cannot be fetched."
+                          f"An error occurred while processing the file on the server.: {str(e)}"},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+    def post(self, request, batch_id):
+        logger = logging.getLogger(__name__)
+
+        batch_job = get_object_or_404(BatchJob, id=batch_id)
+
+        # 현재 요청한 사용자가 소유자인지 확인
+        if batch_job.user != request.user:
+            return Response(
+                {"error": "You do not have permission to access this resource."},
+                status=HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            data = request.data
+            prompt = data.get('prompt', None)
+            selected_headers = data.get('selected_headers', None)
+
+            if prompt is None or selected_headers is None:
+                return Response(
+                    {"error": "The request is invalid as the prompt is empty or no headers were selected."},
+                    status=HTTP_400_BAD_REQUEST,
+                )
+
+            config = batch_job.config
+            work_unit = int(config['work_unit'])
+            gpt_model = config['gpt_model']
+
+            preview = batch_job.get_file_preview()
+            preview = json.loads(preview)
+
+            logger.error("preview")
+            logger.error(preview)
+
+            filtered_preview = [
+                {key: str(value) for key, value in item.items() if key in selected_headers}
+                for item in preview
+            ]
+
+            logger.error("filtered_preview")
+            logger.error(filtered_preview)
+
+            generate_prompt = [get_prompt(prompt, item) for item in filtered_preview]
+            json_formatted = [{
+                "prompt": item,
+                "result": "test"
+            } for item in generate_prompt]
+
+            logger.error("generate_prompt")
+            logger.error(generate_prompt)
+
+            return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"error": f"cannot retrive preview: {str(e)}"},

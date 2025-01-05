@@ -15,48 +15,28 @@
     <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
     <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
 
-    <!-- CSV 데이터 미리보기 -->
+
     <div v-if="isReady" class="mb-4">
       <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
       <div>
         <div v-if="selectedColumns.length > 0" class="text-dark">
-          The following columns will be used to send requests to GPT: {{ selectedColumns.join(', ') }}.
+          <div>The following columns will be used in the GPT request,</div>
+          <div>You can use them in the prompt like this: {{
+              selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
+            }}
+          </div>
         </div>
         <div v-else class="text-dark">
-          Select columns to be used for GPT requests.
+          <div>Select columns to be used for GPT requests.</div>
+          <div>You can use them in the prompt.</div>
         </div>
       </div>
-      <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
-             class="table table-hover table-bordered table-striped mt-3">
-        <thead class="table-primary">
-        <tr>
-          <!-- 각 열 이름 -->
-          <th
-              v-for="(value, key) in filteredData[0]"
-              :key="'header-' + key"
-              :class="{ 'selected-column': selectedColumns.includes(key) }"
-              style="cursor: pointer;"
-              @click="toggleColumnSelection(key)"
-          >
-            {{ key }}
-          </th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- 데이터 행 렌더링 -->
-        <tr v-for="row in filteredData" :key="'row-' + row.id">
-          <td
-              v-for="(value, key) in row"
-              :key="'cell-' + key"
-              :class="{ 'selected-column': selectedColumns.includes(key) }"
-              style="cursor: pointer;"
-              @click="toggleColumnSelection(key)"
-          >
-            {{ value }}
-          </td>
-        </tr>
-        </tbody>
-      </table>
+      <CsvPreview
+          :isReady="isReady"
+          :previewData="filteredData"
+          :selectedColumns="selectedColumns"
+          @toggle-column="toggleColumnSelection"
+      />
     </div>
 
     <!-- 프롬프트 입력란 -->
@@ -77,21 +57,21 @@
         <!-- 라디오 버튼들 -->
         <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
           <input
-              :id="'workUnit' + unit"
-              v-model.number="workUnit"
+              :id="'work_unit' + unit"
+              v-model.number="work_unit"
               :value="unit"
               class="form-check-input"
               disabled
               type="radio"
           />
-          <label :for="'workUnit' + unit" class="form-check-label">{{ unit }}</label>
+          <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
         </div>
 
         <!-- 사용자 입력 필드 -->
         <div class="input-group w-25">
           <span class="input-group-text">Custom Units:</span>
           <input
-              v-model.number="workUnit"
+              v-model.number="work_unit"
               class="form-control"
               disabled
               min="1"
@@ -103,7 +83,7 @@
 
       <!-- 안내 메시지 -->
       <div class="text-info">
-        Each time a request is made to GPT, it processes items in groups of {{ workUnit }} items.
+        Each time a request is made to GPT, it processes items in groups of {{ work_unit }} items.
       </div>
       <div class="text-dark">
         A total of {{ totalRequests }} requests will be processed.
@@ -113,13 +93,22 @@
       <div v-if="remainder !== 0" class="text-danger">
         There are {{ remainder }} items left to process with the last request.
       </div>
-      <div v-if="workUnit > batchJob.total_size" class="text-bg-danger">
-        The {{ workUnit }} work unit cannot exceed the total size.
+      <div v-if="work_unit > batchJob.total_size" class="text-bg-danger">
+        The {{ work_unit }} work unit cannot exceed the total size.
       </div>
     </div>
 
+    <!-- 결과 미리보기 -->
+    <CsvPreview
+        :isReady="isPreviewRunning"
+        :previewData="previewFilteredResult"
+        :selectedColumns="previewResultSelectedColumns"
+        @toggle-column="toggleColumnSelection"
+    />
+
     <!-- 버튼들 -->
     <div class="text-end mb-4 mt-3">
+      <button class="btn btn-secondary me-3" @click="configSave">Save Prompt</button>
       <button :disabled="isPreviewRunning" class="btn btn-primary me-3" @click="previewRun">Preview</button>
       <button class="btn btn-success" @click="goToNextStep">Next</button>
     </div>
@@ -127,65 +116,67 @@
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+import CsvPreview from '@/components/CSVPreview.vue'; // 추가된 부분
 
 export default {
-  props: ['batch_id'],  // URL 파라미터를 props로 받음
+  props: ['batch_id'],
   components: {
-    ProgressIndicator, // 등록
+    ProgressIndicator,
+    CsvPreview, // 추가된 부분
   },
   data() {
     return {
-      currentStep: 3, // 현재 진행 중인 단계 (0부터 시작)
-      batchJob: null, // 배치 작업 데이터
-
-      loading: true, // 로딩 상태
-      error: null, // 에러 메시지
+      currentStep: 3,
+      batchJob: null,
+      loading: true,
+      error: null,
       success: null,
 
-      workUnit: 1,
+      work_unit: 1,
       prompt: '',
 
-      previewData: [], // 서버에서 가져온 CSV 데이터
-      selectedColumns: [], // 선택된 열 이름
+      previewData: [],
+      selectedColumns: [],
 
+      previewResult: [],
+      previewResultSelectedColumns: [],
       isPreviewRunning: false,
     };
   },
   computed: {
     remainder() {
-      return this.batchJob.total_size % this.workUnit;
+      return this.batchJob.total_size % this.work_unit;
     },
     isReady() {
       return !this.loading;
     },
     totalRequests() {
-      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.workUnit) : 0;
+      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
     },
     filteredData() {
       if (!Array.isArray(this.previewData ?? []))
         return [];
-
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
     },
+    previewFilteredResult() {
+      return this.previewResult;
+    },
   },
   methods: {
-    // 배치 작업 데이터 가져오기
     async fetchBatchJob() {
       this.loading = true;
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {withCredentials: true});
         this.batchJob = response.data;
-
         const config = this.batchJob.config ?? {};
-        this.workUnit = config.workUnit ?? 1;
+        this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
       } catch (error) {
-        this.handleError("Failed to load Batch Job details. Please try again later.");
+        this.handleError(`Failed to load Batch Job details. ${error.message}`);
       } finally {
         this.loading = false;
       }
@@ -195,28 +186,50 @@ export default {
       this.loading = true;
       try {
         const response = await axios.get(`/api/batch-jobs/${this.batch_id}/preview/`, {withCredentials: true});
-
-        if (typeof response.data === 'string') {
-          this.previewData = JSON.parse(response.data);
-        } else {
-          this.previewData = response.data;
-        }
-
+        this.previewData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
       } catch (error) {
-        this.handleError("Failed to load Preview data. Please try again later.");
+        this.handleError(`Failed to load Preview data. ${error.message}`);
       } finally {
         this.loading = false;
       }
     },
 
-    previewRun() {
-      this.isPreviewRunning = true;
-
+    async previewRun() {
+      if (this.selectedColumns.length === 0) {
+        this.handleError("Please select the columns of the table.")
+        return;
+      }
       try {
+        this.isPreviewRunning = true;
 
-        this.success = "Preview loaded successfully!";
+        const payload = {
+          prompt: this.prompt,
+          'selected_headers': this.selectedColumns,
+        };
+
+        const response = await axios.post(`/api/batch-jobs/${this.batch_id}/preview/`, payload);
+
+        if (!response.data) {
+          this.handleError("No data received from Server.")
+          this.batchJob = null;
+          return;
+        }
+
+        this.previewResult = response.data;
+        this.handleSuccess("Preview loaded successfully!")
       } catch (error) {
-        this.handleError("Failed to load Preview data. Please try again later.");
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+
+          // Handle error if it's a JSON object
+          if (errorData && errorData.error) {
+            this.handleError(`Failed to load Preview data. Please try again later: ${errorData.error}`);
+          } else {
+            this.handleError(`Failed to load Preview data. Unknown error.`);
+          }
+        } else {
+          this.handleError(`Failed to load Preview data. Please try again later: ${error.message}`);
+        }
       } finally {
         this.isPreviewRunning = false;
       }
@@ -224,33 +237,85 @@ export default {
 
     toggleColumnSelection(column) {
       if (this.selectedColumns.includes(column)) {
-        // 이미 선택된 열이면 제거
         this.selectedColumns = this.selectedColumns.filter(c => c !== column);
       } else {
-        // 선택되지 않은 열이면 추가
         this.selectedColumns.push(column);
       }
     },
 
-    // 다음 단계로 이동
+    async configSave() {
+      this.clearMessages();
+      this.loadingSave = true;
+
+      if (this.work_unit > this.batchJob.total_size) {
+        this.error = "The work unit cannot exceed the total size.";
+        this.loadingSave = false;
+        return;
+      }
+
+      if (!this.prompt.trim()) {
+        this.error = "Prompt cannot be empty.";
+        this.loadingSave = false;
+        return;
+      }
+
+      const payload = {
+        work_unit: this.batchJob.work_unit,
+        prompt: this.prompt,
+        gpt_model: this.batchJob.gpt_model,
+      };
+
+      try {
+        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
+
+        if (!response.data) {
+          this.error = "No data received from Server.";
+          this.success = null;
+          this.batchJob = null;
+          return;
+        }
+
+        this.batchJob = response.data;
+        const config = this.batchJob.config ?? {};
+        this.prompt = config.prompt ?? '';
+
+        this.success = "Configuration updated successfully.";
+      } catch (err) {
+        this.error = `Error updating configuration: ${err.message}`;
+      } finally {
+        this.loadingSave = false;
+      }
+    },
+
     goToNextStep() {
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
 
-    // 에러 처리 공통 메서드
+    clearMessages() {
+      this.success = null;
+      this.error = null;
+    },
+
+    handleSuccess(message) {
+      this.clearMessages();
+      this.success = message;
+      this.error = null;
+    },
+
     handleError(message) {
+      this.clearMessages();
       this.success = null;
       this.error = message;
     }
   },
 
-  // 컴포넌트 생성 시 배치 작업 데이터 가져오기
   async created() {
     await this.fetchBatchJob();
     await this.fetchPreviewData();
   },
 };
 </script>
+
 
 <style scoped>
 .container {
