@@ -221,7 +221,7 @@ class TaskUnitResponse(TimestampedModel):
     """TaskUnit에 대한 ChatGPT 응답 저장"""
     task_unit = models.ForeignKey(
         TaskUnit,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE,  # TODO SET_NULL을 고민할 것.
         related_name="responses",
         verbose_name="Task Unit"
     )
