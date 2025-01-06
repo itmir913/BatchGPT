@@ -15,6 +15,7 @@
     <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{ messages.success }}</div>
     <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
 
+
     <!-- 배치 작업 상세 정보 -->
     <div v-if="formStatus.isReady" class="card">
       <div class="card-body">

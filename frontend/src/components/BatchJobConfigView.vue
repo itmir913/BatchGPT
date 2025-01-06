@@ -10,7 +10,7 @@
       <p>{{ formStatus.loadingMessage }}</p>
     </div>
 
-    <div v-if="formStatus.isReady" class="mb-4">
+    <div v-if="formStatus.isReady" class="mb-4 g-4 p-3">
       <h3>Uploaded File</h3>
       <table class="table table-striped table-bordered table-responsive mb-4">
         <thead class="table-light">
@@ -36,41 +36,16 @@
       </table>
 
       <!-- Work Unit Selection Section -->
-      <div class="mb-4">
-        <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
-        <div class="d-flex justify-content-center align-items-center mb-2">
-          <div v-for="unit in [1, 2, 4, 8]" :key="'unit-' + unit" class="form-check me-3">
-            <input id="work_unit{{ unit }}" v-model.number="work_unit" :disabled="workUnit.isWorkUnitDisabled"
-                   :value="unit"
-                   class="form-check-input" type="radio"/>
-            <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
-          </div>
-          <div class="input-group w-25">
-            <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="work_unit" :disabled="workUnit.isWorkUnitDisabled" class="form-control" min="1"
-                   placeholder="Unit" type="number"/>
-          </div>
-        </div>
-
-        <div class="text-info">
-          Each time a request is made to GPT, it processes items in groups of {{ work_unit }} items.
-        </div>
-        <div class="text-dark">
-          A total of {{ workUnit.totalRequests }} requests will be processed.
-        </div>
-        <div v-if="workUnit.isWorkUnitDisabled" class="text-success">
-          This option is disabled as the current file type does not support it.
-        </div>
-        <div v-if="workUnit.remainder !== 0" class="text-danger">
-          There are {{ workUnit.remainder }} items left to process with the last request.
-        </div>
-        <div v-if="work_unit > batchJob.total_size" class="text-bg-danger">
-          The {{ work_unit }} work unit cannot exceed the total size.
-        </div>
+      <div class="mb-4 g-4 p-3">
+        <WorkUnitSettings
+            :batchJob="batchJob"
+            :isReady="formStatus.isReady"
+            :work_unit="work_unit"
+        />
       </div>
 
       <!-- GPT Model Selection -->
-      <div class="mb-4">
+      <div class="mb-4 g-4 p-3">
         <h3 class="text-center">Select GPT Model</h3>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
           <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
@@ -115,6 +90,7 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+import WorkUnitSettings from "@/components/WorkUnitSettings.vue";
 
 // 상수화 가능한 값 정의
 const API_BASE_URL = "/api/batch-jobs/";
@@ -134,6 +110,7 @@ const ERROR_MESSAGES = {
 export default {
   props: ['batch_id'],
   components: {
+    WorkUnitSettings,
     ProgressIndicator,
   },
   data() {
@@ -156,14 +133,6 @@ export default {
     };
   },
   computed: {
-    workUnit() {
-      return {
-        totalRequests: this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0,
-        remainder: this.batchJob.total_size % this.work_unit,
-        isWorkUnitDisabled: this.batchJob.file_type !== 'pdf',
-      }
-    },
-
     formStatus() {
       return {
         isLoading: this.loadingState.loading,
