@@ -121,7 +121,12 @@ export default {
         this.clearMessages();
         this.loadingState.submitted = true;
 
-        const response = await axios.post(API_BASE_URL, this.batchJob);
+        const payload = {
+          'title': this.batchJob.title,
+          'description': this.batchJob.description,
+        };
+
+        const response = await axios.post(API_BASE_URL, payload);
         this.batch_id = response.data.id;
 
         this.handleMessages("success", SUCCESS_MESSAGES.createBatchJob);

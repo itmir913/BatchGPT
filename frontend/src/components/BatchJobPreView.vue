@@ -205,7 +205,7 @@ export default {
         this.isPreviewRunning = true;
 
         const payload = {
-          prompt: this.prompt,
+          'prompt': this.prompt,
           'selected_headers': this.selectedColumns,
         };
 
@@ -262,9 +262,9 @@ export default {
       }
 
       const payload = {
-        work_unit: this.batchJob.work_unit,
-        prompt: this.prompt,
-        gpt_model: this.batchJob.gpt_model,
+        'work_unit': this.batchJob.work_unit,
+        'prompt': this.prompt,
+        'gpt_model': this.batchJob.gpt_model,
         'selected_headers': this.selectedColumns,
       };
 

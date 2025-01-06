@@ -96,7 +96,13 @@ export default {
     async modifyBatchJob() {
       try {
         this.isButtonDisabled = true;
-        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, this.batchJob);
+
+        const payload = {
+          'title': this.batchJob.title,
+          'description': this.batchJob.description,
+        };
+
+        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, payload);
         this.success = "Batch Job modified successfully!";
         this.error = null;
 
