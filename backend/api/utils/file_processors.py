@@ -54,8 +54,8 @@ class CSVProcessor:
             else:
                 file_path = os.path.join(settings.BASE_DIR, file.path)
 
-            # 파일을 읽어 7행만 가져오기
-            df = pd.read_csv(file_path, nrows=7)
+            # 파일을 읽어 3행만 가져오기
+            df = pd.read_csv(file_path, nrows=3)
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
             return df.to_json(orient='records')
