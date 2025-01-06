@@ -1,5 +1,5 @@
 // router/home.js
-import HomeView from '@/components/HomeView.vue';
+import HomeView from '@/components/home/HomeView.vue';
 
 export default [
     {

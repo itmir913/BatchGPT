@@ -73,7 +73,7 @@
 
 <script>
 import axios from "@/configs/axios";
-import ProgressIndicator from "@/components/BatchJobProgressIndicator.vue";
+import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 
 // 상수 정의
 const API_BASE_URL = "/api/batch-jobs/";

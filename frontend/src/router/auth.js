@@ -1,6 +1,6 @@
 // router/auth.js
-import LoginView from '@/components/LoginView.vue';
-import RegisterView from '@/components/RegisterView.vue';
+import LoginView from '@/components/auth/LoginView.vue';
+import RegisterView from '@/components/auth/RegisterView.vue';
 
 export default [
     {

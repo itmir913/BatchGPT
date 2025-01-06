@@ -17,15 +17,15 @@
         <h3 class="text-center mt-3 mb-2">CSV Preview</h3>
         <div>
           <div v-if="previewData.CSV.selectedColumns.length > 0" class="text-dark">
-            <div>The following columns will be used in the GPT request,</div>
-            <div>You can use them in the prompt like this: {{
+            <div>The following columns will be included in the GPT request:</div>
+            <div>You can refer to them in the prompt as: {{
                 previewData.CSV.selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
               }}
             </div>
           </div>
           <div v-else class="text-dark">
-            <div>Select columns to be used for GPT requests.</div>
-            <div>You can use them in the prompt.</div>
+            <div>Please select the columns you want to include in the GPT request.</div>
+            <div>Once selected, you can use them in the prompt.</div>
           </div>
         </div>
         <CsvPreview
@@ -88,10 +88,10 @@
 </template>
 
 <script>
-import ProgressIndicator from "@/components/BatchJobProgressIndicator.vue";
-import CsvPreview from "@/components/CSVPreview.vue";
+import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
+import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import axios from "@/configs/axios";
-import WorkUnitSettings from "@/components/WorkUnitSettings.vue";
+import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 
 const API_BASE_URL = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";

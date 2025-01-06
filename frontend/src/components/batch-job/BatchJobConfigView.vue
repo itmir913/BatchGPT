@@ -89,8 +89,8 @@
 
 <script>
 import axios from "@/configs/axios";
-import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
-import WorkUnitSettings from "@/components/WorkUnitSettings.vue";
+import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
+import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 
 // 상수화 가능한 값 정의
 const API_BASE_URL = "/api/batch-jobs/";

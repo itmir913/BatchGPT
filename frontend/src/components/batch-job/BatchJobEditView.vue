@@ -57,7 +57,7 @@
 
 <script>
 import axios from "@/configs/axios";
-import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 
 export default {
   components: {
