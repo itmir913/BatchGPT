@@ -4,3 +4,5 @@ django-cors-headers
 pandas
 celery
 requests
+python-dotenv
+openai==1.59.3

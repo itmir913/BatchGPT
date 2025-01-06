@@ -5,8 +5,6 @@ import os
 
 from celery import Celery
 
-from .task_queue import resume_pending_tasks
-
 # Django settings 파일을 Celery에 설정
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
@@ -20,6 +18,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Celery가 시작된 후, 자동으로 작업 실행
+    from .task_queue import resume_pending_tasks
     resume_pending_tasks.apply_async()
 
 

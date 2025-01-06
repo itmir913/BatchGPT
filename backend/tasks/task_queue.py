@@ -1,11 +1,12 @@
 # tasks/task_queue.py
 import time
 
-import requests
 from celery import shared_task
 from django.db.models import Q
+from openai import OpenAI
 
-URL = "https://google.com"
+from api.models import BatchJob
+from backend.settings import OPENAI_API_KEY
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
@@ -18,32 +19,33 @@ def process_task_unit(self, task_unit_id):
         task_unit = TaskUnit.objects.get(id=task_unit_id)
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
 
+        batch_job = BatchJob.objects.get(id=task_unit.batch_job_id)
+        batch_job_config = batch_job.config or {}
+        model = batch_job_config['gpt_model']
+
         try:
-            connect_timeout, read_timeout = 5.0, 30.0
-            response = requests.get(URL, timeout=(connect_timeout, read_timeout))
+            client = OpenAI(api_key=OPENAI_API_KEY)
 
-            if response.status_code == 200:
-                task_unit_response = TaskUnitResponse.objects.create(
-                    task_unit=task_unit,
-                    status=TaskUnitStatus.COMPLETED,
-                    request_data=task_unit.text_data,
-                    response_data=response.json(),
-                )
-                calculate_and_save_processing_time(task_unit_response, start_time)
-                task_unit.set_status(TaskUnitStatus.COMPLETED)
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": task_unit.text_data,
+                    }
+                ],
+                max_tokens=500
+            )
 
-            else:
-                task_unit_response = TaskUnitResponse.objects.create(
-                    task_unit=task_unit,
-                    status=TaskUnitStatus.FAILED,
-                    request_data=task_unit.text_data,
-                    error_code=str(response.status_code),
-                    error_message=response.text,
-                )
-                calculate_and_save_processing_time(task_unit_response, start_time)
-                task_unit.set_status(TaskUnitStatus.FAILED)
-
-                self.retry(countdown=1)
+            # chatgpt_reply = response.choices[0].message.content
+            task_unit_response = TaskUnitResponse.objects.create(
+                task_unit=task_unit,
+                status=TaskUnitStatus.COMPLETED,
+                request_data=task_unit.text_data,
+                response_data=response.model_dump_json()
+            )
+            calculate_and_save_processing_time(task_unit_response, start_time)
+            task_unit.set_status(TaskUnitStatus.COMPLETED)
 
         except Exception as e:
             # 예외 처리: 요청 실패 및 오류 발생 시 처리

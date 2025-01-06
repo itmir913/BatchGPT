@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -165,8 +167,14 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# settings.py
+# Celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis 브로커 URL
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # 작업 결과를 Redis에 저장
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+ENV_PATH = os.path.join(BASE_DIR, '.env')
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
