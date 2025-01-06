@@ -3,14 +3,14 @@
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
-    <div v-if="loadingState.loading" class="text-center">
+    <div v-if="formStatus.isLoading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <p>Processing your request...</p>
+      <p>{{ formStatus.loadingMessage }}</p>
     </div>
 
-    <div v-if="isReady" class="mb-4">
+    <div v-if="formStatus.isReady" class="mb-4">
       <h3>Uploaded File</h3>
       <table class="table table-striped table-bordered table-responsive mb-4">
         <thead class="table-light">
@@ -40,13 +40,14 @@
         <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
         <div class="d-flex justify-content-center align-items-center mb-2">
           <div v-for="unit in [1, 2, 4, 8]" :key="'unit-' + unit" class="form-check me-3">
-            <input id="work_unit{{ unit }}" v-model.number="work_unit" :disabled="isWorkUnitDisabled" :value="unit"
+            <input id="work_unit{{ unit }}" v-model.number="work_unit" :disabled="workUnit.isWorkUnitDisabled"
+                   :value="unit"
                    class="form-check-input" type="radio"/>
             <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="work_unit" :disabled="isWorkUnitDisabled" class="form-control" min="1"
+            <input v-model.number="work_unit" :disabled="workUnit.isWorkUnitDisabled" class="form-control" min="1"
                    placeholder="Unit" type="number"/>
           </div>
         </div>
@@ -55,13 +56,13 @@
           Each time a request is made to GPT, it processes items in groups of {{ work_unit }} items.
         </div>
         <div class="text-dark">
-          A total of {{ totalRequests }} requests will be processed.
+          A total of {{ workUnit.totalRequests }} requests will be processed.
         </div>
-        <div v-if="isWorkUnitDisabled" class="text-success">
+        <div v-if="workUnit.isWorkUnitDisabled" class="text-success">
           This option is disabled as the current file type does not support it.
         </div>
-        <div v-if="remainder !== 0" class="text-danger">
-          There are {{ remainder }} items left to process with the last request.
+        <div v-if="workUnit.remainder !== 0" class="text-danger">
+          There are {{ workUnit.remainder }} items left to process with the last request.
         </div>
         <div v-if="work_unit > batchJob.total_size" class="text-bg-danger">
           The {{ work_unit }} work unit cannot exceed the total size.
@@ -91,23 +92,21 @@
         <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
       </div>
 
-      <!-- Success/Failure Message -->
-      <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-4" role="alert">
-        {{ messages.success }}
-      </div>
-      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">
-        {{ messages.error }}
-      </div>
-
       <!-- Action Buttons -->
       <div class="text-end mb-4 mt-3">
-        <button :disabled="loadingState.loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">
+        <button :disabled="formStatus.isSaveButtonDisabled" class="btn btn-primary me-3" @click="configSave">
           Save
         </button>
-        <button :disabled="loadingState.loadingSave || canNext" class="btn btn-success" @click="goToNextStep">Next
+        <button :disabled="formStatus.isNextButtonDisabled" class="btn btn-success"
+                @click="goToNextStep">Next
         </button>
       </div>
     </div>
+
+    <!-- Success/Failure Message -->
+    <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{ messages.success }}</div>
+    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
+
   </div>
 </template>
 
@@ -138,7 +137,7 @@ export default {
   data() {
     return {
       currentStep: 2,
-      batchJob: undefined,
+      batchJob: null,
 
       loadingState: {loading: true, loadingSave: false},
       messages: {success: null, error: null},
@@ -155,21 +154,25 @@ export default {
     };
   },
   computed: {
-    totalRequests() {
-      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
+    workUnit() {
+      return {
+        totalRequests: this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0,
+        remainder: this.batchJob.total_size % this.work_unit,
+        isWorkUnitDisabled: this.batchJob.file_type !== 'pdf',
+      }
     },
-    remainder() {
-      return this.batchJob?.total_size % this.work_unit;
+
+    formStatus() {
+      return {
+        isLoading: this.loadingState.loading,
+        loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
+        isReady: !this.loadingState.loading && this.batchJob,
+        isNextButtonDisabled: !!(this.batchJob && this.batchJob.config &&
+            Object.keys(this.batchJob.config).length === 0 && !this.loadingState.loadingSave),
+        isSaveButtonDisabled: this.loadingState.loadingSave || !this.prompt.trim(),
+      };
     },
-    isReady() {
-      return !this.loadingState.loading && this.batchJob;
-    },
-    isWorkUnitDisabled() {
-      return this.batchJob?.file_type !== 'pdf';
-    },
-    canNext() {
-      return !this.batchJob?.config || Object.keys(this.batchJob?.config).length === 0;
-    },
+
   },
   methods: {
     clearMessages() {
@@ -190,11 +193,12 @@ export default {
       try {
         this.loadingState.loading = true;
         const response = await axios.get(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, {withCredentials: true});
+        this.batchJob = response.data;
         if (!response.data) {
           this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
           return;
         }
-        this.batchJob = response.data;
+
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';

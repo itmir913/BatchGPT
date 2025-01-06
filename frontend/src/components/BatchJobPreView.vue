@@ -130,17 +130,19 @@ export default {
     return {
       currentStep: 3,
       batchJob: null,
-
-      loadingState: {loading: true, success: null, error: null, isPreviewRunning: false},
-      messages: {success: null, error: null},
+      loading: true,
+      error: null,
+      success: null,
 
       work_unit: 1,
       prompt: '',
+
       previewData: [],
       selectedColumns: [],
 
       previewResult: [],
       previewResultSelectedColumns: [],
+      isPreviewRunning: false,
     };
   },
   computed: {
