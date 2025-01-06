@@ -107,7 +107,7 @@
 
     <!-- 버튼들 -->
     <div class="text-end mb-4 mt-3">
-      <button class="btn btn-secondary me-3" @click="configSave">Save Prompt</button>
+      <button class="btn btn-secondary me-3" @click="configSave">Save</button>
       <button :disabled="isPreviewRunning" class="btn btn-primary me-3" @click="previewRun">Preview</button>
       <button class="btn btn-success" @click="goToNextStep">Next</button>
     </div>
@@ -174,6 +174,7 @@ export default {
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
+        this.selectedColumns = config.selected_headers ?? [];
       } catch (error) {
         this.handleError(`Failed to load Batch Job details. ${error.message}`);
       } finally {
@@ -264,6 +265,7 @@ export default {
         work_unit: this.batchJob.work_unit,
         prompt: this.prompt,
         gpt_model: this.batchJob.gpt_model,
+        'selected_headers': this.selectedColumns,
       };
 
       try {

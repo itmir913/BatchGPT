@@ -142,6 +142,8 @@ class BatchJobFileUploadView(APIView):
 
             batch_job.file = file
             batch_job.file_name = file.name
+            batch_job.config = {}
+
             batch_job.save()
         except ValidationError as e:
             return Response(
@@ -208,6 +210,7 @@ class BatchJobConfigView(APIView):
         work_unit = int(data.get('work_unit', 1))
         prompt = data.get('prompt', None)
         gpt_model = data.get('gpt_model', 'gpt-4o-mini')
+        selected_headers = data.get('selected_headers', None)
 
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
@@ -233,6 +236,7 @@ class BatchJobConfigView(APIView):
         current_config['work_unit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
+        current_config['selected_headers'] = selected_headers
 
         # 수정된 config 저장
         batch_job.config = current_config
