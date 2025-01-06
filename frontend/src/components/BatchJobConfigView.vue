@@ -2,7 +2,7 @@
   <div class="container mt-5">
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
-    <div v-if="loading" class="text-center">
+    <div v-if="loadingState.loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
@@ -37,18 +37,15 @@
       <div class="mb-4">
         <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
         <div class="d-flex justify-content-center align-items-center mb-2">
-          <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
-            <input id="work_unit{{ unit }}"
-                   v-model.number="work_unit" :value="unit"
-                   :disabled="isWorkUnitDisabled" class="form-check-input"
-                   type="radio"/>
+          <div v-for="unit in [1, 2, 4, 8]" :key="'unit-' + unit" class="form-check me-3">
+            <input id="work_unit{{ unit }}" v-model.number="work_unit" :disabled="isWorkUnitDisabled" :value="unit"
+                   class="form-check-input" type="radio"/>
             <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
             <input v-model.number="work_unit" :disabled="isWorkUnitDisabled" class="form-control" min="1"
-                   placeholder="Unit"
-                   type="number"/>
+                   placeholder="Unit" type="number"/>
           </div>
         </div>
 
@@ -73,7 +70,7 @@
       <div class="mb-4">
         <h3 class="text-center">Select GPT Model</h3>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-          <div v-for="(model, key) in models" :key="key" class="col-md-4">
+          <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
             <div :class="{'border-primary': gpt_model === key}" class="card shadow-sm clickable-card"
                  @click="gpt_model = key">
               <div class="card-body d-flex flex-column justify-content-center text-center">
@@ -93,22 +90,41 @@
       </div>
 
       <!-- Success/Failure Message -->
-      <div v-if="success && !error" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
-      <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
+      <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-4" role="alert">
+        {{ messages.success }}
+      </div>
+      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
 
       <!-- Action Buttons -->
       <div class="text-end mb-4 mt-3">
-        <button :disabled="loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">Save</button>
-        <button :disabled="loadingSave || canNext" class="btn btn-success" @click="goToNextStep">Next</button>
+        <button :disabled="loadingState.loadingSave || !prompt.trim()" class="btn btn-primary me-3" @click="configSave">
+          Save
+        </button>
+        <button :disabled="loadingState.loadingSave || canNext" class="btn btn-success" @click="goToNextStep">Next
+        </button>
       </div>
     </div>
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+
+// 상수화 가능한 값 정의
+const API_BASE_URL = "/api/batch-jobs/";
+const API_CONFIG_URL = "configs/";
+
+const DEFAULT_GPT_MODEL = 'gpt-4o-mini';
+
+const ERROR_MESSAGES = {
+  fetchBatchJobError: "Failed to load Batch Job details. Please try again later.",
+  saveConfigError: "Error updating configuration: ",
+};
+
+const SUCCESS_MESSAGES = {
+  saveConfigSuccess: "Configuration updated successfully.",
+};
 
 export default {
   props: ['batch_id'],
@@ -118,22 +134,17 @@ export default {
   data() {
     return {
       currentStep: 2,
-      batchJob: null,
-
-      loading: true,
-      error: null,
-      success: null,
-
-      loadingSave: false,
-
+      batchJob: undefined,
+      loadingState: {loading: true, loadingSave: false},
+      messages: {success: null, error: null},
       work_unit: 1,
       prompt: '',
-      gpt_model: 'gpt-4o-mini',  // 기본 모델
-      models: { // 모델 딕셔너리
+      gpt_model: DEFAULT_GPT_MODEL,
+      models: {
         'gpt-3.5-turbo': 'GPT-3.5 Turbo',
         'gpt-4': 'GPT-4',
         'gpt-4o': 'GPT-4o',
-        'gpt-4o-mini': 'GPT-4o Mini'
+        'gpt-4o-mini': 'GPT-4o Mini',
       },
     };
   },
@@ -142,67 +153,62 @@ export default {
       return this.batchJob?.total_size % this.work_unit;
     },
     isReady() {
-      return !this.loading && this.batchJob;
+      return !this.loadingState.loading && this.batchJob;
     },
     totalRequests() {
       return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
     },
     canNext() {
-      const config = this.batchJob.config ?? {};
-      return Object.keys(config).length === 0;
+      return !this.batchJob?.config || Object.keys(this.batchJob.config).length === 0;
     },
     isWorkUnitDisabled() {
-      return this.batchJob.file_type !== 'pdf';
+      return this.batchJob?.file_type !== 'pdf';
     },
   },
   methods: {
     clearMessages() {
-      this.success = null;
-      this.error = null;
+      this.messages.success = null;
+      this.messages.error = null;
+    },
+
+    handleMessages(type, message) {
+      this.clearMessages();
+      if (type === "error") {
+        this.messages.error = message;
+      } else if (type === "success") {
+        this.messages.success = message;
+      }
     },
 
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/configs/`, {
-          withCredentials: true,
-        });
-
+        const response = await axios.get(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, {withCredentials: true});
         if (!response.data) {
-          this.error = "No data received from Server.";
-          this.success = null;
-          this.batchJob = null;
+          this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
           return;
         }
-
         this.batchJob = response.data;
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
-        this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
-
+        this.gpt_model = config.gpt_model ?? DEFAULT_GPT_MODEL;
       } catch (error) {
-        console.error("Error fetching Batch Job:", error);
-        this.error = "Failed to load Batch Job details. Please try again later.";
-        this.success = null;
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
       } finally {
-        this.loading = false;
+        this.loadingState.loading = false;
       }
     },
 
     async configSave() {
       this.clearMessages();
-      this.loadingSave = true;
+      this.loadingState.loadingSave = true;
 
       if (this.work_unit > this.batchJob.total_size) {
-        this.error = "The work unit cannot exceed the total size.";
-        this.loadingSave = false;
-        return;
+        return this.handleMessages("error", "The work unit cannot exceed the total size.");
       }
 
       if (!this.prompt.trim()) {
-        this.error = "Prompt cannot be empty.";
-        this.loadingSave = false;
-        return;
+        return this.handleMessages("error", "Prompt cannot be empty.");
       }
 
       const payload = {
@@ -212,12 +218,9 @@ export default {
       };
 
       try {
-        const response = await axios.patch(`/api/batch-jobs/${this.batch_id}/configs/`, payload);
-
+        const response = await axios.patch(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, payload);
         if (!response.data) {
-          this.error = "No data received from Server.";
-          this.success = null;
-          this.batchJob = null;
+          this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
           return;
         }
 
@@ -225,13 +228,13 @@ export default {
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';
-        this.gpt_model = config.gpt_model ?? 'gpt-4o-mini';
+        this.gpt_model = config.gpt_model ?? DEFAULT_GPT_MODEL;
 
-        this.success = "Configuration updated successfully.";
+        this.handleMessages("success", SUCCESS_MESSAGES.saveConfigSuccess);
       } catch (err) {
-        this.error = `Error updating configuration: ${err.message}`;
+        this.handleMessages("error", `${ERROR_MESSAGES.saveConfigError} ${err.message}`);
       } finally {
-        this.loadingSave = false;
+        this.loadingState.loadingSave = false;
       }
     },
 
@@ -266,25 +269,23 @@ export default {
 .card {
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
-  font-size: 0.9rem; /* 폰트 크기 조정 */
+  font-size: 0.9rem;
 }
 
 .card:hover {
-  transform: scale(1.05); /* 클릭 시 확대 효과 */
+  transform: scale(1.05);
 }
 
 .card-body {
-  padding: 1.25rem; /* 카드 내부 여백 조정 */
+  padding: 1.25rem;
 }
 
 .card.selected {
-  border: 2px solid #007bff; /* 선택된 카드 강조 */
+  border: 2px solid #007bff;
 }
 
 .row {
-  padding: 20px; /* 여백을 줄여줍니다 */
-  overflow-x: hidden; /* 좌우 스크롤 방지 */
+  padding: 20px;
+  overflow-x: hidden;
 }
 </style>
-
-
