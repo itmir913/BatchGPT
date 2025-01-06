@@ -194,6 +194,8 @@ export default {
     },
 
     async previewRun() {
+      this.clearMessages();
+
       if (this.selectedColumns.length === 0) {
         this.handleError("Please select the columns of the table.")
         return;
