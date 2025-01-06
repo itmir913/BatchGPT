@@ -2,10 +2,12 @@
   <div class="container mt-5">
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
+    <!-- 로딩 상태 -->
     <div v-if="loadingState.loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
+      <p>Processing your request...</p>
     </div>
 
     <div v-if="isReady" class="mb-4">
@@ -93,7 +95,9 @@
       <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-4" role="alert">
         {{ messages.success }}
       </div>
-      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
+      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">
+        {{ messages.error }}
+      </div>
 
       <!-- Action Buttons -->
       <div class="text-end mb-4 mt-3">
@@ -117,13 +121,13 @@ const API_CONFIG_URL = "configs/";
 
 const DEFAULT_GPT_MODEL = 'gpt-4o-mini';
 
+const SUCCESS_MESSAGES = {
+  saveConfigSuccess: "Configuration updated successfully.",
+};
+
 const ERROR_MESSAGES = {
   fetchBatchJobError: "Failed to load Batch Job details. Please try again later.",
   saveConfigError: "Error updating configuration: ",
-};
-
-const SUCCESS_MESSAGES = {
-  saveConfigSuccess: "Configuration updated successfully.",
 };
 
 export default {
@@ -135,8 +139,10 @@ export default {
     return {
       currentStep: 2,
       batchJob: undefined,
+
       loadingState: {loading: true, loadingSave: false},
       messages: {success: null, error: null},
+
       work_unit: 1,
       prompt: '',
       gpt_model: DEFAULT_GPT_MODEL,
@@ -149,20 +155,20 @@ export default {
     };
   },
   computed: {
+    totalRequests() {
+      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
+    },
     remainder() {
       return this.batchJob?.total_size % this.work_unit;
     },
     isReady() {
       return !this.loadingState.loading && this.batchJob;
     },
-    totalRequests() {
-      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
-    },
-    canNext() {
-      return !this.batchJob?.config || Object.keys(this.batchJob.config).length === 0;
-    },
     isWorkUnitDisabled() {
       return this.batchJob?.file_type !== 'pdf';
+    },
+    canNext() {
+      return !this.batchJob?.config || Object.keys(this.batchJob?.config).length === 0;
     },
   },
   methods: {
@@ -182,6 +188,7 @@ export default {
 
     async fetchBatchJob() {
       try {
+        this.loadingState.loading = true;
         const response = await axios.get(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, {withCredentials: true});
         if (!response.data) {
           this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
@@ -200,9 +207,6 @@ export default {
     },
 
     async configSave() {
-      this.clearMessages();
-      this.loadingState.loadingSave = true;
-
       if (this.work_unit > this.batchJob.total_size) {
         return this.handleMessages("error", "The work unit cannot exceed the total size.");
       }
@@ -211,20 +215,23 @@ export default {
         return this.handleMessages("error", "Prompt cannot be empty.");
       }
 
-      const payload = {
-        work_unit: this.work_unit,
-        prompt: this.prompt,
-        gpt_model: this.gpt_model,
-      };
-
       try {
+        this.loadingState.loadingSave = true;
+
+        const payload = {
+          work_unit: this.work_unit,
+          prompt: this.prompt,
+          gpt_model: this.gpt_model,
+        };
+
         const response = await axios.patch(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, payload);
+        this.batchJob = response.data;
+
         if (!response.data) {
           this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
           return;
         }
 
-        this.batchJob = response.data;
         const config = this.batchJob.config ?? {};
         this.work_unit = config.work_unit ?? 1;
         this.prompt = config.prompt ?? '';

@@ -16,7 +16,7 @@
     <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
-    <div v-if="isReady" class="card">
+    <div v-if="formStatus.isReady" class="card">
       <div class="card-body">
         <h2 class="card-title">{{ batchJob.title }}</h2>
         <p class="card-text">{{ batchJob.description || "No description provided." }}</p>
@@ -102,7 +102,7 @@ export default {
       selectedFile: null,
       uploading: false,
       allowedFileTypes: [],
-      loadingState: {loading: true, success: null, error: null},
+      loadingState: {loading: true},
       messages: {success: null, error: null},
     };
   },
@@ -113,11 +113,9 @@ export default {
         isNextButtonDisabled: !this.batchJob || !this.batchJob.file_name,
         isUploading: this.uploading,
         isLoading: this.loadingState.loading,
+        isReady: !this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
       };
-    },
-    isReady() {
-      return !this.loadingState.loading;
     },
   },
   methods: {

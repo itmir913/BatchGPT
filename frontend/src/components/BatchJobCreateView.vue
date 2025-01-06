@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="0" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loadingState.loading" class="text-center">
@@ -11,11 +11,11 @@
       <p>Processing your request...</p>
     </div>
 
-    <!-- 메시지 -->
-    <div v-show="messages.success" class="alert alert-success text-center mt-4" role="alert">
+    <!-- Success/Failure Message -->
+    <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-4" role="alert">
       {{ messages.success }}
     </div>
-    <div v-show="messages.error" class="alert alert-danger text-center mt-4" role="alert">
+    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">
       {{ messages.error }}
     </div>
 
@@ -35,9 +35,9 @@
                 placeholder="Enter the title of the batch job"
                 required
                 type="text"
-                :class="{ 'is-invalid': !batchJob.title && submitted }"
+                :class="{ 'is-invalid': !batchJob.title && loadingState.submitted }"
             />
-            <div v-if="!batchJob.title && submitted" class="invalid-feedback">
+            <div v-if="!batchJob.title && loadingState.submitted" class="invalid-feedback">
               Title is required.
             </div>
           </div>
@@ -68,20 +68,25 @@
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
-const API_URL = '/api/batch-jobs/create/';
-const SUCCESS_MSG = "Batch Job created successfully!";
-const ERROR_MSG = "Failed to create Batch Job.";
+const API_BASE_URL = '/api/batch-jobs/create/';
+
+const SUCCESS_MESSAGES = {
+  createSuccess: "Batch Job created successfully!",
+};
+
+const ERROR_MESSAGES = {
+  failedToCreateError: "Failed to create Batch Job. Please try again later.",
+};
 
 export default {
   components: {ProgressIndicator},
   data() {
     return {
-      currentStep: 0,  // 진행 단계 (필요시 동적으로 변경)
-      id: 0,
+      currentStep: 0,
+      batch_id: 0,
       batchJob: {title: "", description: ""},
-      loadingState: {loading: false, success: null, error: null},
+      loadingState: {loading: false, submitted: false},
       messages: {success: null, error: null},
-      submitted: false,  // 폼 제출 상태
     };
   },
   computed: {
@@ -90,38 +95,37 @@ export default {
     },
   },
   methods: {
-    async createBatchJob() {
-      this.submitted = true;  // 폼 제출 상태로 설정
+    clearMessages() {
+      this.messages.success = null;
+      this.messages.error = null;
+    },
 
-      if (!this.batchJob.title) return;  // 제목이 없으면 리턴
-
-      this.loadingState.loading = true;
-      this.clearMessages();  // 메시지 초기화
-
-      try {
-        const response = await axios.post(API_URL, this.batchJob);
-        this.id = response.data.id;
-        this.handleMessages("success", SUCCESS_MSG);
-        this.$router.push(`/batch-jobs/${this.id}/`);
-      } catch (error) {
-        this.handleMessages("error", ERROR_MSG);
-      } finally {
-        this.loadingState.loading = false;
-        this.submitted = false;  // 폼 제출 후 초기화
+    handleMessages(type, message) {
+      this.clearMessages();
+      if (type === "error") {
+        this.messages.error = message;
+      } else if (type === "success") {
+        this.messages.success = message;
       }
     },
 
-    clearMessages() {
-      this.messages = {success: null, error: null};
-      this.loadingState.error = null;
-      this.loadingState.success = null;
-    },
+    async createBatchJob() {
+      if (!this.batchJob?.title) return;
 
-    handleMessages(type, message, details = "") {
-      const fullMessage = details ? `${message} - ${details}` : message;
-      this.messages[type] = fullMessage;
-      this.loadingState.error = type === "error" ? fullMessage : null;
-      this.loadingState.success = type === "success" ? fullMessage : null;
+      try {
+        this.loadingState.submitted = true;
+        this.clearMessages();
+
+        const response = await axios.post(API_BASE_URL, this.batchJob);
+        this.batch_id = response.data.id;
+
+        this.handleMessages("success", SUCCESS_MESSAGES.createSuccess);
+        this.$router.push(`/batch-jobs/${this.batch_id}/`);
+      } catch (error) {
+        this.handleMessages("error", ERROR_MESSAGES.failedToCreateError);
+      } finally {
+        this.loadingState.submitted = false;
+      }
     },
   },
 };
