@@ -150,9 +150,9 @@ class TaskUnitStatus:
 
     VALID_TRANSITIONS = {
         PENDING: [IN_PROGRESS, FAILED],
-        IN_PROGRESS: [COMPLETED, FAILED],
-        COMPLETED: [],
-        FAILED: [],
+        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
+        COMPLETED: [PENDING],
+        FAILED: [PENDING, IN_PROGRESS],
     }
 
     @classmethod
@@ -214,6 +214,12 @@ class TaskUnit(TimestampedModel):
             raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
         self.status = new_status
         self.save()
+
+
+# @receiver(post_save, sender=TaskUnit)
+# def start_celery_task(sender, instance, created, **kwargs):
+#     if created:
+#         process_task_unit.delay(instance.id)
 
 
 # TODO TaskUnitResponse가 삭제될 때, 남아있는 Prompt를 어떻게 할 것인지 고려해야 함.

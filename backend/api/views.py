@@ -10,10 +10,11 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 
-from api.models import BatchJob
+from api.models import BatchJob, TaskUnitStatus, TaskUnit
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
+from tasks.task_queue import process_task_unit
 
 
 class UserBatchJobsView(APIView):
@@ -283,6 +284,10 @@ class BatchJobPreView(APIView):
             )
 
         try:
+            config = batch_job.config if batch_job.config is not None else {}
+            work_unit = int(config['work_unit'])
+            gpt_model = config['gpt_model']
+
             data = request.data
             prompt = data.get('prompt', None)
             selected_headers = data.get('selected_headers', None)
@@ -293,34 +298,49 @@ class BatchJobPreView(APIView):
                     status=HTTP_400_BAD_REQUEST,
                 )
 
-            config = batch_job.config
-            work_unit = int(config['work_unit'])
-            gpt_model = config['gpt_model']
-
             preview = batch_job.get_file_preview()
             preview = json.loads(preview)
-
-            logger.error("preview")
-            logger.error(preview)
 
             filtered_preview = [
                 {key: str(value) for key, value in item.items() if key in selected_headers}
                 for item in preview
             ]
 
-            logger.error("filtered_preview")
-            logger.error(filtered_preview)
+            generate_prompts = [get_prompt(prompt, item) for item in filtered_preview]
+            json_formatted = []
 
-            generate_prompt = [get_prompt(prompt, item) for item in filtered_preview]
-            json_formatted = [{
-                "prompt": item,
-                "result": "test"
-            } for item in generate_prompt]
+            logger.error("generate_prompts")
+            logger.error(generate_prompts)
 
-            logger.error("generate_prompt")
-            logger.error(generate_prompt)
+            for idx, prompt in enumerate(generate_prompts, start=1):
+                logger.error("prompt")
+                logger.error(prompt)
+                logger.error(" ")
+
+                existing_task_units = TaskUnit.objects.filter(batch_job_id=batch_job, unit_index=idx)
+                if existing_task_units.exists():
+                    existing_task_units.delete()
+
+                task_unit = TaskUnit(
+                    batch_job=batch_job,
+                    unit_index=idx,
+                    text_data=prompt,
+                    file_data=None,
+                    status=TaskUnitStatus.PENDING,
+                )
+                task_unit.save()
+
+                process_task_unit.apply_async(args=[task_unit.id])
+
+                json_formatted.append({
+                    "task_unit_id": task_unit.id,
+                    "prompt": prompt,
+                    "result": "",
+                    "status": TaskUnitStatus.PENDING
+                })
 
             return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
+
         except Exception as e:
             return Response(
                 {"error": f"cannot retrive preview: {str(e)}"},
