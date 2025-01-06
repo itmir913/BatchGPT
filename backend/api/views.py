@@ -10,10 +10,10 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 
+from api.models import BatchJob
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
-from job.models import BatchJob
 
 
 class UserBatchJobsView(APIView):

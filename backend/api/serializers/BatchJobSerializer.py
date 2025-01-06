@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
+from api.models import BatchJob
 from api.utils.file_settings import FileSettings
-from job.models import BatchJob
 
 
 class BatchJobSerializer(serializers.ModelSerializer):
