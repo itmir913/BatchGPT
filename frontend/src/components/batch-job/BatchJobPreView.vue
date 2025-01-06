@@ -99,7 +99,7 @@ const API_PREVIEW_POSTFIX = "/preview/";
 const API_CONFIGS_POSTFIX = "/configs/";
 const SUCCESS_MESSAGES = {
   updatedConfigs: "Configuration updated successfully.",
-  loadResult: "Preview result loaded successfully!",
+  loadResult: "The preview has been requested; the result will be available in a moment.",
 };
 const ERROR_MESSAGES = {
   loadBatchJob: "Failed to load Batch Job details. Please try again later.",
