@@ -1,19 +1,19 @@
 <template>
   <div class="container mt-5">
-
     <!-- 5단계 워크플로우 표시 -->
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
+    <div v-if="formStatus.isLoading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
+      <p>{{ formStatus.loadingMessage }}</p>
     </div>
 
     <!-- 메시지 표시 -->
-    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
+    <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{ messages.success }}</div>
+    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
     <div v-if="isReady" class="card">
@@ -36,12 +36,12 @@
                 @change="handleFileChange"
             />
             <button
-                :disabled="uploading"
+                :disabled="formStatus.isUploading"
                 class="btn btn-primary"
                 style="white-space: nowrap;"
                 type="submit"
             >
-              {{ uploading ? "Uploading..." : "Upload File" }}
+              {{ formStatus.isUploading ? "Uploading..." : "Upload File" }}
             </button>
           </form>
         </div>
@@ -59,7 +59,7 @@
             <button class="btn btn-secondary ms-2" @click="editBatchJob">Edit</button>
           </div>
           <button
-              :disabled="isNextButtonDisabled"
+              :disabled="formStatus.isNextButtonDisabled"
               class="btn btn-success"
               @click="goToNextStep"
           >
@@ -68,17 +68,30 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
-import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
+import ProgressIndicator from "@/components/BatchJobProgressIndicator.vue";
+
+// 상수 정의
+const API_BASE_URL = "/api/batch-jobs/";
+const FILE_TYPES_URL = "/api/batch-jobs/supported-file-types/";
+const SUCCESS_MESSAGES = {
+  uploadFile: "File uploaded successfully!",
+  deleteBatchJob: "Batch Job deleted successfully!",
+};
+const ERROR_MESSAGES = {
+  loadBatchJob: "Failed to load Batch Job details. Please try again later.",
+  fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
+  uploadFile: "Error uploading file: ",
+  deleteBatchJob: "Error deleting batch job: ",
+  missingFile: "The uploaded file is missing. Please select a file to upload.",
+};
 
 export default {
-  props: ['batch_id'],
+  props: ["batch_id"],
   components: {
     ProgressIndicator,
   },
@@ -86,42 +99,62 @@ export default {
     return {
       currentStep: 1,
       batchJob: null,
-      loading: true,
-      error: null,
-      success: null,
       selectedFile: null,
       uploading: false,
       allowedFileTypes: [],
+      loadingState: {loading: true, success: null, error: null},
+      messages: {success: null, error: null},
     };
   },
   computed: {
-    isReady() {
-      return !this.loading;
+    // 버튼 상태와 로딩 상태를 하나로 관리
+    formStatus() {
+      return {
+        isNextButtonDisabled: !this.batchJob || !this.batchJob.file_name,
+        isUploading: this.uploading,
+        isLoading: this.loadingState.loading,
+        loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
+      };
     },
-    isNextButtonDisabled() {
-      return !this.batchJob || !this.batchJob.file_name;
+    isReady() {
+      return !this.loadingState.loading;
     },
   },
   methods: {
+    // 메시지 처리 함수
+    clearMessages() {
+      this.messages = {success: null, error: null};
+      this.loadingState.error = null;
+      this.loadingState.success = null;
+    },
+
+    handleMessages(type, message, details = "") {
+      this.clearMessages();
+
+      const fullMessage = details ? `${message} - ${details}` : message;
+      this.messages[type] = fullMessage;
+      this.loadingState.error = type === "error" ? fullMessage : null;
+      this.loadingState.success = type === "success" ? fullMessage : null;
+    },
 
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
+        const response = await axios.get(`${API_BASE_URL}${this.batch_id}/`, {withCredentials: true});
         this.batchJob = response.data;
-        this.clearMessage()
+        this.clearMessages();
       } catch (error) {
-        this.handleError("Failed to load Batch Job details. Please try again later.");
+        this.handleMessages("error", ERROR_MESSAGES.loadBatchJob);
       } finally {
-        this.loading = false;
+        this.loadingState.loading = false;
       }
     },
 
     async fetchFileTypes() {
       try {
-        const response = await axios.get('/api/batch-jobs/supported-file-types/');
-        this.allowedFileTypes = Object.values(response.data); // ['csv', 'pdf', ...]
+        const response = await axios.get(FILE_TYPES_URL);
+        this.allowedFileTypes = Object.values(response.data);
       } catch (error) {
-        this.handleError("Failed to retrieve the types of files supported by the server. Please try again later.");
+        this.handleMessages("error", ERROR_MESSAGES.fileTypes);
       }
     },
 
@@ -129,19 +162,21 @@ export default {
       this.selectedFile = event.target.files[0];
     },
 
-    async uploadFile() {
+    validateFile() {
       if (!this.selectedFile) {
-        return this.handleError("Please select a file to upload.");
+        return "Please select a file to upload.";
       }
-
-      const fileExtension = this.selectedFile.name.split('.').pop().toLowerCase();
+      const fileExtension = this.selectedFile.name.split(".").pop().toLowerCase();
       if (!this.allowedFileTypes.includes(fileExtension)) {
-        this.handleError(`Unsupported file type.
-        Please upload one of the following: ${this.allowedFileTypes.join(', ')}`)
+        return `Unsupported file type. Please upload one of the following: ${this.allowedFileTypes.join(", ")}`;
+      }
+      return null;
+    },
 
-        this.selectedFile = null;
-        this.resetFileInput();
-        return;
+    async uploadFile() {
+      const errorMessage = this.validateFile();
+      if (errorMessage) {
+        return this.handleMessages("error", errorMessage);
       }
 
       try {
@@ -149,34 +184,19 @@ export default {
         formData.append("file", this.selectedFile);
         this.uploading = true;
         const response = await axios.patch(
-            `/api/batch-jobs/${this.batch_id}/upload/`,
+            `${API_BASE_URL}${this.batch_id}/upload/`,
             formData,
             {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
         );
         this.batchJob = response.data;
-        this.handleSuccess("File uploaded successfully!")
+        this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
-        this.handleError(`Error uploading file: ${error.response.data?.error || "Unknown error occurred."}`);
+        this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data?.error || "Unknown error occurred."}`);
       } finally {
         this.uploading = false;
         this.selectedFile = null;
         this.resetFileInput();
       }
-    },
-
-    clearMessage() {
-      this.error = null;
-      this.success = null;
-    },
-
-    handleError(message) {
-      this.error = message;
-      this.success = null;
-    },
-
-    handleSuccess(message) {
-      this.error = null;
-      this.success = message;
     },
 
     resetFileInput() {
@@ -192,18 +212,18 @@ export default {
     async deleteBatchJob() {
       if (confirm("Are you sure you want to delete this batch job?")) {
         try {
-          await axios.delete(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
-          alert("Batch Job deleted successfully!")
+          await axios.delete(`${API_BASE_URL}${this.batch_id}/`, {withCredentials: true});
+          alert(SUCCESS_MESSAGES.deleteBatchJob);
           this.$router.push(`/home`);
         } catch (error) {
-          this.handleError(`Error deleting batch job: ${error.response.data?.error || "Unknown error occurred."}`);
+          this.handleMessages("error", `${ERROR_MESSAGES.deleteBatchJob} ${error.response.data?.error || "Unknown error occurred."}`);
         }
       }
     },
 
     goToNextStep() {
       if (!this.batchJob.file_name) {
-        return this.handleError("The uploaded file is missing. Please select a file to upload.");
+        return this.handleMessages("error", ERROR_MESSAGES.missingFile);
       }
       this.$router.push(`/batch-jobs/${this.batch_id}/configs`);
     },
@@ -213,6 +233,7 @@ export default {
       return new Date(dateString).toLocaleDateString(undefined, options);
     },
   },
+
   mounted() {
     this.fetchBatchJob();
     this.fetchFileTypes();

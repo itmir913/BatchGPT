@@ -1,18 +1,23 @@
 <template>
   <div class="container mt-5">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="null" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
+    <div v-if="loadingState.loading" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
+      <p>Processing your request...</p>
     </div>
 
     <!-- 메시지 -->
-    <div v-if="success" class="alert alert-success text-center mt-4" role="alert">{{ success }}</div>
-    <div v-if="error" class="alert alert-danger text-center mt-4" role="alert">{{ error }}</div>
+    <div v-show="messages.success" class="alert alert-success text-center mt-4" role="alert">
+      {{ messages.success }}
+    </div>
+    <div v-show="messages.error" class="alert alert-danger text-center mt-4" role="alert">
+      {{ messages.error }}
+    </div>
 
     <!-- 배치 작업 폼 -->
     <h2 class="mb-4">Create a New Batch Job</h2>
@@ -30,7 +35,11 @@
                 placeholder="Enter the title of the batch job"
                 required
                 type="text"
+                :class="{ 'is-invalid': !batchJob.title && submitted }"
             />
+            <div v-if="!batchJob.title && submitted" class="invalid-feedback">
+              Title is required.
+            </div>
           </div>
 
           <!-- Description 입력 -->
@@ -46,7 +55,7 @@
           </div>
 
           <!-- Submit 버튼 -->
-          <button :disabled="isButtonDisabled || !batchJob.title" class="btn btn-primary" type="submit">
+          <button :disabled="isFormDisabled" class="btn btn-primary" type="submit">
             Create Batch Job
           </button>
         </form>
@@ -55,71 +64,66 @@
   </div>
 </template>
 
-
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/BatchJobProgressIndicator.vue';
 
+const API_URL = '/api/batch-jobs/create/';
+const SUCCESS_MSG = "Batch Job created successfully!";
+const ERROR_MSG = "Failed to create Batch Job.";
+
 export default {
-  components: {
-    ProgressIndicator,
-  },
+  components: {ProgressIndicator},
   data() {
     return {
-      currentStep: 0, // 현재 진행 중인 단계 (0부터 시작)
-      batchJob: {
-        title: "", // Title 초기값
-        description: "", // Description 초기값
-      },
+      currentStep: 0,  // 진행 단계 (필요시 동적으로 변경)
       id: 0,
-      success: null, // 성공 메시지 상태
-      error: null, // 에러 메시지 상태
-      loading: false, // 로딩 상태
-      isButtonDisabled: false,
+      batchJob: {title: "", description: ""},
+      loadingState: {loading: false, success: null, error: null},
+      messages: {success: null, error: null},
+      submitted: false,  // 폼 제출 상태
     };
   },
   computed: {
-    isReady() {
-      return !this.loading;
+    isFormDisabled() {
+      return !this.batchJob.title || this.loadingState.loading;
     },
   },
   methods: {
     async createBatchJob() {
-      this.isButtonDisabled = true;
-      this.loading = true;
+      this.submitted = true;  // 폼 제출 상태로 설정
+
+      if (!this.batchJob.title) return;  // 제목이 없으면 리턴
+
+      this.loadingState.loading = true;
       this.clearMessages();  // 메시지 초기화
 
       try {
-        const response = await axios.post('/api/batch-jobs/create/', this.batchJob);
+        const response = await axios.post(API_URL, this.batchJob);
         this.id = response.data.id;
-        this.success = "Batch Job created successfully!";
-        this.error = null;
-
-        // 리디렉션을 직접 처리
+        this.handleMessages("success", SUCCESS_MSG);
         this.$router.push(`/batch-jobs/${this.id}/`);
       } catch (error) {
-        this.error = this.getErrorMessage(error);
-        this.success = null;
+        this.handleMessages("error", ERROR_MSG);
       } finally {
-        this.isButtonDisabled = false;
-        this.loading = false;
+        this.loadingState.loading = false;
+        this.submitted = false;  // 폼 제출 후 초기화
       }
     },
 
-    // 오류 메시지를 처리하는 함수
-    getErrorMessage(error) {
-      if (error.response && error.response.data) {
-        return error.response.data.error || "Failed to create Batch Job.";
-      }
-      return "An unexpected error occurred.";
-    },
-
-    // 메시지 초기화 함수
     clearMessages() {
-      this.success = null;
-      this.error = null;
+      this.messages = {success: null, error: null};
+      this.loadingState.error = null;
+      this.loadingState.success = null;
     },
-  }
+
+    handleMessages(type, message, details = "") {
+      const fullMessage = details ? `${message} - ${details}` : message;
+      this.messages[type] = fullMessage;
+      this.loadingState.error = type === "error" ? fullMessage : null;
+      this.loadingState.success = type === "success" ? fullMessage : null;
+    },
+  },
 };
 </script>
 
