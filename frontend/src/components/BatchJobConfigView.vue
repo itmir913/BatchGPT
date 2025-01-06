@@ -92,6 +92,12 @@
         <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
       </div>
 
+      <!-- Success/Failure Message -->
+      <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">
+        {{ messages.success }}
+      </div>
+      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
+
       <!-- Action Buttons -->
       <div class="text-end mb-4 mt-3">
         <button :disabled="formStatus.isSaveButtonDisabled" class="btn btn-primary me-3" @click="configSave">
@@ -102,10 +108,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Success/Failure Message -->
-    <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{ messages.success }}</div>
-    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
 
   </div>
 </template>
