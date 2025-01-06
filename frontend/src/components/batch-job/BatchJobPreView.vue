@@ -57,7 +57,7 @@
       </div>
 
       <!-- 결과 미리보기 -->
-      <div class="mb-3 g-3 p-2">
+      <div class="preview-result-container b-3 g-3 p-2">
         <!-- File Type이 CSV일 때 -->
         <CsvPreview
             :isReady="formStatus.isResultLoading"
@@ -156,7 +156,7 @@ export default {
       if (!Array.isArray(this.previewData.resultData ?? []))
         return [];
       // eslint-disable-next-line no-unused-vars
-      return this.previewData.resultData.map(({task_unit_id, ...rest}) => rest);
+      return this.previewData.resultData.map(({prompt, result, ...rest}) => ({prompt, result}));
     },
   },
   methods: {
@@ -323,9 +323,16 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .container {
   max-width: 1000px;
+}
+</style>
+
+<!-- Preview Result 테이블의 열 너비 고정 -->
+<style scoped>
+.preview-result-container table {
+  table-layout: fixed;
+  width: 100%;
 }
 </style>
