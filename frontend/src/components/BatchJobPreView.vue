@@ -255,6 +255,13 @@ export default {
         return;
       }
 
+      // TODO CSV에서만 작동해야 한다.
+      if (Array.isArray(this.selectedColumns) && this.selectedColumns.length === 0) {
+        this.error = "Please select at least one column.";
+        this.loadingSave = false;
+        return;
+      }
+
       if (!this.prompt.trim()) {
         this.error = "Prompt cannot be empty.";
         this.loadingSave = false;
