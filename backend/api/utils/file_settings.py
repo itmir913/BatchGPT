@@ -74,6 +74,8 @@ class FileSettings:
                 return processor.get_size(file)
             except ValueError as e:
                 raise ValueError(f"Unsupported file: {str(e)}")
+            except Exception as e:
+                raise ValueError(f"Internal Server Error: {str(e)}")
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
 
@@ -87,5 +89,7 @@ class FileSettings:
                 return processor.get_preview(file)
             except ValueError as e:
                 raise ValueError(f"Unsupported file: {str(e)}")
+            except Exception as e:
+                raise ValueError(f"Internal Server Error: {str(e)}")
         else:
             raise ValueError(f"Unsupported file type: {file_type}")

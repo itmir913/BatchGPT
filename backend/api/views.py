@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
-    HTTP_204_NO_CONTENT
+    HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
@@ -153,6 +153,11 @@ class BatchJobFileUploadView(APIView):
                 {"error": str(e)},
                 status=HTTP_400_BAD_REQUEST,
             )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
@@ -212,6 +217,11 @@ class BatchJobConfigView(APIView):
             total_size = batch_job.get_file_total_size() if batch_job.file else 0
         except ValueError as e:
             return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         if work_unit > total_size:
             return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
