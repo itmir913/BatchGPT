@@ -92,17 +92,15 @@ const ERROR_MESSAGES = {
 
 export default {
   props: ["batch_id"],
-  components: {
-    ProgressIndicator,
-  },
+  components: {ProgressIndicator},
   data() {
     return {
       currentStep: 1,
       batchJob: null,
-      selectedFile: null,
-      uploading: false,
       allowedFileTypes: [],
-      loadingState: {loading: true},
+      selectedFile: null,
+
+      loadingState: {loading: true, uploading: false},
       messages: {success: null, error: null},
     };
   },
@@ -111,7 +109,7 @@ export default {
     formStatus() {
       return {
         isNextButtonDisabled: !this.batchJob || !this.batchJob.file_name,
-        isUploading: this.uploading,
+        isUploading: this.loadingState.uploading,
         isLoading: this.loadingState.loading,
         isReady: !this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
@@ -180,7 +178,7 @@ export default {
       try {
         const formData = new FormData();
         formData.append("file", this.selectedFile);
-        this.uploading = true;
+        this.loadingState.uploading = true;
         const response = await axios.patch(
             `${API_BASE_URL}${this.batch_id}/upload/`,
             formData,
@@ -191,7 +189,7 @@ export default {
       } catch (error) {
         this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data?.error || "Unknown error occurred."}`);
       } finally {
-        this.uploading = false;
+        this.loadingState.uploading = false;
         this.selectedFile = null;
         this.resetFileInput();
       }
