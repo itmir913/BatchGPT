@@ -55,7 +55,10 @@ class BatchJob(TimestampedModel):
         validators=[FileExtensionValidator(allowed_extensions=[key for key in FileSettings.FILE_TYPES.keys()])],
         verbose_name="Uploaded File")
 
-    file_name = models.CharField(max_length=255, default='default_filename')
+    file_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True)
 
     """
         배치 작업 기본 설정
