@@ -7,10 +7,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
-    HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
+    HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
-from api.models import BatchJob, TaskUnitStatus, TaskUnit
+from api.models import BatchJob, TaskUnitStatus, TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
@@ -353,3 +353,33 @@ class BatchJobSupportFileType(APIView):
 
     def get(self, request):
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
+
+
+class TaskUnits(APIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    status_code_map = {
+        TaskUnitStatus.PENDING: HTTP_202_ACCEPTED,
+        TaskUnitStatus.IN_PROGRESS: HTTP_202_ACCEPTED,
+        TaskUnitStatus.COMPLETED: HTTP_201_CREATED,
+        TaskUnitStatus.FAILED: HTTP_400_BAD_REQUEST,
+    }
+
+    def get(self, request, task_unit_id):
+        try:
+            task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
+            status = task_unit_result.status
+
+            response_data = {
+                "task_unit_id": task_unit_id,
+                "status": status
+            }
+
+            if status == TaskUnitStatus.COMPLETED:
+                json_data = json.loads(task_unit_result.response_data)
+                response_data["result"] = json_data['choices'][0]['message']['content']
+
+            return JsonResponse(response_data, status=self.status_code_map.get(status, HTTP_500_INTERNAL_SERVER_ERROR))
+
+        except TaskUnitResponse.DoesNotExist:
+            return JsonResponse({"status": "ERROR", "message": "Task unit not found"}, status=HTTP_404_NOT_FOUND)

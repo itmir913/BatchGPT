@@ -92,8 +92,9 @@ import ProgressIndicator from "@/components/batch-job/components/ProgressIndicat
 import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import axios from "@/configs/axios";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
+import TaskUnitChecker from "@/components/batch-job/components/TaskUnitChecker"
 
-const API_BASE_URL = "/api/batch-jobs/";
+const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";
 const API_CONFIGS_POSTFIX = "/configs/";
 const SUCCESS_MESSAGES = {
@@ -129,6 +130,10 @@ export default {
         },
         resultData: [],
       },
+      taskUnits: {
+        taskUnitChecker: null,
+        taskUnitIds: [],
+      },
     };
   },
   computed: {
@@ -148,7 +153,10 @@ export default {
       return this.previewData.fetchData.map(({index, ...rest}) => rest);
     },
     resultFilteredData() {
-      return this.previewData.resultData;
+      if (!Array.isArray(this.previewData.resultData ?? []))
+        return [];
+      // eslint-disable-next-line no-unused-vars
+      return this.previewData.resultData.map(({task_unit_id, ...rest}) => rest);
     },
   },
   methods: {
@@ -170,7 +178,7 @@ export default {
     async fetchBatchJob() {
       try {
         this.clearMessages();
-        const response = await axios.get(`${API_BASE_URL}${this.batch_id}${API_CONFIGS_POSTFIX}`, {withCredentials: true});
+        const response = await axios.get(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_CONFIGS_POSTFIX}`, {withCredentials: true});
         this.batchJob = response.data;
 
         this.previewData.work_unit = this.batchJob.config.work_unit ?? 1;
@@ -187,7 +195,7 @@ export default {
       try {
         this.clearMessages();
         this.loadingState.previewLoading = true;
-        const response = await axios.get(`${API_BASE_URL}${this.batch_id}${API_PREVIEW_POSTFIX}`, {withCredentials: true});
+        const response = await axios.get(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, {withCredentials: true});
         this.previewData.fetchData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.loadPreview);
@@ -229,7 +237,7 @@ export default {
       };
 
       try {
-        const response = await axios.patch(`${API_BASE_URL}${this.batch_id}${API_CONFIGS_POSTFIX}`, payload);
+        const response = await axios.patch(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_CONFIGS_POSTFIX}`, payload);
         this.batchJob = response.data;
 
         if (!this.batchJob) {
@@ -262,13 +270,14 @@ export default {
 
       try {
         this.loadingState.resultLoading = true;
+        this.taskUnits.taskUnitChecker.stopAllChecking()
 
         const payload = {
           'prompt': this.previewData.prompt,
           'selected_headers': this.previewData.CSV.selectedColumns,
         };
 
-        const response = await axios.post(`${API_BASE_URL}${this.batch_id}${API_PREVIEW_POSTFIX}`, payload);
+        const response = await axios.post(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, payload);
         this.previewData.resultData = response.data;
 
         if (!response.data) {
@@ -276,6 +285,19 @@ export default {
           this.batchJob = null;
           return;
         }
+
+        this.taskUnitIds = this.previewData.resultData.map(item => item.task_unit_id);
+
+        this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.taskUnitIds);
+        this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
+          const previewItem = this.previewData.resultData.find(item => item.task_unit_id === taskId);
+          if (previewItem) {
+            previewItem.status = status;
+            previewItem.result = result;
+          } else {
+            console.error(`Task ID ${taskId} not found in previewData.resultData`);
+          }
+        });
 
         this.handleMessages("success", SUCCESS_MESSAGES.loadResult);
       } catch (error) {
@@ -293,6 +315,10 @@ export default {
   mounted() {
     this.fetchBatchJob();
     this.fetchPreviewData();
+    this.taskUnits.taskUnitChecker = new TaskUnitChecker();
+  },
+  beforeUnmount() {
+    this.taskUnits.taskUnitChecker.stopAllChecking();
   },
 };
 </script>

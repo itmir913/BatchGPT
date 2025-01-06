@@ -62,7 +62,7 @@ def process_task_unit(self, task_unit_id):
             raise self.retry(exc=e, countdown=1)
 
     except TaskUnit.DoesNotExist as e:
-        raise self.retry(exc=e, countdown=1)
+        pass
 
 
 @shared_task
