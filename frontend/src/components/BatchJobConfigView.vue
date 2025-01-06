@@ -40,12 +40,15 @@
           <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
             <input id="work_unit{{ unit }}"
                    v-model.number="work_unit" :value="unit"
-                   class="form-check-input" type="radio"/>
+                   :disabled="isWorkUnitDisabled" class="form-check-input"
+                   type="radio"/>
             <label :for="'work_unit' + unit" class="form-check-label">{{ unit }}</label>
           </div>
           <div class="input-group w-25">
             <span class="input-group-text">Custom Units:</span>
-            <input v-model.number="work_unit" class="form-control" min="1" placeholder="Unit" type="number"/>
+            <input v-model.number="work_unit" :disabled="isWorkUnitDisabled" class="form-control" min="1"
+                   placeholder="Unit"
+                   type="number"/>
           </div>
         </div>
 
@@ -54,6 +57,9 @@
         </div>
         <div class="text-dark">
           A total of {{ totalRequests }} requests will be processed.
+        </div>
+        <div v-if="isWorkUnitDisabled" class="text-success">
+          This option is disabled as the current file type does not support it.
         </div>
         <div v-if="remainder !== 0" class="text-danger">
           There are {{ remainder }} items left to process with the last request.
@@ -144,6 +150,9 @@ export default {
     canNext() {
       const config = this.batchJob.config ?? {};
       return Object.keys(config).length === 0;
+    },
+    isWorkUnitDisabled() {
+      return this.batchJob.file_type !== 'pdf';
     },
   },
   methods: {
