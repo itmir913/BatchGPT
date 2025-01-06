@@ -1,7 +1,7 @@
 <template>
   <div v-if="isReady">
-    <h3 class="text-center mt-4 mb-2">Select Number of Items per Task</h3>
-    <div class="d-flex justify-content-center align-items-center mb-2">
+    <h3 class="text-center my-3">Select Number of Items per Task</h3>
+    <div class="d-flex justify-content-center align-items-center mb-3">
       <!-- 라디오 버튼들 -->
       <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
         <input
@@ -17,7 +17,7 @@
 
       <!-- 사용자 입력 필드 -->
       <div class="input-group w-25">
-        <span class="input-group-text">Custom Units:</span>
+        <span class="input-group-text">Custom:</span>
         <input
             v-model.number="localWorkUnit"
             :disabled="isSupportedType"
@@ -29,24 +29,25 @@
       </div>
     </div>
 
-    <!-- 안내 메시지 -->
-    <div class="text-info">
-      Each time a request is made to GPT, it processes items in groups of {{ localWorkUnit }} items.
+    <!-- 정보 메시지 -->
+    <div class="text-info mb-1">
+      Each request to GPT processes {{ localWorkUnit }} items at a time.
     </div>
-    <div class="text-dark">
-      A total of {{ totalRequests }} requests will be processed.
+    <div class="text-dark mb-1">
+      Total requests: {{ totalRequests }}
     </div>
 
-    <div v-if="isSupportedType" class="text-success">
+    <!-- 지원 유형 메시지 -->
+    <div v-if="isSupportedType" class="text-success mb-1">
       This option is disabled as the current file type does not support it.
     </div>
 
     <!-- 경고 메시지 -->
-    <div v-if="remainder !== 0" class="text-danger">
-      There are {{ remainder }} items left to process with the last request.
+    <div v-if="remainder !== 0" class="text-danger mb-1">
+      {{ remainder }} items will remain in the last request.
     </div>
-    <div v-if="localWorkUnit > batchJob.total_size" class="text-bg-danger">
-      The {{ localWorkUnit }} work unit cannot exceed the total size.
+    <div v-if="localWorkUnit > batchJob.total_size" class="text-danger mb-1">
+      The work unit size cannot exceed the total size.
     </div>
   </div>
 </template>

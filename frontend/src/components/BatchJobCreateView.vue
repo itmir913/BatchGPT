@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-5">
+  <div class="container mt-4">
     <!-- 진행 상태 표시 -->
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
@@ -12,15 +12,15 @@
     </div>
 
     <!-- Success/Failure Message -->
-    <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-4" role="alert">
+    <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-3" role="alert">
       {{ messages.success }}
     </div>
-    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">
+    <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">
       {{ messages.error }}
     </div>
 
     <!-- 배치 작업 폼 -->
-    <h2 class="mb-4">Create a New Batch Job</h2>
+    <h2 class="mb-3">Create a New Batch Job</h2>
     <div class="card">
       <div class="card-body">
         <!-- Form 시작 -->

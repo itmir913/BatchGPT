@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-5">
+  <div class="container mt-4">
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
@@ -10,9 +10,9 @@
       <p>{{ formStatus.loadingMessage }}</p>
     </div>
 
-    <div v-if="formStatus.isReady" class="mb-4 g-4 p-3">
+    <div v-if="formStatus.isReady" class="p-2 mb-3">
       <h3>Uploaded File</h3>
-      <table class="table table-striped table-bordered table-responsive mb-4">
+      <table class="table table-striped table-bordered table-responsive mb-3">
         <thead class="table-light">
         <tr>
           <th style="width: 30%;">Item</th>
@@ -36,7 +36,7 @@
       </table>
 
       <!-- Work Unit Selection Section -->
-      <div class="mb-4 g-4 p-3">
+      <div class="p-2 mb-3">
         <WorkUnitSettings
             :batchJob="batchJob"
             :isReady="formStatus.isReady"
@@ -45,7 +45,7 @@
       </div>
 
       <!-- GPT Model Selection -->
-      <div class="mb-4 g-4 p-3">
+      <div class="p-2 mb-3">
         <h3 class="text-center">Select GPT Model</h3>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
           <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
@@ -62,19 +62,19 @@
       </div>
 
       <!-- Prompt Input Section -->
-      <div class="mb-4 g-4 p-3">
+      <div class="p-2 mb-3">
         <h3>Input Prompt</h3>
         <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
       </div>
 
       <!-- Success/Failure Message -->
-      <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">
+      <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
         {{ messages.success }}
       </div>
-      <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
+      <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
 
       <!-- Action Buttons -->
-      <div class="text-end mb-4 mt-3">
+      <div class="text-end mt-3">
         <button :disabled="formStatus.isSaveButtonDisabled" class="btn btn-primary me-3" @click="configSave">
           Save
         </button>

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-5">
+  <div class="container mt-4">
     <!-- 5단계 워크플로우 표시 -->
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
@@ -12,12 +12,11 @@
     </div>
 
     <!-- 메시지 표시 -->
-    <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{ messages.success }}</div>
-    <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
-
+    <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{ messages.success }}</div>
+    <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
 
     <!-- 배치 작업 상세 정보 -->
-    <div v-if="formStatus.isReady" class="card">
+    <div v-if="formStatus.isReady" class="card mt-3">
       <div class="card-body">
         <h2 class="card-title">{{ batchJob.title }}</h2>
         <p class="card-text">{{ batchJob.description || "No description provided." }}</p>
@@ -27,9 +26,9 @@
         </p>
 
         <!-- 파일 업로드 섹션 -->
-        <div class="mt-4">
+        <div class="mt-3">
           <h5>File Upload</h5>
-          <form class="d-flex align-items-center gap-2" @submit.prevent="uploadFile">
+          <form class="d-flex align-items-center gap-3" @submit.prevent="uploadFile">
             <input
                 ref="fileInput"
                 class="form-control flex-grow-1"
@@ -48,13 +47,13 @@
         </div>
 
         <!-- 업로드된 파일 정보 -->
-        <div v-if="batchJob.file_name" class="mt-4">
+        <div v-if="batchJob.file_name" class="mt-3">
           <h5>Uploaded File</h5>
           <h6>{{ batchJob.file_name }}</h6>
         </div>
 
         <!-- 하단 버튼 추가 -->
-        <div class="d-flex justify-content-between mt-4">
+        <div class="d-flex justify-content-between mt-3">
           <div>
             <button class="btn btn-danger" @click="deleteBatchJob">Delete</button>
             <button class="btn btn-secondary ms-2" @click="editBatchJob">Edit</button>

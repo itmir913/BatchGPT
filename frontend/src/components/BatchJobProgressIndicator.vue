@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- 배치 GPT 타이틀 -->
-    <h1 class="text-center cursor-pointer hover-effect" @click="goToHome">BatchGPT</h1>
+    <h1 class="text-center cursor-pointer hover-effect mb-3" @click="goToHome">BatchGPT</h1>
 
     <!-- 진행 상태 표시 -->
-    <div class="progress-indicator d-flex justify-content-between my-4">
+    <div class="progress-indicator d-flex justify-content-between my-3">
       <div
           v-for="(step, index) in steps"
           :key="index"
@@ -18,7 +18,6 @@
     </div>
   </div>
 </template>
-
 
 <script>
 export default {

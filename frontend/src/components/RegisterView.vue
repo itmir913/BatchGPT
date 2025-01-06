@@ -7,7 +7,7 @@
       <!-- 회원가입 폼 -->
       <form @submit.prevent="register">
         <!-- 아이디 입력 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="username">아이디</label>
           <input
               id="username"
@@ -20,7 +20,7 @@
         </div>
 
         <!-- 이메일 입력 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="email">이메일</label>
           <input
               id="email"
@@ -33,7 +33,7 @@
         </div>
 
         <!-- 비밀번호 입력 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="password">비밀번호</label>
           <input
               id="password"
@@ -46,7 +46,7 @@
         </div>
 
         <!-- 비밀번호 확인 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="passwordConfirm">비밀번호 확인</label>
           <input
               id="passwordConfirm"
@@ -63,7 +63,9 @@
         </div>
 
         <!-- 회원가입 버튼 -->
-        <button :disabled="isButtonDisabled || !isFormValid" class="btn btn-primary w-100" type="submit">회원가입</button>
+        <button :disabled="isButtonDisabled || !isFormValid" class="btn btn-primary w-100" type="submit">
+          회원가입
+        </button>
 
         <!-- 에러 메시지 -->
         <div v-if="error" class="alert alert-danger mt-3">
@@ -78,7 +80,6 @@
     </div>
   </div>
 </template>
-
 
 <script>
 import axios from '@/configs/axios';

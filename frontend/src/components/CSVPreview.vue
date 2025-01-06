@@ -1,35 +1,37 @@
 <template>
-    <table v-if="Array.isArray(filteredData) && filteredData.length > 0"
-           class="table table-hover table-bordered table-striped mt-3">
-      <thead class="table-primary">
-      <tr>
-        <!-- 각 열 이름 -->
-        <th
-            v-for="(value, key) in filteredData[0]"
-            :key="'header-' + key"
-            :class="{ 'selected-column': selectedColumns.includes(key) }"
-            style="cursor: pointer;"
-            @click="toggleColumnSelection(key)"
-        >
-          {{ key }}
-        </th>
-      </tr>
-      </thead>
-      <tbody>
-      <!-- 데이터 행 렌더링 -->
-      <tr v-for="row in filteredData" :key="'row-' + row.id">
-        <td
-            v-for="(value, key) in row"
-            :key="'cell-' + key"
-            :class="{ 'selected-column': selectedColumns.includes(key) }"
-            style="cursor: pointer;"
-            @click="toggleColumnSelection(key)"
-        >
-          {{ value }}
-        </td>
-      </tr>
-      </tbody>
-    </table>
+  <table
+      v-if="Array.isArray(filteredData) && filteredData.length > 0"
+      class="table table-hover table-bordered table-striped mb-2"
+  >
+    <thead class="table-primary">
+    <tr>
+      <!-- 각 열 이름 -->
+      <th
+          v-for="(value, key) in filteredData[0]"
+          :key="'header-' + key"
+          :class="{ 'selected-column': selectedColumns.includes(key) }"
+          style="cursor: pointer;"
+          @click="toggleColumnSelection(key)"
+      >
+        {{ key }}
+      </th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- 데이터 행 렌더링 -->
+    <tr v-for="row in filteredData" :key="'row-' + row.id">
+      <td
+          v-for="(value, key) in row"
+          :key="'cell-' + key"
+          :class="{ 'selected-column': selectedColumns.includes(key) }"
+          style="cursor: pointer;"
+          @click="toggleColumnSelection(key)"
+      >
+        {{ value }}
+      </td>
+    </tr>
+    </tbody>
+  </table>
 </template>
 
 <script>

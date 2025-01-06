@@ -5,23 +5,23 @@
       <h2 class="text-center mb-4">로그인</h2>
 
       <!-- 메시지 -->
-      <div v-if="message" :class="`alert ${message.type} text-center mt-4`" role="alert">
+      <div v-if="message" :class="message.type" class="alert text-center mt-4" role="alert">
         {{ message.text }}
       </div>
 
       <!-- 로그인 폼 -->
       <form @submit.prevent="login">
         <!-- 이메일 입력 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="email">이메일</label>
           <input
               id="email"
               v-model="email"
               class="form-control"
+              :class="{ 'is-invalid': email && !isEmailValid }"
               placeholder="이메일을 입력하세요"
               required
               type="email"
-              :class="{'is-invalid': email && !isEmailValid}"
           />
           <div v-if="email && !isEmailValid" class="invalid-feedback">
             올바른 이메일을 입력하세요.
@@ -29,15 +29,15 @@
         </div>
 
         <!-- 비밀번호 입력 -->
-        <div class="form-group mb-3">
+        <div class="mb-3">
           <label class="form-label" for="password">비밀번호</label>
           <input
               id="password"
               v-model="password"
               class="form-control"
+              type="password"
               placeholder="비밀번호를 입력하세요"
               required
-              type="password"
           />
         </div>
 
@@ -48,15 +48,15 @@
       </form>
 
       <!-- 회원가입 링크 -->
-      <div class="register-link text-center mt-3">
-        <p>계정이 없으신가요?
+      <div class="text-center mt-3">
+        <p>
+          계정이 없으신가요?
           <router-link class="link text-primary" to="/register">회원가입</router-link>
         </p>
       </div>
     </div>
   </div>
 </template>
-
 
 <script>
 import axios from '@/configs/axios';

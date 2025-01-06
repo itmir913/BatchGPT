@@ -1,26 +1,28 @@
 <template>
   <div class="container mt-5">
-    <!-- 인증된 사용자 -->
-    <div v-if="!loading && isAuthenticated" class="alert alert-success text-center">
-      <p>Welcome, {{ email }}!</p>
-      <button class="btn btn-primary mt-3" @click="logout">Logout</button>
+    <!-- 인증 상태 -->
+    <div v-if="!loading" :class="isAuthenticated ? 'alert-success' : 'alert-warning'" class="alert text-center">
+      <p v-if="isAuthenticated">Welcome, {{ email }}!</p>
+      <p v-else>Please log in.</p>
+      <button
+          v-if="isAuthenticated"
+          class="btn btn-primary mt-3"
+          @click="logout"
+      >
+        Logout
+      </button>
     </div>
 
-    <!-- 인증되지 않은 사용자 -->
-    <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center">
-      <p>Please log in.</p>
-    </div>
-
-    <!-- 배치 작업 리스트 -->
+    <!-- 배치 작업 섹션 -->
     <div v-if="isAuthenticated" class="mt-5">
+      <!-- 헤더 -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>My Batch Jobs</h2>
-        <!-- 배치 작업 추가 버튼 -->
         <button class="btn btn-success" @click="goToCreateBatchJob">Add New Batch Job</button>
       </div>
 
       <!-- 로딩 상태 -->
-      <div v-if="loading" class="text-center">
+      <div v-if="loading" class="text-center my-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
@@ -33,43 +35,36 @@
 
       <!-- 배치 작업 리스트 -->
       <div v-if="batchJobs.length > 0" class="row">
-        <div
-            v-for="job in batchJobs"
-            :key="job.id"
-            class="col-md-4 mb-4"
-        >
+        <div v-for="job in batchJobs" :key="job.id" class="col-md-4 mb-4">
           <div class="card h-100">
             <div class="card-body">
-              <!-- 제목 및 링크 -->
               <h5 class="card-title">
-                <a :href="`/batch-jobs/${job.id}`" class="text-decoration-none text-primary">
+                <a
+                    :href="`/batch-jobs/${job.id}`"
+                    class="text-decoration-none text-primary"
+                >
                   {{ job.title }}
                 </a>
               </h5>
-
-              <!-- 설명 표시 -->
               <p class="card-text">
                 {{ job.description || "No description provided." }}
               </p>
-
-              <!-- 날짜 표시 -->
               <p class="card-text text-muted">
-                Created At: {{ formatDate(job.created_at) }}<br/>
-                Updated At: {{ formatDate(job.updated_at) }}
+                Created: {{ formatDate(job.created_at) }}<br/>
+                Updated: {{ formatDate(job.updated_at) }}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 배치 작업이 없을 때 -->
-      <p v-else-if="!loading && !error" class="text-center text-muted">
+      <!-- 배치 작업 없음 -->
+      <p v-else class="text-center text-muted">
         No batch jobs found.
       </p>
     </div>
   </div>
 </template>
-
 
 <script>
 import axios from "@/configs/axios";

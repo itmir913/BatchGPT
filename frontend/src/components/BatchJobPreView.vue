@@ -1,19 +1,20 @@
 <template>
-  <div class="container mt-5">
+  <div class="container mt-4">
     <!-- 진행 상태 표시 -->
     <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
 
     <!-- 로딩 상태 -->
-    <div v-if="formStatus.isLoading" class="text-center">
+    <div v-if="formStatus.isLoading" class="text-center mb-3">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
       <p>{{ formStatus.loadingMessage }}</p>
     </div>
 
-    <div v-if="formStatus.isReady" class="mb-4 g-4 p-3">
-      <div> <!-- File Type이 CSV일 때 -->
-        <h3 class="text-center mt-4 mb-2">CSV Preview</h3>
+    <div v-if="formStatus.isReady" class="mb-3">
+      <!-- File Type이 CSV일 때 -->
+      <div class="mb-3 g-3 p-2">
+        <h3 class="text-center mt-3 mb-2">CSV Preview</h3>
         <div>
           <div v-if="previewData.CSV.selectedColumns.length > 0" class="text-dark">
             <div>The following columns will be used in the GPT request,</div>
@@ -35,9 +36,8 @@
         />
       </div>
 
-
       <!-- 프롬프트 입력란 -->
-      <div v-if="formStatus.isReady" class="mb-4 g-4 p-3">
+      <div class="mb-3 g-3 p-2">
         <h3>Input Prompt</h3>
         <textarea
             v-model="previewData.prompt"
@@ -48,7 +48,7 @@
       </div>
 
       <!-- 작업 단위 설정 컴포넌트 -->
-      <div class="mb-4 g-4 p-3">
+      <div class="mb-3 g-3 p-2">
         <WorkUnitSettings
             :batchJob="batchJob"
             :isReady="formStatus.isReady"
@@ -57,7 +57,7 @@
       </div>
 
       <!-- 결과 미리보기 -->
-      <div class="mb-4 g-4">
+      <div class="mb-3 g-3 p-2">
         <!-- File Type이 CSV일 때 -->
         <CsvPreview
             :isReady="formStatus.isResultLoading"
@@ -69,25 +69,23 @@
 
       <!-- 메시지 표시 -->
       <div>
-        <div v-if="messages.success" class="alert alert-success text-center mt-4" role="alert">{{
+        <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{
             messages.success
           }}
         </div>
-        <div v-if="messages.error" class="alert alert-danger text-center mt-4" role="alert">{{ messages.error }}</div>
+        <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
       </div>
 
       <!-- 버튼들 -->
-      <div class="text-end mb-4 mt-3">
+      <div class="text-end mb-3 mt-3">
         <button class="btn btn-secondary me-3" @click="configSave">Save</button>
         <button :disabled="formStatus.isPreviewLoading" class="btn btn-primary me-3" @click="previewRun">Preview
         </button>
         <button class="btn btn-success" @click="goToNextStep">Next</button>
       </div>
-
     </div>
   </div>
 </template>
-
 
 <script>
 import ProgressIndicator from "@/components/BatchJobProgressIndicator.vue";
