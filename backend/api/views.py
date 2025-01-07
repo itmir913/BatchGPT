@@ -28,17 +28,21 @@ class UserBatchJobsView(APIView):
     def get(self, request):
         """
         Retrieve all batch jobs for the authenticated user.
+        현재 사용자의 모든 BatchJob 목록을 반환하는 기능
         """
         # 현재 로그인된 사용자와 연결된 BatchJob 가져오기
         batch_jobs = BatchJob.objects.filter(user=request.user).order_by('-updated_at')
         serializer = BatchJobSerializer(batch_jobs, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
-    """
-    BatchJob 생성 API 엔드포인트
-    """
-
     def post(self, request, *args, **kwargs):
+        """
+        사용자가 BathJob을 생성하는 기능
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         # 요청 데이터를 직렬화
         serializer = BatchJobCreateSerializer(data=request.data)
         if serializer.is_valid():  # 데이터 검증
@@ -52,14 +56,15 @@ class UserBatchJobsView(APIView):
 
 
 class BatchJobDetailView(APIView):
-    """
-    API 엔드포인트: 특정 BatchJob 정보를 반환
-    - URL: /api/batch-jobs/<int:id>/
-    - 메서드: GET
-    """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     def get(self, request, batch_id):
+        """
+        클라이언트 측으로 BatchJob의 제목과 설명을 반환하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -75,6 +80,12 @@ class BatchJobDetailView(APIView):
         return Response(serializer.data, status=HTTP_200_OK)
 
     def patch(self, request, batch_id):
+        """
+        사용자가 BatchJob의 제목과 설명을 업데이트하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -94,6 +105,12 @@ class BatchJobDetailView(APIView):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def delete(self, request, batch_id):
+        """
+        사용자가 자신이 생성한 BatchJob을 삭제하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
@@ -107,14 +124,15 @@ class BatchJobDetailView(APIView):
 
 
 class BatchJobFileUploadView(APIView):
-    """
-    API 엔드포인트: 특정 BatchJob에 파일 업로드
-    - URL: /api/batch-jobs/{id}/upload/
-    - 메서드: PATCH
-    """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     def patch(self, request, batch_id):
+        """
+        사용자가 서버 측으로 파일을 업로드하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -167,14 +185,15 @@ class BatchJobFileUploadView(APIView):
 
 
 class BatchJobConfigView(APIView):
-    """
-    API 엔드포인트: 특정 BatchJob 정보를 반환
-    - URL: /api/batch-jobs/<int:id>/preview/
-    - 메서드: GET
-    """
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     def get(self, request, batch_id):
+        """
+        현재 BatchJob의 구성 설정을 반환하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -203,6 +222,12 @@ class BatchJobConfigView(APIView):
         # )
 
     def patch(self, request, batch_id):
+        """
+        사용자가 결정한 BatchJob Config을 갱신 및 업데이트하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -251,6 +276,12 @@ class BatchJobPreView(APIView):
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     def get(self, request, batch_id):
+        """
+        사용자가 업로드한 CSV, PDF 파일의 일부를 제공하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
@@ -272,6 +303,12 @@ class BatchJobPreView(APIView):
             )
 
     def post(self, request, batch_id):
+        """
+        사용자가 CSV의 헤더, 혹은 PDF의 작업 단위를 결정하고 GPT 미리보기를 요청하는 기능
+        :param request:
+        :param batch_id:
+        :return:
+        """
         logger = logging.getLogger(__name__)
 
         batch_job = get_object_or_404(BatchJob, id=batch_id)
@@ -352,6 +389,11 @@ class BatchJobSupportFileType(APIView):
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     def get(self, request):
+        """
+        클라이언트 측에서 업로드 가능한 파일 타입을 요청하면 반환하는 기능
+        :param request:
+        :return:
+        """
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
 
 
@@ -366,6 +408,13 @@ class TaskUnits(APIView):
     }
 
     def get(self, request, task_unit_id):
+        """
+        하나의 작업 단위에 대하여 진행 상황을 실시간 갱신하고자
+        클라이언트 측에서 현재 상태를 요청하는 기능
+        :param request:
+        :param task_unit_id:
+        :return:
+        """
         try:
             task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
             status = task_unit_result.status

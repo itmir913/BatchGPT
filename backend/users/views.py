@@ -12,6 +12,11 @@ from users.serializers import RegisterSerializer
 
 class RegisterView(APIView):
     def post(self, request):
+        """
+        회원가입 기능
+        :param request:
+        :return:
+        """
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -23,6 +28,11 @@ class RegisterView(APIView):
 
 
 def check_authentication(request):
+    """
+    현재 사용자가 로그인되어 있는지 확인하는 기능
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated:
         return JsonResponse({'is_authenticated': True, 'email': request.user.email})
     else:
@@ -31,6 +41,11 @@ def check_authentication(request):
 
 @api_view(['POST'])
 def login_view(request):
+    """
+    로그인 기능
+    :param request:
+    :return:
+    """
     email = request.data.get('email')
     password = request.data.get('password')
 
@@ -47,6 +62,11 @@ def login_view(request):
 
 
 def logout_view(request):
+    """
+    로그아웃 기능
+    :param request:
+    :return:
+    """
     if request.method == 'POST':
         logout(request)
         return JsonResponse({'message': 'Logged out successfully.'}, status=200)
