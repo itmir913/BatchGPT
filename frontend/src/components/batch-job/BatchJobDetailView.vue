@@ -119,7 +119,7 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: isEditDisabled(this.batchJob.status)
+        isEditDisabled: isEditDisabled(this.batchJob.batch_job_status)
       };
     },
   },
