@@ -1,16 +1,28 @@
 <template>
   <div class="container mt-5">
-    <!-- 인증 상태 -->
-    <div v-if="!loading" :class="isAuthenticated ? 'alert-success' : 'alert-warning'" class="alert text-center">
-      <p v-if="isAuthenticated">Welcome, {{ email }}!</p>
-      <p v-else>Please log in.</p>
-      <button
-          v-if="isAuthenticated"
-          class="btn btn-primary mt-3"
-          @click="logout"
-      >
-        Logout
-      </button>
+    <!-- 인증되지 않은 상태 -->
+    <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center">
+      <p>Please log in.</p>
+    </div>
+
+    <!-- 인증된 상태 -->
+    <div v-if="!loading && isAuthenticated" class="card border-light shadow-lg"
+         style="background: #f8f9fa; border-radius: 1rem;">
+      <div class="card-body">
+        <h4 class="card-title mb-3 text-primary">Welcome, {{ user.email }}!</h4>
+
+        <!-- 추가 정보 출력 (예시) -->
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item bg-light">
+            <strong>Balances:</strong> ${{ user.balance }}
+          </li>
+          <!-- 필요한 추가 정보를 여기에 삽입 -->
+        </ul>
+
+        <button class="btn btn-outline-primary mt-3 w-100" @click="logout">
+          Logout
+        </button>
+      </div>
     </div>
 
     <!-- 배치 작업 섹션 -->
@@ -73,7 +85,10 @@ export default {
   data() {
     return {
       isAuthenticated: false, // 사용자 인증 상태
-      email: "", // 사용자 이메일
+      user: {
+        email: "",
+        balance: 0,
+      },
       batchJobs: [], // 사용자 배치 작업 데이터
       loading: false, // 로딩 상태
       error: null, // 에러 메시지
@@ -87,7 +102,8 @@ export default {
         withCredentials: true,
       });
       this.isAuthenticated = authResponse.data.is_authenticated;
-      this.email = authResponse.data.email;
+      this.user.email = authResponse.data.email;
+      this.balance = authResponse.data.balance;
 
       // 배치 작업 데이터 가져오기
       if (this.isAuthenticated) {

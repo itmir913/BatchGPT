@@ -55,7 +55,11 @@ def login_view(request):
     if user is not None:
         # 인증 성공
         login(request, user)
-        return Response({'message': 'Login successful', 'user': user.username}, status=status.HTTP_200_OK)
+        return Response({
+            'message': 'Login successful',
+            'user': user.username,
+            'balance': user.balance,
+        }, status=status.HTTP_200_OK)
     else:
         # 인증 실패
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
