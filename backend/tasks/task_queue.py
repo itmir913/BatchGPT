@@ -16,8 +16,10 @@ def process_task_unit(self, task_unit_id):
 
     try:
         start_time = time.time()
+
         task_unit = TaskUnit.objects.get(id=task_unit_id)
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
+        task_unit.save()
 
         batch_job = BatchJob.objects.get(id=task_unit.batch_job_id)
         batch_job_config = batch_job.config or {}
@@ -25,7 +27,6 @@ def process_task_unit(self, task_unit_id):
 
         try:
             client = OpenAI(api_key=OPENAI_API_KEY)
-
             response = client.chat.completions.create(
                 model=model,
                 messages=[
@@ -44,8 +45,12 @@ def process_task_unit(self, task_unit_id):
                 request_data=task_unit.text_data,
                 response_data=response.model_dump_json()
             )
-            calculate_and_save_processing_time(task_unit_response, start_time)
+
+            task_unit_response.processing_time = calculate_processing_time(start_time)
+            task_unit_response.save()
+
             task_unit.set_status(TaskUnitStatus.COMPLETED)
+            task_unit.save()
 
         except Exception as e:
             # 예외 처리: 요청 실패 및 오류 발생 시 처리
@@ -56,8 +61,12 @@ def process_task_unit(self, task_unit_id):
                 error_code="500",  # 예시로 500번 에러 코드
                 error_message=str(e),
             )
-            calculate_and_save_processing_time(task_unit_response, start_time)
+
+            task_unit_response.processing_time = calculate_processing_time(start_time)
+            task_unit_response.save()
+
             task_unit.set_status(TaskUnitStatus.FAILED)
+            task_unit.save()
 
             raise self.retry(exc=e, countdown=1)
 
@@ -75,10 +84,7 @@ def resume_pending_tasks():
         process_task_unit.apply_async(args=[task.id])
 
 
-def calculate_and_save_processing_time(task_unit_response, start_time):
+def calculate_processing_time(start_time):
     """작업 시간 계산 후 저장"""
     end_time = time.time()
-    processing_time = end_time - start_time
-
-    # 처리 시간 업데이트
-    task_unit_response.processing_time = processing_time
+    return end_time - start_time

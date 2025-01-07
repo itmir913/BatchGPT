@@ -16,12 +16,46 @@ class TimestampedModel(models.Model):
         abstract = True
 
 
+class BatchJobStatus:
+    """BatchJob의 상태와 전환 규칙 관리"""
+    CREATED = 'CREATED'
+    UPLOADED = 'UPLOADED'
+    CONFIGS = 'CONFIGS'
+    PREVIEWS = 'PREVIEWS'
+    IN_PROGRESS = 'IN_PROGRESS'
+    COMPLETED = 'COMPLETED'
+    FAILED = 'FAILED'
+
+    CHOICES = [
+        (CREATED, 'Created'),
+        (UPLOADED, 'Uploaded'),
+        (CONFIGS, 'Configs'),
+        (PREVIEWS, 'Previews'),
+        (IN_PROGRESS, 'In Progress'),
+        (COMPLETED, 'Completed'),
+        (FAILED, 'Failed'),
+    ]
+
+    VALID_TRANSITIONS = {
+        CREATED: [UPLOADED],
+        UPLOADED: [UPLOADED, CONFIGS],
+        CONFIGS: [UPLOADED, CONFIGS, PREVIEWS],
+        PREVIEWS: [UPLOADED, CONFIGS, PREVIEWS, IN_PROGRESS],
+        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
+        COMPLETED: [IN_PROGRESS],
+        FAILED: [IN_PROGRESS, FAILED],
+    }
+
+    @classmethod
+    def is_valid_transition(cls, current_status, new_status):
+        """상태 전환이 유효한지 확인"""
+        return new_status in cls.VALID_TRANSITIONS.get(current_status, [])
+
+
 class BatchJob(TimestampedModel):
     """사용자가 생성한 배치 작업"""
 
-    """
-        사용자 키
-    """
+    """사용자 키"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -29,9 +63,7 @@ class BatchJob(TimestampedModel):
         verbose_name="User"
     )
 
-    """
-        배치 작업 기본 설명(제목, 설명)
-    """
+    """배치 작업 기본 설명(제목, 설명)"""
     title = models.CharField(
         max_length=255,
         verbose_name="Title",
@@ -45,9 +77,7 @@ class BatchJob(TimestampedModel):
         help_text="배치 작업에 대한 설명을 입력하세요. (선택 사항)"
     )
 
-    """
-        업로드한 파일 설정
-    """
+    """업로드한 파일 설정"""
     file = models.FileField(
         upload_to=FileSettings.get_upload_path,
         blank=True,
@@ -60,13 +90,19 @@ class BatchJob(TimestampedModel):
         blank=True,
         null=True)
 
-    """
-        배치 작업 기본 설정
-    """
+    """배치 작업 기본 설정"""
     config = models.JSONField(
         null=True,
         blank=True,
         verbose_name="Configurations for BatchJob"
+    )
+
+    """BatchJob 상태 관리"""
+    status = models.CharField(
+        max_length=20,
+        choices=BatchJobStatus.CHOICES,
+        default=BatchJobStatus.CREATED,
+        verbose_name="Status"
     )
 
     class Meta:
@@ -77,6 +113,12 @@ class BatchJob(TimestampedModel):
 
     def __str__(self):
         return f"BatchJob {self.id} - {self.user.email}"
+
+    def set_status(self, new_status):
+        """상태 변경 메서드"""
+        if not BatchJobStatus.is_valid_transition(self.status, new_status):
+            raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
+        self.status = new_status
 
     def clean(self):
         """유효성 검사: 파일 확장자 확인"""
@@ -109,7 +151,6 @@ class BatchJob(TimestampedModel):
         """기존 파일 삭제 -> 유효성 검사 -> 새 파일 저장"""
         self.delete_old_file()
         self.clean()
-
         super().save(*args, **kwargs)
 
     def process_file(self):
@@ -213,7 +254,6 @@ class TaskUnit(TimestampedModel):
         if not TaskUnitStatus.is_valid_transition(self.status, new_status):
             raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
         self.status = new_status
-        self.save()
 
 
 # @receiver(post_save, sender=TaskUnit)
