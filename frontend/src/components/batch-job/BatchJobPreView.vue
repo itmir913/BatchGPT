@@ -37,17 +37,12 @@
         />
       </div>
 
-      <!-- 프롬프트 입력란 -->
-      <div class="mb-3 g-3 p-2">
-        <h3>Input Prompt</h3>
-        <textarea
-            v-model="previewData.prompt"
-            class="form-control"
-            placeholder="Enter your prompt..."
-            rows="5"
-            :disabled="batchJobStatus.isEditDisabled"
-        ></textarea>
-      </div>
+      <!-- Input Prompt 컴포넌트 -->
+      <InputPrompt
+          :disabled="batchJobStatus.isEditDisabled"
+          :prompt="previewData.prompt"
+          @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
+      />
 
       <!-- 작업 단위 설정 컴포넌트 -->
       <div class="mb-3 g-3 p-2">
@@ -96,9 +91,11 @@
 </template>
 
 <script>
+import axios from "@/configs/axios";
+
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
-import axios from "@/configs/axios";
+import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import TaskUnitChecker from "@/components/batch-job/components/TaskUnitChecker"
 import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
@@ -122,7 +119,7 @@ const ERROR_MESSAGES = {
 
 export default {
   props: ['batch_id'],
-  components: {WorkUnitSettings, CsvPreview, ProgressIndicator},
+  components: {WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
       currentStep: 3,

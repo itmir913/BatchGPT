@@ -63,13 +63,12 @@
         </div>
       </div>
 
-      <!-- Prompt Input Section -->
-      <div class="p-2 mb-3">
-        <h3>Input Prompt</h3>
-        <textarea v-model="prompt" :disabled="batchJobStatus.isEditDisabled"
-                  class="form-control"
-                  placeholder="Enter your prompt..." rows="5"/>
-      </div>
+      <!-- Input Prompt 컴포넌트 -->
+      <InputPrompt
+          :disabled="batchJobStatus.isEditDisabled"
+          :prompt="prompt"
+          @update:prompt="(newPrompt) => (prompt = newPrompt)"
+      />
 
       <!-- Success/Failure Message -->
       <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
@@ -100,6 +99,7 @@ import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
+import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 
 // 상수화 가능한 값 정의
 const API_BASE_URL = "/api/batch-jobs/";
@@ -119,6 +119,7 @@ const ERROR_MESSAGES = {
 export default {
   props: ['batch_id'],
   components: {
+    InputPrompt,
     WorkUnitSettings,
     ProgressIndicator,
   },
