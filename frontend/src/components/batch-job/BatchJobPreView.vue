@@ -62,8 +62,6 @@
         <CsvPreview
             :isReady="formStatus.isResultLoading"
             :previewData="resultFilteredData"
-            :selectedColumns="previewData.CSV.resultSelectedColumns"
-            @toggle-column="toggleColumnSelection"
         />
       </div>
 
@@ -126,7 +124,6 @@ export default {
         work_unit: 1,
         CSV: {
           selectedColumns: [],
-          resultSelectedColumns: [], // 사용하지 않음
         },
         resultData: [],
       },
@@ -292,7 +289,7 @@ export default {
         this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
           const previewItem = this.previewData.resultData.find(item => item.task_unit_id === taskId);
           if (previewItem) {
-            previewItem.status = status;
+            // previewItem.status = status;
             previewItem.result = result;
           } else {
             console.error(`Task ID ${taskId} not found in previewData.resultData`);

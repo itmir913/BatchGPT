@@ -38,7 +38,10 @@
 export default {
   props: {
     previewData: Array,
-    selectedColumns: Array,
+    selectedColumns: {
+      type: Array,
+      default: () => []
+    },
     isReady: Boolean,
   },
   computed: {
