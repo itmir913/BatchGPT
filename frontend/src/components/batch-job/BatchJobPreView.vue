@@ -55,12 +55,26 @@
       </div>
 
       <!-- 결과 미리보기 -->
-      <div class="preview-result-container b-3 g-3 p-2">
+      <div v-if="!formStatus.isResultLoading && resultFilteredData.length !== 0" class="b-3 g-3 p-2">
         <!-- File Type이 CSV일 때 -->
-        <CsvPreview
-            :isReady="formStatus.isResultLoading"
-            :previewData="resultFilteredData"
-        />
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle custom-table">
+            <thead class="table-dark">
+            <tr>
+              <!-- 열 헤더 -->
+              <th scope="col" style="width: 50%;">Prompt</th>
+              <th scope="col" style="width: 50%;">Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- resultFilteredData를 사용하여 데이터 출력 -->
+            <tr v-for="(item, index) in resultFilteredData" :key="index">
+              <td>{{ item.prompt }}</td>
+              <td>{{ item.result }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- 메시지 표시 -->
@@ -337,12 +351,15 @@ export default {
 .container {
   max-width: 1000px;
 }
-</style>
 
-<!-- Preview Result 테이블의 열 너비 고정 -->
-<style scoped>
-.preview-result-container table {
-  table-layout: fixed;
-  width: 100%;
+/* 열 구분선 추가 */
+.custom-table td,
+.custom-table th {
+  border-right: 1px solid #dee2e6; /* Bootstrap 기본 테이블 경계선 색상 */
+}
+
+.custom-table th:last-child,
+.custom-table td:last-child {
+  border-right: none; /* 마지막 열은 구분선 제거 */
 }
 </style>

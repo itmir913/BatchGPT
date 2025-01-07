@@ -11,7 +11,7 @@ class TaskUnitResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskUnitResponse
-        fields = ['task_unit_id', 'unit_index', 'response_data', 'status']  # response_data 포함
+        fields = ['task_unit_id', 'unit_index', 'request_data', 'response_data', 'status']  # response_data 포함
 
     def to_representation(self, instance):
         """
