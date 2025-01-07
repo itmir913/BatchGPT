@@ -430,7 +430,7 @@ class TaskUnitDetailView(APIView):
         :return:
         """
         try:
-            task_unit = TaskUnit.objects.get(task_unit_id=task_unit_id)
+            task_unit = TaskUnit.objects.get(id=task_unit_id)
             task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
             status = task_unit_result.status
 
