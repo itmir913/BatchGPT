@@ -34,7 +34,11 @@ def check_authentication(request):
     :return:
     """
     if request.user.is_authenticated:
-        return JsonResponse({'is_authenticated': True, 'email': request.user.email})
+        return JsonResponse(
+            {'is_authenticated': True,
+             'email': request.user.email,
+             'balance': request.user.balance
+             })
     else:
         return JsonResponse({'is_authenticated': False})
 

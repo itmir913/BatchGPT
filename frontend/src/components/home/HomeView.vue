@@ -103,7 +103,7 @@ export default {
       });
       this.isAuthenticated = authResponse.data.is_authenticated;
       this.user.email = authResponse.data.email;
-      this.balance = authResponse.data.balance;
+      this.user.balance = authResponse.data.balance;
 
       // 배치 작업 데이터 가져오기
       if (this.isAuthenticated) {
