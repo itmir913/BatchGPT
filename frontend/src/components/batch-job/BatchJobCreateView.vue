@@ -118,3 +118,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.container {
+  max-width: 1000px;
+}
+</style>
