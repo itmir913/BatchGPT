@@ -364,7 +364,7 @@ class BatchJobPreView(APIView):
                     unit_index=idx,
                     text_data=prompt,
                     file_data=None,
-                    status=TaskUnitStatus.PENDING,
+                    task_unit_status=TaskUnitStatus.PENDING,
                 )
                 task_unit.save()
 
@@ -467,7 +467,7 @@ class TaskUnitDetailView(APIView):
         try:
             task_unit = TaskUnit.objects.get(id=task_unit_id)
             task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
-            status = task_unit_result.status
+            status = task_unit_result.task_response_status
 
             response_data = {
                 "batch_id": task_unit.batch_job_id,

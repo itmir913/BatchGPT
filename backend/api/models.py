@@ -95,7 +95,7 @@ class BatchJob(TimestampedModel):
     )
 
     """BatchJob 상태 관리"""
-    status = models.CharField(
+    batch_job_status = models.CharField(
         max_length=20,
         choices=BatchJobStatus.CHOICES,
         default=BatchJobStatus.CREATED,
@@ -113,9 +113,9 @@ class BatchJob(TimestampedModel):
 
     def set_status(self, new_status):
         """상태 변경 메서드"""
-        if not BatchJobStatus.is_valid_transition(self.status, new_status):
-            raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
-        self.status = new_status
+        if not BatchJobStatus.is_valid_transition(self.batch_job_status, new_status):
+            raise ValueError(f"Invalid status transition from {self.batch_job_status} to {new_status}")
+        self.batch_job_status = new_status
 
     def clean(self):
         """유효성 검사: 파일 확장자 확인"""
@@ -221,7 +221,7 @@ class TaskUnit(TimestampedModel):
         verbose_name="File Data"
     )
 
-    status = models.CharField(
+    task_unit_status = models.CharField(
         max_length=20,
         choices=TaskUnitStatus.CHOICES,
         default=TaskUnitStatus.PENDING,
@@ -234,7 +234,7 @@ class TaskUnit(TimestampedModel):
         verbose_name_plural = 'Task Units'
         indexes = [
             models.Index(fields=['batch_job']),  # 배치 작업별 조회 최적화
-            models.Index(fields=['status']),  # 상태별 조회 최적화
+            models.Index(fields=['task_unit_status']),  # 상태별 조회 최적화
         ]
         constraints = [
             models.UniqueConstraint(
@@ -248,9 +248,9 @@ class TaskUnit(TimestampedModel):
 
     def set_status(self, new_status):
         """상태 변경 메서드"""
-        if not TaskUnitStatus.is_valid_transition(self.status, new_status):
-            raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
-        self.status = new_status
+        if not TaskUnitStatus.is_valid_transition(self.task_unit_status, new_status):
+            raise ValueError(f"Invalid status transition from {self.task_unit_status} to {new_status}")
+        self.task_unit_status = new_status
 
 
 # @receiver(post_save, sender=TaskUnit)
@@ -282,7 +282,7 @@ class TaskUnitResponse(TimestampedModel):
         help_text="ChatGPT로부터 받은 응답 데이터"
     )
 
-    status = models.CharField(
+    task_response_status = models.CharField(
         max_length=20,
         choices=TaskUnitStatus.CHOICES,
         default=TaskUnitStatus.PENDING,
@@ -318,15 +318,15 @@ class TaskUnitResponse(TimestampedModel):
         ordering = ['task_unit', 'created_at']
         indexes = [
             models.Index(fields=['task_unit']),  # 작업 단위별 응답 조회 최적화
-            models.Index(fields=['status']),  # 상태별 조회 최적화
+            models.Index(fields=['task_response_status']),  # 상태별 조회 최적화
         ]
 
     def __str__(self):
-        return f"Response for TaskUnit {self.task_unit.id} - Status: {self.status}"
+        return f"Response for TaskUnit {self.task_unit.id} - Status: {self.task_response_status}"
 
     def set_status(self, new_status):
         """상태 변경 메서드"""
-        if not TaskUnitStatus.is_valid_transition(self.status, new_status):
-            raise ValueError(f"Invalid status transition from {self.status} to {new_status}")
-        self.status = new_status
+        if not TaskUnitStatus.is_valid_transition(self.task_response_status, new_status):
+            raise ValueError(f"Invalid status transition from {self.task_response_status} to {new_status}")
+        self.task_response_status = new_status
         self.save()

@@ -18,7 +18,7 @@ def process_task_unit(self, task_unit_id):
         start_time = time.time()
 
         task_unit = TaskUnit.objects.get(id=task_unit_id)
-        if task_unit.status == TaskUnitStatus.COMPLETED:
+        if task_unit.task_unit_status == TaskUnitStatus.COMPLETED:
             return
 
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
@@ -44,7 +44,7 @@ def process_task_unit(self, task_unit_id):
             # chatgpt_reply = response.choices[0].message.content
             task_unit_response = TaskUnitResponse.objects.create(
                 task_unit=task_unit,
-                status=TaskUnitStatus.COMPLETED,
+                task_response_status=TaskUnitStatus.COMPLETED,
                 request_data=task_unit.text_data,
                 response_data=response.model_dump_json()
             )
@@ -59,7 +59,7 @@ def process_task_unit(self, task_unit_id):
             # 예외 처리: 요청 실패 및 오류 발생 시 처리
             task_unit_response = TaskUnitResponse.objects.create(
                 task_unit=task_unit,
-                status=TaskUnitStatus.FAILED,
+                task_response_status=TaskUnitStatus.FAILED,
                 request_data=task_unit.text_data,
                 error_code="500",  # 예시로 500번 에러 코드
                 error_message=str(e),
@@ -81,7 +81,7 @@ def process_task_unit(self, task_unit_id):
 def resume_pending_tasks():
     from api.models import TaskUnit, TaskUnitStatus
     pending_or_in_progress_tasks = TaskUnit.objects.filter(
-        Q(status=TaskUnitStatus.PENDING) | Q(status=TaskUnitStatus.IN_PROGRESS)
+        Q(task_unit_status=TaskUnitStatus.PENDING) | Q(task_unit_status=TaskUnitStatus.IN_PROGRESS)
     )
     for task in pending_or_in_progress_tasks:
         process_task_unit.apply_async(args=[task.id])

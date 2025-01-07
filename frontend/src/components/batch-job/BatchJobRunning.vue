@@ -27,7 +27,7 @@
                   'badge bg-danger': task.status === 'FAILED'
                 }"
             >
-                {{ task.status }}
+                {{ task.task_response_status }}
               </span>
           </td>
           <td>{{ parseResponseData(task.request_data) }}</td>
