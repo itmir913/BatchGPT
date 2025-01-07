@@ -4,6 +4,7 @@ import logging
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
@@ -398,7 +399,18 @@ class BatchJobSupportFileType(APIView):
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
 
 
-class TaskUnits(APIView):
+class BatchTaskListView(ListAPIView):
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+
+    def get_queryset(self):
+        batch_id = self.kwargs.get('batch_id')  # URL에서 batch_id 가져오기
+        task_unit_id = self.kwargs.get('task_unit_id')  # URL에서 task_unit_id 가져오기
+
+        # 필터링된 쿼리셋 반환
+        return TaskUnit.objects.filter(batch__id=batch_id, id=task_unit_id)
+
+
+class TaskUnitDetailView(APIView):
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     status_code_map = {
@@ -408,19 +420,22 @@ class TaskUnits(APIView):
         TaskUnitStatus.FAILED: HTTP_400_BAD_REQUEST,
     }
 
-    def get(self, request, task_unit_id):
+    def get(self, request, batch_id, task_unit_id):
         """
         하나의 작업 단위에 대하여 진행 상황을 실시간 갱신하고자
         클라이언트 측에서 현재 상태를 요청하는 기능
         :param request:
+        :param batch_id:
         :param task_unit_id:
         :return:
         """
         try:
+            task_unit = TaskUnit.objects.get(task_unit_id=task_unit_id)
             task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
             status = task_unit_result.status
 
             response_data = {
+                "batch_id": task_unit.batch_job_id,
                 "task_unit_id": task_unit_id,
                 "status": status
             }

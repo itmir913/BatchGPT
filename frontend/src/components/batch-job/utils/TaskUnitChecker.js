@@ -1,6 +1,7 @@
 import axios from "@/configs/axios";
 
-const API_BASE_URL_TASK_UNITS = "/api/task-units/";
+const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
+const API_BASE_URL_TASK_UNITS = "/task-units/";
 
 class TaskUnitChecker {
 
@@ -14,7 +15,7 @@ class TaskUnitChecker {
         this.onCompleteCallback = callback;
     }
 
-    startCheckingTaskUnits(taskUnitIds) {
+    startCheckingTaskUnits(batchJobId, taskUnitIds) {
         taskUnitIds.forEach(taskUnitId => {
             const controller = new AbortController();
             this.controllers.set(taskUnitId, controller);
@@ -22,7 +23,7 @@ class TaskUnitChecker {
             // 1초마다 상태 확인
             const intervalId = setInterval(async () => {
                 try {
-                    const response = await this.checkTaskUnitStatus(taskUnitId, controller.signal);
+                    const response = await this.checkTaskUnitStatus(batchJobId, taskUnitId, controller.signal);
                     const status = response.data.status;
                     const result = response.data.result ?? "";
 
@@ -53,8 +54,8 @@ class TaskUnitChecker {
         }, 30000);
     }
 
-    async checkTaskUnitStatus(taskUnitId, signal) {
-        return await axios.get(`${API_BASE_URL_TASK_UNITS}${taskUnitId}/`, {signal});
+    async checkTaskUnitStatus(batchJobId, taskUnitId, signal) {
+        return await axios.get(`${API_BASE_URL_BATCH_JOBS}${batchJobId}${API_BASE_URL_TASK_UNITS}${taskUnitId}/`, {signal});
     }
 
     stopCheckingTaskUnit(taskUnitId) {

@@ -298,7 +298,7 @@ export default {
 
         this.taskUnitIds = this.previewData.resultData.map(item => item.task_unit_id);
 
-        this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.taskUnitIds);
+        this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.batch_id, this.taskUnitIds);
         this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
           const previewItem = this.previewData.resultData.find(item => item.task_unit_id === taskId);
           if (previewItem) {

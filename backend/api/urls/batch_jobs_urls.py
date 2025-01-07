@@ -11,4 +11,7 @@ urlpatterns = [
     path('<int:batch_id>/upload/', batch_jobs.BatchJobFileUploadView.as_view(), name='batch-job-upload-files'),
     path('<int:batch_id>/configs/', batch_jobs.BatchJobConfigView.as_view(), name='batch-job-configs'),
     path('<int:batch_id>/preview/', batch_jobs.BatchJobPreView.as_view(), name='batch-job-preview'),
+    path('<int:batch_id>/task-units/', batch_jobs.BatchTaskListView.as_view(), name='batch-job-task-units'),
+    path('<int:batch_id>/task-units/<int:task_unit_id>/', batch_jobs.TaskUnitDetailView.as_view(),
+         name='task-units-status'),
 ]
