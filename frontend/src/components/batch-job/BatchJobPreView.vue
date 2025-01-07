@@ -97,7 +97,7 @@ import ProgressIndicator from "@/components/batch-job/components/ProgressIndicat
 import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
-import TaskUnitChecker from "@/components/batch-job/components/TaskUnitChecker"
+import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
 import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
 
 const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
