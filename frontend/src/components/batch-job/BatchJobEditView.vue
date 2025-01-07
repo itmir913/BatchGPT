@@ -19,31 +19,12 @@
     <div v-if="batchJob && isReady" class="card">
       <div class="card-body">
         <form @submit.prevent="modifyBatchJob">
-          <!-- Title 입력 -->
-          <div class="mb-3">
-            <label class="form-label" for="title">Title</label>
-            <input
-                id="title"
-                v-model="batchJob.title"
-                class="form-control"
-                placeholder="Enter the title of the batch job"
-                required
-                type="text"
-            />
-          </div>
-
-          <!-- Description 입력 -->
-          <div class="mb-3">
-            <label class="form-label" for="description">Description</label>
-            <textarea
-                id="description"
-                v-model="batchJob.description"
-                class="form-control"
-                placeholder="Enter a description (optional)"
-                rows="4"
-            ></textarea>
-          </div>
-
+          <!-- 하위 컴포넌트 사용 -->
+          <BatchJobInputFields
+              :batchJob="batchJob"
+              :isTitleInvalid="formStatus.isCreateButtonDisabled"
+              @update:batchJob="batchJob = $event"
+          />
           <!-- 버튼 -->
           <div class="d-flex justify-content-end mt-3">
             <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
@@ -58,9 +39,11 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
+import BatchJobInputFields from "@/components/batch-job/components/BatchJobInputFields.vue";
 
 export default {
   components: {
+    BatchJobInputFields,
     ProgressIndicator,
   },
   props: ['batch_id'],
@@ -77,6 +60,12 @@ export default {
   computed: {
     isReady() {
       return !this.loading;
+    },
+
+    formStatus() {
+      return {
+        isCreateButtonDisabled: !this.batchJob.title,
+      };
     },
   },
   methods: {

@@ -25,35 +25,12 @@
       <div class="card-body">
         <!-- Form 시작 -->
         <form @submit.prevent="createBatchJob">
-          <!-- Title 입력 -->
-          <div class="mb-3">
-            <label class="form-label" for="title">Title</label>
-            <input
-                id="title"
-                v-model="batchJob.title"
-                class="form-control"
-                placeholder="Enter the title of the batch job"
-                required
-                type="text"
-                :class="{ 'is-invalid': formStatus.isCreateButtonDisabled }"
-            />
-            <div v-if="formStatus.isCreateButtonDisabled" class="invalid-feedback">
-              Title is required.
-            </div>
-          </div>
-
-          <!-- Description 입력 -->
-          <div class="mb-3">
-            <label class="form-label" for="description">Description</label>
-            <textarea
-                id="description"
-                v-model="batchJob.description"
-                class="form-control"
-                placeholder="Enter a description (optional)"
-                rows="4"
-            ></textarea>
-          </div>
-
+          <!-- 하위 컴포넌트 사용 -->
+          <BatchJobInputFields
+              :batchJob="batchJob"
+              :isTitleInvalid="formStatus.isCreateButtonDisabled"
+              @update:batchJob="batchJob = $event"
+          />
           <!-- Submit 버튼 -->
           <button :disabled="formStatus.isFormDisabled" class="btn btn-primary" type="submit">
             Create Batch Job
@@ -67,6 +44,7 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
+import BatchJobInputFields from '@/components/batch-job/components/BatchJobInputFields.vue';
 
 const API_BASE_URL = '/api/batch-jobs/create/';
 
@@ -79,7 +57,7 @@ const ERROR_MESSAGES = {
 };
 
 export default {
-  components: {ProgressIndicator},
+  components: {ProgressIndicator, BatchJobInputFields},
   data() {
     return {
       currentStep: 0,
@@ -140,9 +118,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.container {
-  max-width: 1000px;
-}
-</style>
