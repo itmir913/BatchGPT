@@ -18,6 +18,9 @@ def process_task_unit(self, task_unit_id):
         start_time = time.time()
 
         task_unit = TaskUnit.objects.get(id=task_unit_id)
+        if task_unit.status == TaskUnitStatus.COMPLETED:
+            return
+
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
         task_unit.save()
 
