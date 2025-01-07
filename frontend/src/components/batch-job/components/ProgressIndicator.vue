@@ -10,10 +10,15 @@
           :key="index"
           :class="['step', getStepClass(index)]"
       >
-        <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
+        <a v-if="index < currentStep && currentStep !== 0" :href="getStepLink(index)"
+           class="text-decoration-none text-primary">
           {{ step }}
         </a>
-        <span v-else>{{ step }}</span>
+        <a v-else-if="index > currentStep && currentStep !== 0" :href="getStepLink(index)"
+           class="text-decoration-none text-primary">
+          {{ step }}
+        </a>
+        <a v-else>{{ step }}</a>
       </div>
     </div>
   </div>
