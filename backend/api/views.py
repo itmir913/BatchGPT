@@ -10,7 +10,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
-from api.models import BatchJob, TaskUnitStatus, TaskUnit, TaskUnitResponse
+from api.models import BatchJob, TaskUnitStatus, TaskUnit, TaskUnitResponse, BatchJobStatus
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
@@ -163,6 +163,7 @@ class BatchJobFileUploadView(APIView):
             batch_job.file_name = file.name
             batch_job.config = {}
 
+            batch_job.set_status(BatchJobStatus.UPLOADED)
             batch_job.save()
         except ValidationError as e:
             return Response(
@@ -255,17 +256,15 @@ class BatchJobConfigView(APIView):
         if work_unit > total_size:
             return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
 
-        # 기존 config 데이터 가져오기
         current_config = batch_job.config or {}
 
-        # 새로운 설정 추가 또는 업데이트
         current_config['work_unit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
         current_config['selected_headers'] = selected_headers
 
-        # 수정된 config 저장
         batch_job.config = current_config
+        batch_job.set_status(BatchJobStatus.CONFIGS)
         batch_job.save()
 
         serializer = BatchJobConfigSerializer(batch_job)
@@ -376,6 +375,8 @@ class BatchJobPreView(APIView):
                     "status": TaskUnitStatus.PENDING
                 })
 
+            batch_job.set_status(BatchJobStatus.CONFIGS)
+            batch_job.save()
             return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
 
         except Exception as e:

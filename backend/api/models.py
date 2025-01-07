@@ -21,7 +21,6 @@ class BatchJobStatus:
     CREATED = 'CREATED'
     UPLOADED = 'UPLOADED'
     CONFIGS = 'CONFIGS'
-    PREVIEWS = 'PREVIEWS'
     IN_PROGRESS = 'IN_PROGRESS'
     COMPLETED = 'COMPLETED'
     FAILED = 'FAILED'
@@ -30,7 +29,6 @@ class BatchJobStatus:
         (CREATED, 'Created'),
         (UPLOADED, 'Uploaded'),
         (CONFIGS, 'Configs'),
-        (PREVIEWS, 'Previews'),
         (IN_PROGRESS, 'In Progress'),
         (COMPLETED, 'Completed'),
         (FAILED, 'Failed'),
@@ -39,8 +37,7 @@ class BatchJobStatus:
     VALID_TRANSITIONS = {
         CREATED: [UPLOADED],
         UPLOADED: [UPLOADED, CONFIGS],
-        CONFIGS: [UPLOADED, CONFIGS, PREVIEWS],
-        PREVIEWS: [UPLOADED, CONFIGS, PREVIEWS, IN_PROGRESS],
+        CONFIGS: [UPLOADED, CONFIGS, IN_PROGRESS],
         IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
         COMPLETED: [IN_PROGRESS],
         FAILED: [IN_PROGRESS, FAILED],
