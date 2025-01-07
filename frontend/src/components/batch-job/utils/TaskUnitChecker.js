@@ -32,7 +32,7 @@ class TaskUnitChecker {
                     }
 
                     // COMPLETED 상태일 경우 interval 중지
-                    if (status === 'COMPLETED') {
+                    if (status === 'Completed') {
                         console.log(`TaskUnit ${taskUnitId} completed.`);
                         this.stopCheckingTaskUnit(taskUnitId);
                     }

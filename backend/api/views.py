@@ -2,18 +2,17 @@ import json
 import logging
 
 from django.core.exceptions import ValidationError
+from django.db.models import Subquery, OuterRef
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
-from api.models import BatchJob, TaskUnitStatus, TaskUnit, TaskUnitResponse, BatchJobStatus
+from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
-from api.serializers.TaskUnitResponseSerializer import TaskUnitResponseSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
 from tasks.task_queue import process_task_unit
@@ -400,49 +399,60 @@ class BatchJobSupportFileType(APIView):
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
 
 
-class BatchTaskListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = TaskUnitResponseSerializer
+class TaskUnitPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+
+
+from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from api.models import TaskUnit, TaskUnitResponse
+
+
+class TaskUnitResponsePagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+
+
+class TaskUnitResponseListAPIView(ListAPIView):
+    pagination_class = TaskUnitResponsePagination
 
     def get_queryset(self):
-        """
-        조인을 활용하여 batch_id에 해당하는 TaskUnitResponse를 가져옵니다.
-        """
-        batch_id = self.kwargs.get('batch_id')  # URL에서 batch_id 가져오기
+        batch_id = self.kwargs.get('batch_id')
 
-        return TaskUnitResponse.objects.filter(task_unit__batch_job__id=batch_id).select_related(
-            'task_unit',  # TaskUnit과 조인 (ForeignKey)
-            'task_unit__batch_job'  # BatchJob과 조인 (ForeignKey의 ForeignKey)
-        )
+        # TaskUnitResponse의 필드를 각각 Subquery로 가져옴
+        response_subquery = TaskUnitResponse.objects.filter(task_unit_id=OuterRef('pk'))
+
+        queryset = TaskUnit.objects.filter(batch_job_id=batch_id).annotate(
+            task_response_status=Subquery(response_subquery.values('task_response_status')[:1]),
+            request_data=Subquery(response_subquery.values('request_data')[:1]),
+            response_data=Subquery(response_subquery.values('response_data')[:1]),
+            error_message=Subquery(response_subquery.values('error_message')[:1]),
+            processing_time=Subquery(response_subquery.values('processing_time')[:1]),
+        ).order_by('unit_index')
+
+        return queryset
 
     def list(self, request, *args, **kwargs):
-        """
-        Pagination을 적용하여 조인된 데이터를 반환합니다.
-        """
-        # 1. QuerySet 필터링 및 가져오기
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # 2. Pagination 적용
+        queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
 
-        # 3. Pagination이 없을 경우 전체 데이터 반환
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    """
-    {
-    "count": 100,  # 전체 데이터 개수
-    "next": "http://example.com/api/items/?page=2",
-    "previous": null,
-    "results": [
-        {"id": 1, "name": "Item 1"},
-        {"id": 2, "name": "Item 2"}
+        # 결과를 직렬화
+        results = [
+            {
+                "id": item.id,
+                "unit_index": item.unit_index,
+                "task_unit_status": item.get_task_unit_status_display(),
+                "request_data": item.text_data if item.text_data is not None else item.file_data,
+                "response_data": item.response_data.get('choices', [])[0].get('message', {}).get('content', None),
+                "error_message": item.error_message,
+                "processing_time": item.processing_time,
+            }
+            for item in page
         ]
-    }
-    """
+
+        return self.get_paginated_response(results)
 
 
 class TaskUnitDetailView(APIView):
@@ -472,11 +482,11 @@ class TaskUnitDetailView(APIView):
             response_data = {
                 "batch_id": task_unit.batch_job_id,
                 "task_unit_id": task_unit_id,
-                "status": status
+                "status": task_unit_result.get_task_response_status_display()
             }
 
             if status == TaskUnitStatus.COMPLETED:
-                json_data = json.loads(task_unit_result.response_data)
+                json_data = task_unit_result.response_data
                 response_data["response_data"] = json_data['choices'][0]['message']['content']
 
             return JsonResponse(response_data, status=self.status_code_map.get(status, HTTP_500_INTERNAL_SERVER_ERROR))

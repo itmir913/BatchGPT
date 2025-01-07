@@ -22,12 +22,12 @@
             <!-- Status 표시 -->
             <span
                 :class="{
-                  'badge bg-success': task.status === 'COMPLETED',
-                  'badge bg-warning text-dark': task.status === 'PENDING',
-                  'badge bg-danger': task.status === 'FAILED'
+                  'badge bg-success': task.task_unit_status === 'Completed',
+                  'badge bg-warning text-dark': task.task_unit_status === 'PENDING',
+                  'badge bg-danger': task.task_unit_status === 'FAILED'
                 }"
             >
-                {{ task.task_response_status }}
+                {{ task.task_unit_status }}
               </span>
           </td>
           <td>{{ parseResponseData(task.request_data) }}</td>

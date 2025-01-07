@@ -1,4 +1,5 @@
 # tasks/task_queue.py
+import json
 import time
 
 from celery import shared_task
@@ -46,7 +47,9 @@ def process_task_unit(self, task_unit_id):
                 task_unit=task_unit,
                 task_response_status=TaskUnitStatus.COMPLETED,
                 request_data=task_unit.text_data,
-                response_data=response.model_dump_json()
+                response_data=response.model_dump_json() if isinstance(response.model_dump_json(),
+                                                                       dict) else json.loads(
+                    response.model_dump_json()),
             )
 
             task_unit_response.processing_time = calculate_processing_time(start_time)
