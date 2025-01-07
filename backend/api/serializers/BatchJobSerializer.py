@@ -8,7 +8,7 @@ class BatchJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = BatchJob
         # fields = "__all__"
-        fields = ['id', 'created_at', 'updated_at', 'title', 'description', 'file_name']
+        fields = ['id', 'created_at', 'updated_at', 'title', 'description', 'file_name', 'status']
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
 
@@ -28,7 +28,7 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
         fields = ['id', 'created_at', 'updated_at',
                   'title', 'description',
                   'file_name', 'file_type', 'total_size',
-                  'config']
+                  'config', 'status']
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
     def get_file_type(self, obj):

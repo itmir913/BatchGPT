@@ -33,6 +33,7 @@
             :previewData="filteredData"
             :selectedColumns="previewData.CSV.selectedColumns"
             @toggle-column="toggleColumnSelection"
+            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 
@@ -44,6 +45,7 @@
             class="form-control"
             placeholder="Enter your prompt..."
             rows="5"
+            :disabled="batchJobStatus.isEditDisabled"
         ></textarea>
       </div>
 
@@ -53,6 +55,7 @@
             :batchJob="batchJob"
             :isReady="formStatus.isReady"
             :work_unit="previewData.work_unit"
+            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 
@@ -76,8 +79,15 @@
 
       <!-- 버튼들 -->
       <div class="text-end mb-3 mt-3">
-        <button class="btn btn-secondary me-3" @click="configSave">Save</button>
-        <button :disabled="formStatus.isPreviewLoading" class="btn btn-primary me-3" @click="previewRun">Preview
+        <button :disabled="batchJobStatus.isEditDisabled"
+                class="btn btn-secondary me-3"
+                @click="configSave">
+          Save
+        </button>
+        <button :disabled="formStatus.isPreviewLoading|| batchJobStatus.isEditDisabled"
+                class="btn btn-primary me-3"
+                @click="previewRun">
+          Preview
         </button>
         <button class="btn btn-success" @click="goToNextStep">Next</button>
       </div>
@@ -91,6 +101,7 @@ import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import axios from "@/configs/axios";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import TaskUnitChecker from "@/components/batch-job/components/TaskUnitChecker"
+import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
 
 const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";
@@ -154,6 +165,11 @@ export default {
         return [];
       // eslint-disable-next-line no-unused-vars
       return this.previewData.resultData.map(({prompt, result, ...rest}) => ({prompt, result}));
+    },
+    batchJobStatus() {
+      return {
+        isEditDisabled: isEditDisabled(this.batchJob.status)
+      };
     },
   },
   methods: {

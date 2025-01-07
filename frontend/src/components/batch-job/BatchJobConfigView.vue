@@ -41,6 +41,7 @@
             :batchJob="batchJob"
             :isReady="formStatus.isReady"
             :work_unit="work_unit"
+            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 
@@ -53,6 +54,7 @@
                  @click="gpt_model = key">
               <div class="card-body d-flex flex-column justify-content-center text-center">
                 <input id="model" v-model="gpt_model" :value="key" class="form-check-input" style="display: none;"
+                       :disabled="batchJobStatus.isEditDisabled"
                        type="radio"/>
                 <label :for="key" class="form-check-label">{{ model }}</label>
               </div>
@@ -64,7 +66,9 @@
       <!-- Prompt Input Section -->
       <div class="p-2 mb-3">
         <h3>Input Prompt</h3>
-        <textarea v-model="prompt" class="form-control" placeholder="Enter your prompt..." rows="5"></textarea>
+        <textarea v-model="prompt" :disabled="batchJobStatus.isEditDisabled"
+                  class="form-control"
+                  placeholder="Enter your prompt..." rows="5"/>
       </div>
 
       <!-- Success/Failure Message -->
@@ -75,11 +79,15 @@
 
       <!-- Action Buttons -->
       <div class="text-end mt-3">
-        <button :disabled="formStatus.isSaveButtonDisabled" class="btn btn-primary me-3" @click="configSave">
+        <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
+                class="btn btn-primary me-3"
+                @click="configSave">
           Save
         </button>
-        <button :disabled="formStatus.isNextButtonDisabled" class="btn btn-success"
-                @click="goToNextStep">Next
+        <button :disabled="formStatus.isNextButtonDisabled"
+                class="btn btn-success"
+                @click="goToNextStep">
+          Next
         </button>
       </div>
     </div>
@@ -91,6 +99,7 @@
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
+import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
 
 // 상수화 가능한 값 정의
 const API_BASE_URL = "/api/batch-jobs/";
@@ -143,7 +152,11 @@ export default {
         isSaveButtonDisabled: this.loadingState.loadingSave || !this.prompt.trim(),
       };
     },
-
+    batchJobStatus() {
+      return {
+        isEditDisabled: isEditDisabled(this.batchJob.status)
+      };
+    },
   },
   methods: {
     clearMessages() {

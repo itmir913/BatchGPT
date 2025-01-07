@@ -33,10 +33,11 @@
                 ref="fileInput"
                 class="form-control flex-grow-1"
                 type="file"
+                :disabled="batchJobStatus.isEditDisabled"
                 @change="handleFileChange"
             />
             <button
-                :disabled="formStatus.isUploading"
+                :disabled="formStatus.isUploading || batchJobStatus.isEditDisabled"
                 class="btn btn-primary"
                 style="white-space: nowrap;"
                 type="submit"
@@ -74,6 +75,7 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
+import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
 
 // 상수 정의
 const API_BASE_URL = "/api/batch-jobs/";
@@ -113,6 +115,11 @@ export default {
         isLoading: this.loadingState.loading,
         isReady: !this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
+      };
+    },
+    batchJobStatus() {
+      return {
+        isEditDisabled: isEditDisabled(this.batchJob.status)
       };
     },
   },
