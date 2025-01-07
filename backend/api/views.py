@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 
 from api.models import BatchJob, TaskUnitStatus, TaskUnit, TaskUnitResponse, BatchJobStatus
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
+from api.serializers.TaskUnitResponseSerializer import TaskUnitResponseSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
 from tasks.task_queue import process_task_unit
@@ -400,14 +401,48 @@ class BatchJobSupportFileType(APIView):
 
 
 class BatchTaskListView(ListAPIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
+    serializer_class = TaskUnitResponseSerializer
 
     def get_queryset(self):
+        """
+        조인을 활용하여 batch_id에 해당하는 TaskUnitResponse를 가져옵니다.
+        """
         batch_id = self.kwargs.get('batch_id')  # URL에서 batch_id 가져오기
-        task_unit_id = self.kwargs.get('task_unit_id')  # URL에서 task_unit_id 가져오기
 
-        # 필터링된 쿼리셋 반환
-        return TaskUnit.objects.filter(batch__id=batch_id, id=task_unit_id)
+        return TaskUnitResponse.objects.filter(task_unit__batch_job__id=batch_id).select_related(
+            'task_unit',  # TaskUnit과 조인 (ForeignKey)
+            'task_unit__batch_job'  # BatchJob과 조인 (ForeignKey의 ForeignKey)
+        )
+
+    def list(self, request, *args, **kwargs):
+        """
+        Pagination을 적용하여 조인된 데이터를 반환합니다.
+        """
+        # 1. QuerySet 필터링 및 가져오기
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # 2. Pagination 적용
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # 3. Pagination이 없을 경우 전체 데이터 반환
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    """
+    {
+    "count": 100,  # 전체 데이터 개수
+    "next": "http://example.com/api/items/?page=2",
+    "previous": null,
+    "results": [
+        {"id": 1, "name": "Item 1"},
+        {"id": 2, "name": "Item 2"}
+        ]
+    }
+    """
 
 
 class TaskUnitDetailView(APIView):
@@ -442,7 +477,7 @@ class TaskUnitDetailView(APIView):
 
             if status == TaskUnitStatus.COMPLETED:
                 json_data = json.loads(task_unit_result.response_data)
-                response_data["result"] = json_data['choices'][0]['message']['content']
+                response_data["response_data"] = json_data['choices'][0]['message']['content']
 
             return JsonResponse(response_data, status=self.status_code_map.get(status, HTTP_500_INTERNAL_SERVER_ERROR))
 

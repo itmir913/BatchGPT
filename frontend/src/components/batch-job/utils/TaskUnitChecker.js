@@ -25,7 +25,7 @@ class TaskUnitChecker {
                 try {
                     const response = await this.checkTaskUnitStatus(batchJobId, taskUnitId, controller.signal);
                     const status = response.data.status;
-                    const result = response.data.result ?? "";
+                    const result = response.data.response_data ?? "";
 
                     if (this.onCompleteCallback) {
                         this.onCompleteCallback(taskUnitId, status, result);
