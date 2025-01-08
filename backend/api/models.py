@@ -245,13 +245,8 @@ class TaskUnit(TimestampedModel):
         verbose_name_plural = 'Task Units'
         indexes = [
             models.Index(fields=['batch_job']),  # 배치 작업별 조회 최적화
+            models.Index(fields=['created_at']),  # 생성 날짜별 조회 최적화
             models.Index(fields=['task_unit_status']),  # 상태별 조회 최적화
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['batch_job', 'unit_index'],
-                name='unique_task_unit_per_batch'
-            )
         ]
 
     def __str__(self):
