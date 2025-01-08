@@ -1,25 +1,23 @@
-# file_processors.py
 import logging
 import os
 
 import pandas as pd
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from api.utils.files_processor.file_processor import FileProcessor
 from backend import settings
 
 CHUNK_SIZE = 1000
 
 
-class CSVProcessor:
-    """CSV 파일 처리 클래스"""
+class CSVProcessor(FileProcessor):
 
-    @staticmethod
-    def process(file):
-        # CSV 파일을 처리하는 로직
+    def process(self, file):
+        # CSV 파일 처리 로직 구현
         return f"Processed CSV file: {file.name}"
+        pass
 
-    @staticmethod
-    def get_size(file):
+    def get_size(self, file):
         logger = logging.getLogger(__name__)
 
         try:
@@ -42,8 +40,7 @@ class CSVProcessor:
             logger.error(f"Error reading file: {str(file)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
-    @staticmethod
-    def get_preview(file):
+    def get_preview(self, file):
         logger = logging.getLogger(__name__)
 
         try:
@@ -63,20 +60,3 @@ class CSVProcessor:
         except Exception as e:
             logger.error(f"Error reading file: {str(file)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
-
-
-class PDFProcessor:
-    """PDF 파일 처리 클래스"""
-
-    @staticmethod
-    def process(file):
-        # PDF 파일을 처리하는 로직
-        raise NotImplementedError(f"Not Implemented PDF")
-
-    @staticmethod
-    def get_size(file):
-        raise NotImplementedError(f"Not Implemented PDF")
-
-    @staticmethod
-    def get_preview(file):
-        raise NotImplementedError(f"Not Implemented PDF")

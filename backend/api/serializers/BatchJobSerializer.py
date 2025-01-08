@@ -39,7 +39,7 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
     def get_total_size(self, obj):
         if obj.file:
             try:
-                return obj.get_file_total_size()
+                return obj.get_size()
             except ValueError as e:
                 raise ValueError(f"Unsupported File Type: {str(e)}")
             except Exception as e:

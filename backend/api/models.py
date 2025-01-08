@@ -150,26 +150,34 @@ class BatchJob(TimestampedModel):
         self.clean()
         super().save(*args, **kwargs)
 
-    def process_file(self):
+    def _process_file_method(self, method_name):
+        """파일 타입에 맞는 처리 로직을 실행하는 공통 메서드"""
+        if not self.file:
+            raise ValueError("File type not defined for processing.")
+
+        method_map = {
+            'process': FileSettings.process,
+            'get_total_size': FileSettings.get_size,
+            'get_preview': FileSettings.get_preview
+        }
+
+        method = method_map.get(method_name)
+        if not method:
+            raise ValueError(f"Unsupported method: {method_name}")
+
+        return method(self.file)
+
+    def process(self):
         """파일 타입에 맞는 처리 로직 실행"""
-        if self.file:
-            return FileSettings.process_file(FileSettings.get_file_extension(self.file.name), self.file)
-        else:
-            raise ValueError("File type not defined for processing.")
+        return self._process_file_method('process')
 
-    def get_file_total_size(self):
+    def get_size(self):
         """파일 타입에 맞는 Total Size 로직 실행"""
-        if self.file:
-            return FileSettings.get_total_size_for_file_types(self.file)
-        else:
-            raise ValueError("File type not defined for processing.")
+        return self._process_file_method('get_total_size')
 
-    def get_file_preview(self):
-        """파일 타입에 맞는 Total Size 로직 실행"""
-        if self.file:
-            return FileSettings.get_preview_for_file_types(self.file)
-        else:
-            raise ValueError("File type not defined for processing.")
+    def get_preview(self):
+        """파일 타입에 맞는 Preview 로직 실행"""
+        return self._process_file_method('get_preview')
 
 
 class TaskUnitStatus:

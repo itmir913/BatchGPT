@@ -1,8 +1,8 @@
-# file_settings.py
 import hashlib
 import os
 
-from api.utils.file_processors import CSVProcessor, PDFProcessor
+from api.utils.files_processor.csv_processor import CSVProcessor
+from api.utils.files_processor.pdf_processor import PDFProcessor
 
 
 class FileSettings:
@@ -14,19 +14,17 @@ class FileSettings:
         'PDF': 'pdf',
     }
 
-    FILE_TYPE_CHOICES = [(key, key) for key in FILE_TYPES.keys()]  # 상수를 기반으로 선택지 생성
-
     # 파일 처리 클래스 매핑
     FILE_PROCESSORS = {
         'csv': CSVProcessor,
         'pdf': PDFProcessor,
     }
 
-    # 업로드 경로 설정
+    FILE_TYPE_CHOICES = [(key, key) for key in FILE_TYPES.keys()]  # 상수를 기반으로 선택지 생성
+
     @staticmethod
     def get_upload_path(instance, filename):
         """사용자 ID별 파일 업로드 경로 설정"""
-
         name, ext = os.path.splitext(filename)
         hashed_name = hashlib.sha256(name.encode('utf-8')).hexdigest()
 
@@ -35,7 +33,6 @@ class FileSettings:
     @staticmethod
     def get_taskunit_path(instance, filename):
         """사용자 ID별 파일 업로드 경로 설정"""
-
         name, ext = os.path.splitext(filename)
         hashed_name = hashlib.sha256(name.encode('utf-8')).hexdigest()
 
@@ -43,53 +40,40 @@ class FileSettings:
 
     @staticmethod
     def get_file_extension(file_name):
+        """파일 확장자 추출"""
         return file_name.split('.')[-1].lower()
 
-    # 파일 확장자 검증
     @staticmethod
     def is_valid_extension(file_name):
         """파일 확장자 검사"""
-        valid_extensions = list(FileSettings.FILE_TYPES.values())
-        file_extension = FileSettings.get_file_extension(file_name)
-        return file_extension in valid_extensions
+        return FileSettings.get_file_extension(file_name) in FileSettings.FILE_TYPES.values()
 
-    # 파일 처리 함수 (다형성 적용)
     @staticmethod
-    def process_file(file_type, file):
+    def process(file_type, file):
         """파일 타입에 따라 파일 처리 로직을 실행"""
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
-        if processor_class:
-            processor = processor_class()  # 클래스를 바로 인스턴스화
-            return processor.process(file)
-        else:
+        if not processor_class:
             raise ValueError(f"Unsupported file type: {file_type}")
+        return processor_class().process(file)
 
     @staticmethod
-    def get_total_size_for_file_types(file):
+    def handle_file_processor_method(file, method):
+        """파일 처리 메서드 공통 처리"""
         file_type = FileSettings.get_file_extension(file.name)
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
-        if processor_class:
-            processor = processor_class()  # 클래스를 바로 인스턴스화
-            try:
-                return processor.get_size(file)
-            except ValueError as e:
-                raise ValueError(f"Unsupported file: {str(e)}")
-            except Exception as e:
-                raise ValueError(f"Internal Server Error: {str(e)}")
-        else:
+        if not processor_class:
             raise ValueError(f"Unsupported file type: {file_type}")
 
+        try:
+            processor = processor_class()
+            return getattr(processor, method)(file)
+        except Exception as e:
+            raise ValueError(f"Error processing file: {str(e)}")
+
     @staticmethod
-    def get_preview_for_file_types(file):
-        file_type = FileSettings.get_file_extension(file.name)
-        processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
-        if processor_class:
-            processor = processor_class()  # 클래스를 바로 인스턴스화
-            try:
-                return processor.get_preview(file)
-            except ValueError as e:
-                raise ValueError(f"Unsupported file: {str(e)}")
-            except Exception as e:
-                raise ValueError(f"Internal Server Error: {str(e)}")
-        else:
-            raise ValueError(f"Unsupported file type: {file_type}")
+    def get_size(file):
+        return FileSettings.handle_file_processor_method(file, 'get_size')
+
+    @staticmethod
+    def get_preview(file):
+        return FileSettings.handle_file_processor_method(file, 'get_preview')

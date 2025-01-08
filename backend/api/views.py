@@ -154,7 +154,7 @@ class BatchJobFileUploadView(APIView):
 
         # 파일 저장
         try:
-            total_size = FileSettings.get_total_size_for_file_types(file)
+            total_size = FileSettings.get_size(file)
             if total_size <= 0:
                 raise ValidationError(
                     "The file cannot be read because its size is 0 or less."
@@ -245,7 +245,7 @@ class BatchJobConfigView(APIView):
 
         # 파일 존재 여부 및 사이즈 확인
         try:
-            total_size = batch_job.get_file_total_size() if batch_job.file else 0
+            total_size = batch_job.get_size() if batch_job.file else 0
         except ValueError as e:
             return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -293,7 +293,7 @@ class BatchJobPreView(APIView):
             )
 
         try:
-            preview = batch_job.get_file_preview()
+            preview = batch_job.get_preview()
             return JsonResponse(preview, safe=False, status=HTTP_200_OK)
         except Exception as e:
             return Response(
@@ -335,7 +335,7 @@ class BatchJobPreView(APIView):
                     status=HTTP_400_BAD_REQUEST,
                 )
 
-            preview = batch_job.get_file_preview()
+            preview = batch_job.get_preview()
             preview = json.loads(preview)
 
             filtered_preview = [
