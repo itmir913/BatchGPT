@@ -17,8 +17,8 @@
           <input
               id="email"
               v-model="email"
-              class="form-control"
               :class="{ 'is-invalid': email && !isEmailValid }"
+              class="form-control"
               placeholder="이메일을 입력하세요"
               required
               type="email"
@@ -35,9 +35,9 @@
               id="password"
               v-model="password"
               class="form-control"
-              type="password"
               placeholder="비밀번호를 입력하세요"
               required
+              type="password"
           />
         </div>
 

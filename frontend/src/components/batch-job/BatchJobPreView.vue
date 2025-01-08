@@ -29,11 +29,11 @@
           </div>
         </div>
         <CsvPreview
+            :disabled="batchJobStatus.isEditDisabled"
             :isReady="formStatus.isReady"
             :previewData="filteredData"
             :selectedColumns="previewData.CSV.selectedColumns"
             @toggle-column="toggleColumnSelection"
-            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 
@@ -48,9 +48,9 @@
       <div class="mb-3 g-3 p-2">
         <WorkUnitSettings
             :batchJob="batchJob"
+            :disabled="batchJobStatus.isEditDisabled"
             :isReady="formStatus.isReady"
             :work_unit="previewData.work_unit"
-            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 

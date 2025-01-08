@@ -9,7 +9,6 @@ import api.utils.file_settings
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [

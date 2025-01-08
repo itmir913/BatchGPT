@@ -51,11 +51,11 @@
           <input
               id="passwordConfirm"
               v-model="passwordConfirm"
+              :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
               class="form-control"
               placeholder="비밀번호를 다시 입력하세요"
               required
               type="password"
-              :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
           />
           <div v-if="passwordConfirm && passwordConfirm !== password" class="invalid-feedback">
             비밀번호가 일치하지 않습니다.

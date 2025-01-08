@@ -31,9 +31,9 @@
           <form class="d-flex align-items-center gap-3" @submit.prevent="uploadFile">
             <input
                 ref="fileInput"
+                :disabled="batchJobStatus.isEditDisabled"
                 class="form-control flex-grow-1"
                 type="file"
-                :disabled="batchJobStatus.isEditDisabled"
                 @change="handleFileChange"
             />
             <button

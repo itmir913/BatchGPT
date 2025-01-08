@@ -39,9 +39,9 @@
       <div class="p-2 mb-3">
         <WorkUnitSettings
             :batchJob="batchJob"
+            :disabled="batchJobStatus.isEditDisabled"
             :isReady="formStatus.isReady"
             :work_unit="work_unit"
-            :disabled="batchJobStatus.isEditDisabled"
         />
       </div>
 
@@ -53,8 +53,9 @@
             <div :class="{'border-primary': gpt_model === key}" class="card shadow-sm clickable-card"
                  @click="gpt_model = key">
               <div class="card-body d-flex flex-column justify-content-center text-center">
-                <input id="model" v-model="gpt_model" :value="key" class="form-check-input" style="display: none;"
-                       :disabled="batchJobStatus.isEditDisabled"
+                <input id="model" v-model="gpt_model" :disabled="batchJobStatus.isEditDisabled" :value="key"
+                       class="form-check-input"
+                       style="display: none;"
                        type="radio"/>
                 <label :for="key" class="form-check-label">{{ model }}</label>
               </div>
