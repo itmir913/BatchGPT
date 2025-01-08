@@ -211,7 +211,7 @@ export default {
       try {
         this.clearMessages();
         this.loadingState.previewLoading = true;
-        this.previewData.fetchData = fetchPreviewResultsAPI(this.batch_id);
+        this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.loadPreview);
       } finally {
@@ -291,7 +291,7 @@ export default {
           'selected_headers': this.previewData.CSV.selectedColumns,
         };
 
-        this.previewData.resultData = await fetchPreviewAPI(payload);
+        this.previewData.resultData = await fetchPreviewResultsAPI(payload, payload);
 
         if (!this.previewData.resultData) {
           this.handleMessages("error", ERROR_MESSAGES.noDataReceived);
