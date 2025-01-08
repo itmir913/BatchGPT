@@ -174,7 +174,7 @@ export default {
 
       try {
         this.loadingState.uploading = true;
-        this.batchJob = await uploadFilesAPI(this.batchJob, this.selectedFile);
+        this.batchJob = await uploadFilesAPI(this.batch_id, this.selectedFile);
         this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
         this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data?.error || "Unknown error occurred."}`);
