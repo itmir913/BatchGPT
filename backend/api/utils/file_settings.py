@@ -49,12 +49,12 @@ class FileSettings:
         return FileSettings.get_file_extension(file_name) in FileSettings.FILE_TYPES.values()
 
     @staticmethod
-    def process(file_type, file):
+    def get_file_processor(file_type):
         """파일 타입에 따라 파일 처리 로직을 실행"""
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
         if not processor_class:
             raise ValueError(f"Unsupported file type: {file_type}")
-        return processor_class().process(file)
+        return processor_class()
 
     @staticmethod
     def handle_file_processor_method(file, method):

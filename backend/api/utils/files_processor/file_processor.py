@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class FileProcessor(ABC):
     @abstractmethod
-    def process(self, file):
+    def process(self, batch_job_id, file):
         """파일 처리 로직"""
         pass
 

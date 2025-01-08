@@ -16,7 +16,6 @@ from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreat
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
 from tasks.queue_batch_job_process import process_batch_job
-from tasks.queue_task_units import process_task_unit
 
 
 class UserBatchJobsView(APIView):
@@ -322,6 +321,8 @@ class BatchJobPreView(APIView):
             )
 
         try:
+            # TODO FileProcessor의 process 함수를 활용하도록 수정해야 함.
+
             config = batch_job.configs if batch_job.configs is not None else {}
             work_unit = int(config['work_unit'])
             gpt_model = config['gpt_model']
@@ -367,8 +368,6 @@ class BatchJobPreView(APIView):
                     task_unit_status=TaskUnitStatus.PENDING,
                 )
                 task_unit.save()
-
-                process_task_unit.apply_async(args=[task_unit.id])
 
                 json_formatted.append({
                     "task_unit_id": task_unit.id,
@@ -506,8 +505,14 @@ class BatchJobRunView(APIView):
         try:
             batch_job = BatchJob.objects.get(id=batch_id)
 
-            batch_job.set_status(BatchJobStatus.PENDING)
-            batch_job.save()
+            try:
+                batch_job.set_status(BatchJobStatus.PENDING)
+                batch_job.save()
+            except ValueError as e:
+                return Response(
+                    {"message": "BatchJob status already set to Pending."},
+                    status=HTTP_200_OK
+                )
 
             process_batch_job.apply_async(args=[batch_job.id])
 

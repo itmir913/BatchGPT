@@ -5,6 +5,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from api.utils.file_settings import FileSettings
+from tasks.queue_task_units import process_task_unit
 from users.models import User
 
 
@@ -40,8 +41,8 @@ class BatchJobStatus:
         CREATED: [UPLOADED],
         UPLOADED: [UPLOADED, CONFIGS],
         CONFIGS: [CONFIGS, UPLOADED, PENDING, IN_PROGRESS],
-        PENDING: [PENDING, IN_PROGRESS],
-        IN_PROGRESS: [IN_PROGRESS, PENDING, COMPLETED, FAILED],
+        PENDING: [IN_PROGRESS],
+        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
         COMPLETED: [COMPLETED, PENDING, IN_PROGRESS],
         FAILED: [FAILED, PENDING, IN_PROGRESS],
     }
@@ -159,7 +160,6 @@ class BatchJob(TimestampedModel):
             raise ValueError("File type not defined for processing.")
 
         method_map = {
-            'process': FileSettings.process,
             'get_total_size': FileSettings.get_size,
             'get_preview': FileSettings.get_preview
         }
@@ -262,6 +262,13 @@ class TaskUnit(TimestampedModel):
         if not TaskUnitStatus.is_valid_transition(self.task_unit_status, new_status):
             raise ValueError(f"Invalid status transition from {self.task_unit_status} to {new_status}")
         self.task_unit_status = new_status
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.pk is None:
+            # 새로운 인스턴스가 저장되었으면 apply_async 호출
+            process_task_unit.apply_async(args=[self.id])
 
 
 # @receiver(post_save, sender=TaskUnit)

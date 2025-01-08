@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -173,6 +174,18 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # 작업 결과를 Redis에 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
+CELERY_BEAT_SCHEDULE = {
+    'resume_pending_task_units': {
+        'task': 'tasks.resume_queue.resume_pending_tasks_task_units',  # 작업 이름
+        'schedule': crontab(minute='*/5'),  # 5분마다 실행
+    },
+    'resume_pending_batch_jobs': {
+        'task': 'tasks.resume_queue.resume_pending_tasks_batch_job',  # 작업 이름
+        'schedule': crontab(minute='*/5'),  # 5분마다 실행
+    },
+}
+
+# load env
 ENV_PATH = os.path.join(BASE_DIR, '.env')
 if os.path.exists(ENV_PATH):
     load_dotenv(ENV_PATH)

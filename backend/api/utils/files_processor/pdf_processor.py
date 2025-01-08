@@ -2,7 +2,7 @@ from api.utils.files_processor.file_processor import FileProcessor
 
 
 class PDFProcessor(FileProcessor):
-    def process(self, file):
+    def process(self, batch_job_id, file):
         # PDF 파일 처리 로직 구현
         raise NotImplementedError(f"Not Implemented PDF")
 

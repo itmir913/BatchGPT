@@ -6,14 +6,13 @@ from celery import shared_task
 from django.db.models import Q
 from openai import OpenAI
 
-from api.models import BatchJob
 from backend.settings import OPENAI_API_KEY
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
-    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus
+    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob
 
     try:
         start_time = time.time()

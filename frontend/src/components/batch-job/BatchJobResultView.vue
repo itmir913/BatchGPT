@@ -119,9 +119,10 @@
         <tr v-for="task in tasks" :key="task.task_unit_id">
           <td>
               <span :class="{
+                'badge bg-warning text-dark': task.task_unit_status === 'Pending',
+                'badge bg-info': task.task_unit_status === 'In Progress',
+                'badge bg-danger': task.task_unit_status === 'Failed',
                 'badge bg-success': task.task_unit_status === 'Completed',
-                'badge bg-warning text-dark': task.task_unit_status === 'PENDING',
-                'badge bg-danger': task.task_unit_status === 'FAILED'
               }">
                 {{ task.task_unit_status }}
               </span>
@@ -250,9 +251,9 @@ export default {
       return responseData;
     },
     async handleRun() {
-      this.tasks = []; // 기존 데이터를 초기화
-      this.nextPage = null;
-      this.hasMore = true;
+      // this.tasks = []; // 기존 데이터를 초기화
+      // this.nextPage = null;
+      // this.hasMore = true;
 
       try {
         await runBatchJobProcess(this.batch_id);
