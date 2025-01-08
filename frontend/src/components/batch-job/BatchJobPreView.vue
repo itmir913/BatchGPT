@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-4">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="3"/>
 
     <!-- 로딩 상태 -->
     <div v-if="formStatus.isLoading" class="text-center mb-3">
@@ -130,7 +130,6 @@ export default {
   components: {WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
-      currentStep: 3,
       batchJob: null,
       loadingState: {loading: true, previewLoading: false, configSave: false, resultLoading: false},
       messages: {success: null, error: null},

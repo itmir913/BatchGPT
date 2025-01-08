@@ -2,7 +2,7 @@
   <div class="container mt-4 infinite-scroll-container">
     <!-- 진행 상태 표시 -->
     <div class="mb-4">
-      <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+      <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
     </div>
 
     <!-- RUNNING 버튼 -->
@@ -78,7 +78,6 @@ export default {
   components: {ProgressIndicator},
   data() {
     return {
-      currentStep: 4,
       tasks: [],
       nextPage: null,
       loadingState: {loading: false, loadingSave: false},

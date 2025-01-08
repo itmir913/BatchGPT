@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-4">
     <!-- 5단계 워크플로우 표시 -->
-    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="1"/>
 
     <!-- 로딩 상태 -->
     <div v-if="formStatus.isLoading" class="text-center">
@@ -97,7 +97,6 @@ export default {
   components: {ProgressIndicator},
   data() {
     return {
-      currentStep: 1,
       batchJob: null,
       allowedFileTypes: [],
       selectedFile: null,

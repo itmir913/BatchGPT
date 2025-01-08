@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-4">
-    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="2"/>
 
     <!-- 로딩 상태 -->
     <div v-if="formStatus.isLoading" class="text-center">
@@ -116,7 +116,6 @@ export default {
   },
   data() {
     return {
-      currentStep: 2,
       batchJob: null,
 
       loadingState: {loading: true, loadingSave: false},

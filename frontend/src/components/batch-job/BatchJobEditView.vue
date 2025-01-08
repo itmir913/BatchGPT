@@ -1,7 +1,7 @@
 <template>
   <div class="container mt-4">
     <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
+    <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center">
@@ -54,7 +54,6 @@ export default {
   props: ['batch_id'],
   data() {
     return {
-      currentStep: 0, // 현재 진행 중인 단계
       batchJob: null, // 배치 작업 초기값
       success: null, // 성공 메시지 상태
       error: null, // 에러 메시지 상태
