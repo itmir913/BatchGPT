@@ -29,6 +29,7 @@
           </div>
         </div>
         <CsvPreview
+            :fileType="batchJob.file_type"
             :disabled="batchJobStatus.isEditDisabled"
             :isReady="formStatus.isReady"
             :previewData="filteredData"

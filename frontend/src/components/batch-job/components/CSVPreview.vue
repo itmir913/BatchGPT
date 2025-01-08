@@ -1,6 +1,7 @@
 <template>
   <table
-      v-if="Array.isArray(filteredData) && filteredData.length > 0"
+      v-if="Array.isArray(filteredData) && filteredData.length > 0
+              && supportedFileTypes.includes(fileType)"
       class="table table-hover table-bordered table-striped mb-2"
   >
     <thead class="table-primary">
@@ -42,7 +43,13 @@ export default {
       type: Array,
       default: () => []
     },
+    fileType: String,
     isReady: Boolean,
+  },
+  data() {
+    return {
+      supportedFileTypes: ['csv']
+    };
   },
   computed: {
     filteredData() {

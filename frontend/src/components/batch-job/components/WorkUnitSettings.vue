@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isReady">
+  <div v-if="isReady && supportedFileTypes.includes(fileType)">
     <h3 class="text-center my-3">Select Number of Items per Task</h3>
     <div class="d-flex justify-content-center align-items-center mb-3">
       <!-- 라디오 버튼들 -->
@@ -67,12 +67,16 @@ export default {
       return this.batchJob.total_size % this.work_unit;
     },
     isSupportedType() {
-      return this.batchJob.file_type !== 'pdf';
+      return !this.supportedFileTypes.includes(this.fileType);
+    },
+    fileType() {
+      return this.batchJob.file_type;
     },
   },
   data() {
     return {
-      localWorkUnit: this.work_unit
+      localWorkUnit: this.work_unit,
+      supportedFileTypes: ['pdf']
     };
   },
   watch: {
