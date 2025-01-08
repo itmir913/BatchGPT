@@ -76,24 +76,13 @@
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import {
   deleteBatchJobTitleAPI,
+  ERROR_MESSAGES,
   fetchBatchJobTitleAPI,
   fetchFileTypesAPI,
   isEditDisabled,
+  SUCCESS_MESSAGES,
   uploadFilesAPI
 } from '@/components/batch-job/utils/batchJobUtils';
-
-// 상수 정의
-const SUCCESS_MESSAGES = {
-  uploadFile: "File uploaded successfully!",
-  deleteBatchJob: "Batch Job deleted successfully!",
-};
-const ERROR_MESSAGES = {
-  loadBatchJob: "Failed to load Batch Job details. Please try again later.",
-  fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
-  uploadFile: "Error uploading file: ",
-  deleteBatchJob: "Error deleting batch job: ",
-  missingFile: "The uploaded file is missing. Please select a file to upload.",
-};
 
 export default {
   props: ["batch_id"],

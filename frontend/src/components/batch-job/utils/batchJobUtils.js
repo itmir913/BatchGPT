@@ -13,11 +13,17 @@ const API_TASK_UNITS_URL = "/task-units/";
 export const SUCCESS_MESSAGES = {
     updatedConfigs: "Configuration updated successfully.",
     modifyBatchJob: "Batch Job modified successfully!",
+    deleteBatchJob: "Batch Job deleted successfully!",
+    uploadFile: "File uploaded successfully!",
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
     fetchBatchJob: "Failed to load Batch Job details. Please try again later.",
     modifyBatchJob: "Error modifying Batch Job: ",
+    deleteBatchJob: "Error deleting batch job: ",
+    fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
+    uploadFile: "Error uploading file: ",
+    missingFile: "The uploaded file is missing. Please select a file to upload.",
     updatedConfigs: "Error updating configuration. Please try again later.",
     loadPreview: "Failed to load Preview data. Please try again later.",
     noColumn: "Please select at least one column.",
