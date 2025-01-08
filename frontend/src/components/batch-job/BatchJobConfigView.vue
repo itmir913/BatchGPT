@@ -46,23 +46,12 @@
       </div>
 
       <!-- GPT Model Selection -->
-      <div class="p-2 mb-3">
-        <h3 class="text-center">Select GPT Model</h3>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-          <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
-            <div :class="{'border-primary': gpt_model === key}" class="card shadow-sm clickable-card"
-                 @click="gpt_model = key">
-              <div class="card-body d-flex flex-column justify-content-center text-center">
-                <input id="model" v-model="gpt_model" :disabled="batchJobStatus.isEditDisabled" :value="key"
-                       class="form-check-input"
-                       style="display: none;"
-                       type="radio"/>
-                <label :for="key" class="form-check-label">{{ model }}</label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <GPTModelSelector
+          :disabled="batchJobStatus.isEditDisabled"
+          :gpt_model="gpt_model"
+          :models="models"
+          @update:gpt_model="gpt_model = $event"
+      />
 
       <!-- Input Prompt 컴포넌트 -->
       <InputPrompt
@@ -107,10 +96,12 @@ import {
 } from '@/components/batch-job/utils/BatchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
+import GPTModelSelector from "@/components/batch-job/components/GPTModelSelector.vue";
 
 export default {
   props: ['batch_id'],
   components: {
+    GPTModelSelector,
     InputPrompt,
     WorkUnitSettings,
     ProgressIndicator,
@@ -238,26 +229,5 @@ export default {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-</style>
-
-<!-- GPT 모델 선택 카드 -->
-<style scoped>
-.card {
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out;
-  font-size: 0.9rem;
-}
-
-.card:hover {
-  transform: scale(1.05);
-}
-
-.card-body {
-  padding: 1.25rem;
-}
-
-.card.selected {
-  border: 2px solid #007bff;
 }
 </style>
