@@ -104,7 +104,7 @@ import {
   isEditDisabled,
   modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
-} from '@/components/batch-job/utils/batchJobUtils';
+} from '@/components/batch-job/utils/BatchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 

@@ -44,7 +44,7 @@
 <script>
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import BatchJobInputFields from '@/components/batch-job/components/BatchJobInputFields.vue';
-import {createBatchJobAPI} from "@/components/batch-job/utils/batchJobUtils";
+import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",

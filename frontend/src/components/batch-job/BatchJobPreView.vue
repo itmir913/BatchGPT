@@ -118,7 +118,7 @@ import {
   isEditDisabled,
   modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
-} from '@/components/batch-job/utils/batchJobUtils';
+} from '@/components/batch-job/utils/BatchJobUtils';
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 
 

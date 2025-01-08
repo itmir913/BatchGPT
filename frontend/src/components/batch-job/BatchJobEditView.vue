@@ -44,7 +44,7 @@ import {
   fetchBatchJobTitleAPI,
   modifyBatchJobTitleAPI,
   SUCCESS_MESSAGES
-} from "@/components/batch-job/utils/batchJobUtils";
+} from "@/components/batch-job/utils/BatchJobUtils";
 
 export default {
   components: {

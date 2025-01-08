@@ -1,4 +1,4 @@
-// batchJobUtils.js
+// BatchJobUtils.js
 import axios from "@/configs/axios";
 
 const API_BASE_URL = "/api/batch-jobs/";

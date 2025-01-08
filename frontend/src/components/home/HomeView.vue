@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import {fetchBatchJobListAPI} from "@/components/batch-job/utils/batchJobUtils";
+import {fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 
 export default {

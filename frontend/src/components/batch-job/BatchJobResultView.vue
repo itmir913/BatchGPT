@@ -68,7 +68,7 @@ import {
   fetchTasksAPI,
   shouldDisableRunButton,
   shouldDisplayResults
-} from "@/components/batch-job/utils/batchJobUtils";
+} from "@/components/batch-job/utils/BatchJobUtils";
 
 export default {
   props: ["batch_id"],
