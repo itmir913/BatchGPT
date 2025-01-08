@@ -62,3 +62,12 @@ export async function fetchBatchJobConfigsAPI(batch_id) {
     };
 }
 
+export async function modifyBatchJobConfigsAPI(batch_id, payload) {
+    const response = await axios.patch(`${API_BASE_URL}${batch_id}${API_CONFIG_URL}`, payload, {withCredentials: true});
+
+    const config = response.data.config ?? {};
+    return {
+        batchJob: response.data,
+        configs: config,
+    };
+}

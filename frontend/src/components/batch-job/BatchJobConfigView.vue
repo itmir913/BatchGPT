@@ -95,7 +95,6 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import {
@@ -103,13 +102,10 @@ import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   isEditDisabled,
+  modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/batchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
-
-// 상수화 가능한 값 정의
-const API_BASE_URL = "/api/batch-jobs/";
-const API_CONFIG_URL = "configs/";
 
 export default {
   props: ['batch_id'],
@@ -204,18 +200,17 @@ export default {
           gpt_model: this.gpt_model,
         };
 
-        const response = await axios.patch(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, payload);
-        this.batchJob = response.data;
+        const {batchJob, configs} = await modifyBatchJobConfigsAPI(this.batch_id, payload);
+        this.batchJob = batchJob;
 
-        if (!response.data) {
+        if (!this.batchJob) {
           this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
           return;
         }
 
-        const config = this.batchJob.config ?? {};
-        this.work_unit = config.work_unit ?? 1;
-        this.prompt = config.prompt ?? '';
-        this.gpt_model = config.gpt_model ?? DEFAULT_GPT_MODEL;
+        this.work_unit = configs.work_unit ?? 1;
+        this.prompt = configs.prompt ?? '';
+        this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
       } catch (err) {

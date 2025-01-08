@@ -117,12 +117,12 @@ import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   isEditDisabled,
+  modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/batchJobUtils';
 
 const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";
-const API_CONFIGS_POSTFIX = "/configs/";
 
 
 export default {
@@ -257,8 +257,8 @@ export default {
       };
 
       try {
-        const response = await axios.patch(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_CONFIGS_POSTFIX}`, payload);
-        this.batchJob = response.data;
+        const {batchJob, configs} = await modifyBatchJobConfigsAPI(this.batch_id, payload);
+        this.batchJob = batchJob;
 
         if (!this.batchJob) {
           this.handleMessages("error", ERROR_MESSAGES.noDataReceived);
@@ -266,10 +266,9 @@ export default {
           return;
         }
 
-        this.batchJob.config = this.batchJob.config ?? {};
-        this.previewData.work_unit = this.batchJob.config.work_unit ?? 1;
-        this.previewData.prompt = this.batchJob.config.prompt ?? '';
-        this.previewData.CSV.selectedColumns = this.batchJob.config.selected_headers ?? [];
+        this.previewData.work_unit = configs.work_unit ?? 1;
+        this.previewData.prompt = configs.prompt ?? '';
+        this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
       } catch (err) {
