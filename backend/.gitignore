@@ -287,3 +287,6 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/intellij,django
 
 uploads/
+/celerybeat-schedule.bak
+/celerybeat-schedule.dat
+/celerybeat-schedule.dir
