@@ -207,17 +207,18 @@ class BatchJobConfigView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
-            pending, in_progress, fail = get_task_status_counts(batch_id)
+        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+            if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
+                pending, in_progress, fail = get_task_status_counts(batch_id)
 
-            if pending > 0 or in_progress > 0:
-                pass
-            elif fail > 0:
-                batch_job.set_status(BatchJobStatus.FAILED)
-                batch_job.save()
-            else:
-                batch_job.set_status(BatchJobStatus.COMPLETED)
-                batch_job.save()
+                if pending > 0 or in_progress > 0:
+                    pass
+                elif fail > 0:
+                    batch_job.set_status(BatchJobStatus.FAILED)
+                    batch_job.save()
+                else:
+                    batch_job.set_status(BatchJobStatus.COMPLETED)
+                    batch_job.save()
 
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
