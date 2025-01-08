@@ -213,6 +213,7 @@ export default {
 
     async fetchPreviewData() {
       try {
+        // TODO 함수 분리 대상
         this.clearMessages();
         this.loadingState.previewLoading = true;
         const response = await axios.get(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, {withCredentials: true});
@@ -296,6 +297,7 @@ export default {
           'selected_headers': this.previewData.CSV.selectedColumns,
         };
 
+        // TODO 함수 분리 대상
         const response = await axios.post(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, payload);
         this.previewData.resultData = response.data;
 

@@ -131,6 +131,7 @@ export default {
     },
 
     async fetchTasks(url = `${API_BASE_URL}${this.batch_id}${API_TASK_UNITS_URL}`) {
+      // TODO 함수 분리 대상
       this.loadingState.loading = true;
       try {
         const response = await axios.get(url);

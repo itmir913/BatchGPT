@@ -93,6 +93,7 @@ export default {
     },
 
     async createBatchJob() {
+      // TODO 함수 분리 대상
       if (this.formStatus.isFormDisabled) return;
 
       try {

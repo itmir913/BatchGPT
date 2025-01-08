@@ -153,6 +153,7 @@ export default {
     },
 
     async fetchFileTypes() {
+      // TODO 함수 분리 대상
       try {
         const response = await axios.get(FILE_TYPES_URL);
         this.allowedFileTypes = Object.values(response.data);
@@ -177,6 +178,7 @@ export default {
     },
 
     async uploadFile() {
+      // TODO 함수 분리 대상
       const errorMessage = this.validateFile();
       if (errorMessage) {
         return this.handleMessages("error", errorMessage);
@@ -213,6 +215,7 @@ export default {
     },
 
     async deleteBatchJob() {
+      // TODO 함수 분리 대상
       if (confirm("Are you sure you want to delete this batch job?")) {
         try {
           await axios.delete(`${API_BASE_URL}${this.batch_id}/`, {withCredentials: true});
