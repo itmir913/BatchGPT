@@ -73,13 +73,16 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
-import {fetchBatchJobTitleAPI, isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
+import {
+  deleteBatchJobTitleAPI,
+  fetchBatchJobTitleAPI,
+  fetchFileTypesAPI,
+  isEditDisabled,
+  uploadFilesAPI
+} from '@/components/batch-job/utils/batchJobUtils';
 
 // 상수 정의
-const API_BASE_URL = "/api/batch-jobs/";
-const FILE_TYPES_URL = "/api/batch-jobs/supported-file-types/";
 const SUCCESS_MESSAGES = {
   uploadFile: "File uploaded successfully!",
   deleteBatchJob: "Batch Job deleted successfully!",
@@ -152,10 +155,8 @@ export default {
     },
 
     async fetchFileTypes() {
-      // TODO 함수 분리 대상
       try {
-        const response = await axios.get(FILE_TYPES_URL);
-        this.allowedFileTypes = Object.values(response.data);
+        this.allowedFileTypes = await fetchFileTypesAPI();
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.fileTypes);
       }
@@ -177,33 +178,25 @@ export default {
     },
 
     async uploadFile() {
-      // TODO 함수 분리 대상
       const errorMessage = this.validateFile();
       if (errorMessage) {
         return this.handleMessages("error", errorMessage);
       }
 
       try {
-        const formData = new FormData();
-        formData.append("file", this.selectedFile);
         this.loadingState.uploading = true;
-        const response = await axios.patch(
-            `${API_BASE_URL}${this.batch_id}/upload/`,
-            formData,
-            {headers: {"Content-Type": "multipart/form-data"}, withCredentials: true}
-        );
-        this.batchJob = response.data;
+        this.batchJob = await uploadFilesAPI(this.batchJob, this.selectedFile);
         this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
         this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data?.error || "Unknown error occurred."}`);
       } finally {
         this.loadingState.uploading = false;
-        this.selectedFile = null;
         this.resetFileInput();
       }
     },
 
     resetFileInput() {
+      this.selectedFile = null;
       if (this.$refs.fileInput) {
         this.$refs.fileInput.value = "";
       }
@@ -214,10 +207,9 @@ export default {
     },
 
     async deleteBatchJob() {
-      // TODO 함수 분리 대상
       if (confirm("Are you sure you want to delete this batch job?")) {
         try {
-          await axios.delete(`${API_BASE_URL}${this.batch_id}/`, {withCredentials: true});
+          await deleteBatchJobTitleAPI();
           alert(SUCCESS_MESSAGES.deleteBatchJob);
           this.$router.push(`/home`);
         } catch (error) {

@@ -105,8 +105,6 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
-
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
@@ -115,14 +113,13 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  fetchPreviewAPI,
+  fetchPreviewResultsAPI,
   isEditDisabled,
   modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/batchJobUtils';
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
-
-const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
-const API_PREVIEW_POSTFIX = "/preview/";
 
 
 export default {
@@ -212,11 +209,9 @@ export default {
 
     async fetchPreviewData() {
       try {
-        // TODO 함수 분리 대상
         this.clearMessages();
         this.loadingState.previewLoading = true;
-        const response = await axios.get(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, {withCredentials: true});
-        this.previewData.fetchData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+        this.previewData.fetchData = fetchPreviewResultsAPI(this.batch_id);
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.loadPreview);
       } finally {
@@ -296,11 +291,9 @@ export default {
           'selected_headers': this.previewData.CSV.selectedColumns,
         };
 
-        // TODO 함수 분리 대상
-        const response = await axios.post(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_PREVIEW_POSTFIX}`, payload);
-        this.previewData.resultData = response.data;
+        this.previewData.resultData = await fetchPreviewAPI(payload);
 
-        if (!response.data) {
+        if (!this.previewData.resultData) {
           this.handleMessages("error", ERROR_MESSAGES.noDataReceived);
           this.batchJob = null;
           return;

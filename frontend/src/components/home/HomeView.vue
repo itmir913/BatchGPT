@@ -79,7 +79,8 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
+import {fetchBatchJobListAPI} from "@/components/batch-job/utils/batchJobUtils";
+import {fetchAuth, logout} from "@/components/auth/AuthUtils";
 
 export default {
   data() {
@@ -98,12 +99,11 @@ export default {
     try {
       // 인증 상태 확인
       this.loading = true;
-      const authResponse = await axios.get("/api/auth/check/", {
-        withCredentials: true,
-      });
-      this.isAuthenticated = authResponse.data.is_authenticated;
-      this.user.email = authResponse.data.email;
-      this.user.balance = authResponse.data.balance;
+
+      const {isAuthenticated, email, balance} = await fetchAuth();
+      this.isAuthenticated = isAuthenticated;
+      this.user.email = email;
+      this.user.balance = balance;
 
       // 배치 작업 데이터 가져오기
       if (this.isAuthenticated) {
@@ -122,10 +122,7 @@ export default {
       this.error = null;
 
       try {
-        const response = await axios.get("/api/batch-jobs/", {
-          withCredentials: true,
-        });
-        this.batchJobs = response.data; // API에서 가져온 데이터 저장
+        this.batchJobs = await fetchBatchJobListAPI();
       } catch (error) {
         console.error("Error fetching batch jobs:", error);
         this.error = "Failed to fetch batch jobs. Please try again later.";
@@ -135,7 +132,7 @@ export default {
     },
     async logout() {
       try {
-        await axios.post("/api/auth/logout/", {}, {withCredentials: true});
+        await logout();
         this.isAuthenticated = false;
         this.email = "";
         alert("You have been logged out.");

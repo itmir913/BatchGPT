@@ -59,7 +59,8 @@
 </template>
 
 <script>
-import axios from '@/configs/axios';
+
+import {login} from "@/components/auth/AuthUtils";
 
 export default {
   data() {
@@ -89,12 +90,9 @@ export default {
       this.isButtonDisabled = true;
 
       try {
-        const response = await axios.post('/api/auth/login/', {
-          email: this.email,
-          password: this.password,
-        });
+        const response = await login(this.email, this.password);
 
-        if (!response.data) {
+        if (!response) {
           this.message = {type: 'alert-danget', text: "서버로부터 응답을 받지 못했습니다."};
           return;
         }

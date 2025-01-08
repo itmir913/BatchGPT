@@ -61,17 +61,14 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  fetchTasksAPI,
   shouldDisableRunButton,
   shouldDisplayResults
 } from "@/components/batch-job/utils/batchJobUtils";
-
-const API_BASE_URL = "/api/batch-jobs/";
-const API_TASK_UNITS_URL = "/task-units/";
 
 export default {
   props: ["batch_id"],
@@ -129,18 +126,19 @@ export default {
       }
     },
 
-    async fetchTasks(url = `${API_BASE_URL}${this.batch_id}${API_TASK_UNITS_URL}`) {
-      // TODO 함수 분리 대상
+    async fetchTasks() {
+      this.clearMessages();
       this.loadingState.loading = true;
-      try {
-        const response = await axios.get(url);
-        const data = response.data;
 
-        this.tasks.push(...data.results);
-        this.nextPage = data.next;
-        this.hasMore = !!data.next;
+      try {
+        const {tasks, nextPage, hasMore} = await fetchTasksAPI(this.batch_id);
+
+        this.tasks.push(...tasks);
+        this.nextPage = nextPage;
+        this.hasMore = hasMore;
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        this.handleMessages("error", ERROR_MESSAGES.fetchTasks)
+        console.error(ERROR_MESSAGES.fetchTasks, error);
       } finally {
         this.loadingState.loading = false;
       }

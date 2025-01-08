@@ -42,11 +42,9 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import BatchJobInputFields from '@/components/batch-job/components/BatchJobInputFields.vue';
-
-const API_BASE_URL = '/api/batch-jobs/create/';
+import {createBatchJobAPI} from "@/components/batch-job/utils/batchJobUtils";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",
@@ -92,7 +90,6 @@ export default {
     },
 
     async createBatchJob() {
-      // TODO 함수 분리 대상
       if (this.formStatus.isFormDisabled) return;
 
       try {
@@ -104,8 +101,8 @@ export default {
           'description': this.batchJob.description,
         };
 
-        const response = await axios.post(API_BASE_URL, payload);
-        this.batch_id = response.data.id;
+        const {batch_id} = await createBatchJobAPI(payload);
+        this.batch_id = batch_id;
 
         this.handleMessages("success", SUCCESS_MESSAGES.createBatchJob);
         this.$router.push(`/batch-jobs/${this.batch_id}/`);
