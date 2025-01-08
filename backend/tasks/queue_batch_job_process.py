@@ -27,7 +27,7 @@ def process_batch_job(self, batch_job_id):
         processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
 
         for index, prompt in enumerate(processor.process(batch_job_id, file_path), start=1):
-            if prompt is not None:
+            if (prompt is not None) and (not TaskUnit.objects.filter(batch_job=batch_job, unit_index=index).exists()):
                 task_unit = TaskUnit(
                     batch_job=batch_job,
                     unit_index=index,
