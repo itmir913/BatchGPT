@@ -445,7 +445,8 @@ class TaskUnitResponseListAPIView(ListAPIView):
                 "unit_index": item.unit_index,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "request_data": item.text_data if item.text_data is not None else item.file_data,
-                "response_data": item.response_data.get('choices', [])[0].get('message', {}).get('content', None),
+                "response_data": item.response_data.get('choices', [])[0].get('message', {}).get('content',
+                                                                                                 None) if item.response_data is not None else None,
                 "error_message": item.error_message,
                 "processing_time": item.processing_time,
             }
