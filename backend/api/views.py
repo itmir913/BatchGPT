@@ -512,6 +512,10 @@ class BatchJobRunView(APIView):
         try:
             batch_job = BatchJob.objects.get(id=batch_id)
 
+            # TODO 여러 개의 결과를 저장하려면 삭제해야 함.
+            if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
+                TaskUnit.objects.filter(batch_job_id=batch_job).delete()
+
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
