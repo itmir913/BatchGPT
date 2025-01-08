@@ -198,7 +198,7 @@ export default {
     async deleteBatchJob() {
       if (confirm("Are you sure you want to delete this batch job?")) {
         try {
-          await deleteBatchJobTitleAPI();
+          await deleteBatchJobTitleAPI(this.batch_id);
           alert(SUCCESS_MESSAGES.deleteBatchJob);
           this.$router.push(`/home`);
         } catch (error) {
