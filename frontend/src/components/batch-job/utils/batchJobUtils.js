@@ -4,7 +4,6 @@ import axios from "@/configs/axios";
 const API_BASE_URL = "/api/batch-jobs/";
 const API_CONFIG_URL = "/configs/";
 
-export const DEFAULT_GPT_MODEL = 'gpt-4o-mini';
 
 export const SUCCESS_MESSAGES = {
     updatedConfigs: "Configuration updated successfully.",

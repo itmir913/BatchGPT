@@ -98,7 +98,6 @@
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import {
-  DEFAULT_GPT_MODEL,
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   isEditDisabled,
@@ -106,6 +105,7 @@ import {
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/batchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
+import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 
 export default {
   props: ['batch_id'],
@@ -124,12 +124,7 @@ export default {
       work_unit: 1,
       prompt: '',
       gpt_model: DEFAULT_GPT_MODEL,
-      models: {
-        'gpt-3.5-turbo': 'GPT-3.5 Turbo',
-        'gpt-4': 'GPT-4',
-        'gpt-4o': 'GPT-4o',
-        'gpt-4o-mini': 'GPT-4o Mini',
-      },
+      models: MODELS,
     };
   },
   computed: {

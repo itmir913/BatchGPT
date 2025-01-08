@@ -113,13 +113,13 @@ import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
 import {
-  DEFAULT_GPT_MODEL,
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   isEditDisabled,
   modifyBatchJobConfigsAPI,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/batchJobUtils';
+import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 
 const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";
