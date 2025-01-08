@@ -5,12 +5,22 @@
       <ProgressIndicator :batch_id="batch_id" :currentStep="currentStep"/>
     </div>
 
+    <!-- RUNNING 버튼 -->
+    <div class="text-center mb-4">
+      <button
+          :disabled="formStatus.isLoading && formStatus.shouldDisableRunButton"
+          class="btn btn-primary"
+          @click="handleRun"
+      >
+        {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
+      </button>
+    </div>
+
     <!-- CSV 표 형식 테이블 -->
     <div class="table-responsive">
       <table class="table table-striped table-hover align-middle custom-table">
         <thead class="table-dark">
         <tr>
-          <!-- 열 비율 설정 -->
           <th scope="col" style="width: 10%;">Status</th>
           <th scope="col" style="width: 45%;">Request</th>
           <th scope="col" style="width: 45%;">Response</th>
@@ -19,16 +29,15 @@
         <tbody>
         <tr v-for="task in tasks" :key="task.task_unit_id">
           <td>
-            <!-- Status 표시 -->
             <span
                 :class="{
-                  'badge bg-success': task.task_unit_status === 'Completed',
-                  'badge bg-warning text-dark': task.task_unit_status === 'PENDING',
-                  'badge bg-danger': task.task_unit_status === 'FAILED'
-                }"
+                'badge bg-success': task.task_unit_status === 'Completed',
+                'badge bg-warning text-dark': task.task_unit_status === 'PENDING',
+                'badge bg-danger': task.task_unit_status === 'FAILED'
+              }"
             >
-                {{ task.task_unit_status }}
-              </span>
+              {{ task.task_unit_status }}
+            </span>
           </td>
           <td>{{ parseResponseData(task.request_data) }}</td>
           <td>{{ parseResponseData(task.response_data) }}</td>
@@ -54,9 +63,15 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
+import {shouldDisableRunButton, shouldDisplayResults} from "@/components/batch-job/utils/batchJobUtils";
 
 const API_BASE_URL = "/api/batch-jobs/";
 const API_TASK_UNITS_URL = "/task-units/";
+const API_CONFIGS_POSTFIX = "/configs/";
+
+const ERROR_MESSAGES = {
+  loadBatchJob: "Failed to load Batch Job details. Please try again later.",
+};
 
 export default {
   props: ["batch_id"],
@@ -64,35 +79,63 @@ export default {
   data() {
     return {
       currentStep: 4,
-      tasks: [], // TaskUnit 데이터를 저장
-      nextPage: null, // 다음 페이지 URL
-      loadingState: {loading: true, loadingSave: false},
-      hasMore: true, // 추가 데이터 여부
+      tasks: [],
+      nextPage: null,
+      loadingState: {loading: false, loadingSave: false},
+      hasMore: true,
+
+      batchJob: null,
+      batch_job_status: "Created",
     };
   },
   computed: {
     formStatus() {
       return {
-        isLoading: this.loadingState.loading, // 로딩 중인지 여부
-        hasMore: this.hasMore, // 더 가져올 데이터가 있는지 여부
-        isReady: !this.loadingState.loading && this.hasMore, // 데이터 로드 준비 상태
+        isLoading: this.loadingState.loading,
+        hasMore: this.hasMore,
+        isReady: !this.loadingState.loading && this.hasMore,
+        shouldDisableRunButton: shouldDisableRunButton(this.batch_job_status),
       };
     },
   },
   methods: {
+    clearMessages() {
+      this.messages = {success: null, error: null};
+      this.loadingState.error = null;
+      this.loadingState.success = null;
+    },
+
+    handleMessages(type, message, details = "") {
+      this.clearMessages();
+
+      const fullMessage = details ? `${message} - ${details}` : message;
+      this.messages[type] = fullMessage;
+      this.loadingState.error = type === "error" ? fullMessage : null;
+      this.loadingState.success = type === "success" ? fullMessage : null;
+    },
+
+    async fetchBatchJob() {
+      try {
+        this.clearMessages();
+        const response = await axios.get(`${API_BASE_URL}${this.batch_id}${API_CONFIGS_POSTFIX}`, {withCredentials: true});
+        this.batchJob = response.data;
+
+        this.batch_job_status = this.batchJob.batch_job_status;
+      } catch (error) {
+        this.handleMessages("error", ERROR_MESSAGES.loadBatchJob);
+      } finally {
+        this.loadingState.loading = false;
+      }
+    },
+
     async fetchTasks(url = `${API_BASE_URL}${this.batch_id}${API_TASK_UNITS_URL}`) {
       this.loadingState.loading = true;
       try {
         const response = await axios.get(url);
         const data = response.data;
 
-        // 새로운 데이터를 기존 데이터에 추가
         this.tasks.push(...data.results);
-
-        // 다음 페이지 URL 설정
         this.nextPage = data.next;
-
-        // 더 이상 데이터가 없으면 hasMore를 false로 설정
         this.hasMore = !!data.next;
       } catch (error) {
         console.error("Error fetching tasks:", error);
@@ -103,24 +146,17 @@ export default {
     parseResponseData(responseData) {
       return responseData;
     },
-    handleScroll() {
-      const bottomOfWindow =
-          window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 10;
-
-      if (bottomOfWindow && this.formStatus.isReady) {
-        this.fetchTasks(this.nextPage); // 다음 페이지 데이터 로드
-      }
+    handleRun() {
+      this.tasks = []; // 기존 데이터를 초기화
+      this.nextPage = null;
+      this.hasMore = true;
+      this.fetchTasks();
     },
   },
-  async created() {
-    await this.fetchTasks();
-
-    // 스크롤 이벤트 리스너 추가
-    window.addEventListener("scroll", this.handleScroll);
-  },
-  beforeUnmount() {
-    // 스크롤 이벤트 리스너 제거
-    window.removeEventListener("scroll", this.handleScroll);
+  async mounted() {
+    await this.fetchBatchJob();
+    if (shouldDisplayResults(this.batch_job_status))
+      await this.fetchTasks();
   },
 };
 </script>
@@ -138,15 +174,14 @@ export default {
   margin-top: 20px;
 }
 
-/* 열 구분선 추가 */
 .custom-table td,
 .custom-table th {
-  border-right: 1px solid #dee2e6; /* Bootstrap 기본 테이블 경계선 색상 */
+  border-right: 1px solid #dee2e6;
 }
 
 .custom-table th:last-child,
 .custom-table td:last-child {
-  border-right: none; /* 마지막 열은 구분선 제거 */
+  border-right: none;
 }
 
 .spinner-border {
