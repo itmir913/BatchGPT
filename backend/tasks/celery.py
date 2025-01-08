@@ -18,8 +18,11 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Celery가 시작된 후, 자동으로 작업 실행
-    from .task_queue import resume_pending_tasks
-    resume_pending_tasks.apply_async()
+    from .queue_task_units import resume_pending_tasks as task_units
+    task_units.apply_async()
+
+    from .queue_batch_job_process import resume_pending_tasks as batch_job
+    batch_job.apply_async()
 
 
 # Celery 작업 자동 발견

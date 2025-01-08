@@ -231,7 +231,6 @@ export default {
     },
 
     async fetchTasks() {
-      this.clearMessages();
       this.loadingState.loading = true;
 
       try {
@@ -268,13 +267,13 @@ export default {
       }
     },
     async handleBatchJobStatus(batchJobId, status, result) {
-      this.batchJobStatus = {status, message: result};
+      this.batchJob.batch_job_status = status;
 
-      if (status === 'Pending') {
-        console.log('Batch job started successfully.');
+      if (status !== 'Pending') {
+        console.log('Batch job started successfully.', result);
         this.handleMessages("success", SUCCESS_MESSAGES.runTasks)
         await this.fetchTasks();
-      } else if (status === 'FAILED') {
+      } else if (status === 'Failed') {
         console.log('Batch job failed.');
       }
     },

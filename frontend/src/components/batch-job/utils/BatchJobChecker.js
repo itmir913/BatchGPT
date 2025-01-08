@@ -20,7 +20,7 @@ class BatchJobChecker {
         const intervalId = setInterval(async () => {
             try {
                 const response = await fetchBatchJobProcessStatus(batchJobId);
-                const status = response.data.status;
+                const status = response.data.batch_job_status;
                 const result = response.data.message ?? "";  // 상태 메세지 또는 결과
 
                 if (this.onCompleteCallback) {

@@ -20,7 +20,7 @@ class BatchJobStatus:
     """BatchJob의 상태와 전환 규칙 관리"""
     CREATED = 'CREATED'
     UPLOADED = 'UPLOADED'
-    CONFIGS = 'CONFIGS'
+    CONFIGS = 'STANDBY'
     PENDING = 'PENDING'
     IN_PROGRESS = 'IN_PROGRESS'
     COMPLETED = 'COMPLETED'
@@ -29,7 +29,7 @@ class BatchJobStatus:
     CHOICES = [
         (CREATED, 'Created'),
         (UPLOADED, 'Uploaded'),
-        (CONFIGS, 'Configs'),
+        (CONFIGS, 'Standby'),
         (PENDING, 'Pending'),
         (IN_PROGRESS, 'In Progress'),
         (COMPLETED, 'Completed'),
@@ -39,11 +39,11 @@ class BatchJobStatus:
     VALID_TRANSITIONS = {
         CREATED: [UPLOADED],
         UPLOADED: [UPLOADED, CONFIGS],
-        CONFIGS: [UPLOADED, CONFIGS, PENDING, IN_PROGRESS],
-        PENDING: [IN_PROGRESS, PENDING],
-        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
-        COMPLETED: [IN_PROGRESS, COMPLETED],
-        FAILED: [IN_PROGRESS, FAILED],
+        CONFIGS: [CONFIGS, UPLOADED, PENDING, IN_PROGRESS],
+        PENDING: [PENDING, IN_PROGRESS],
+        IN_PROGRESS: [IN_PROGRESS, PENDING, COMPLETED, FAILED],
+        COMPLETED: [COMPLETED, PENDING, IN_PROGRESS],
+        FAILED: [FAILED, PENDING, IN_PROGRESS],
     }
 
     @classmethod

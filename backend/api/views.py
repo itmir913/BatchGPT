@@ -15,7 +15,8 @@ from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
-from tasks.task_queue import process_task_unit
+from tasks.queue_batch_job_process import process_batch_job
+from tasks.queue_task_units import process_task_unit
 
 
 class UserBatchJobsView(APIView):
@@ -508,7 +509,7 @@ class BatchJobRunView(APIView):
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
-            # TODO 비동기 시작
+            process_batch_job.apply_async(args=[batch_job.id])
 
             return Response(
                 {"message": "BatchJob status set to Pending successfully."},
