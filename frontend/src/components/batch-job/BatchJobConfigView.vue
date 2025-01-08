@@ -260,9 +260,4 @@ export default {
 .card.selected {
   border: 2px solid #007bff;
 }
-
-.row {
-  padding: 20px;
-  overflow-x: hidden;
-}
 </style>
