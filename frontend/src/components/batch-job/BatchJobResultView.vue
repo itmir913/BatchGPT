@@ -63,15 +63,15 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
-import {shouldDisableRunButton, shouldDisplayResults} from "@/components/batch-job/utils/batchJobUtils";
+import {
+  ERROR_MESSAGES,
+  fetchBatchJobConfigsAPI,
+  shouldDisableRunButton,
+  shouldDisplayResults
+} from "@/components/batch-job/utils/batchJobUtils";
 
 const API_BASE_URL = "/api/batch-jobs/";
 const API_TASK_UNITS_URL = "/task-units/";
-const API_CONFIGS_POSTFIX = "/configs/";
-
-const ERROR_MESSAGES = {
-  loadBatchJob: "Failed to load Batch Job details. Please try again later.",
-};
 
 export default {
   props: ["batch_id"],
@@ -85,7 +85,7 @@ export default {
       hasMore: true,
 
       batchJob: null,
-      batch_job_status: "Created",
+      batch_job_status: "CREATED",
     };
   },
   computed: {
@@ -117,12 +117,14 @@ export default {
     async fetchBatchJob() {
       try {
         this.clearMessages();
-        const response = await axios.get(`${API_BASE_URL}${this.batch_id}${API_CONFIGS_POSTFIX}`, {withCredentials: true});
-        this.batchJob = response.data;
 
-        this.batch_job_status = this.batchJob.batch_job_status;
+        const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
+        this.batchJob = batchJob;
+        this.work_unit = configs.work_unit ?? 1;
+        this.prompt = configs.prompt ?? '';
+        this.batch_job_status = batchJob.batch_job_status ?? 'CREATED';
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.loadBatchJob);
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       } finally {
         this.loadingState.loading = false;
       }

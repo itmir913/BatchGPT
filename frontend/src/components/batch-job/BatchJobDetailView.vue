@@ -75,7 +75,7 @@
 <script>
 import axios from "@/configs/axios";
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
-import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
+import {fetchBatchJobTitleAPI, isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
 
 // 상수 정의
 const API_BASE_URL = "/api/batch-jobs/";
@@ -142,11 +142,11 @@ export default {
 
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`${API_BASE_URL}${this.batch_id}/`, {withCredentials: true});
-        this.batchJob = response.data;
-        this.clearMessages();
+        this.loadingState.loading = true;
+
+        this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.loadBatchJob);
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       } finally {
         this.loadingState.loading = false;
       }

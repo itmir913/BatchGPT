@@ -112,24 +112,18 @@ import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
-import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
+import {
+  DEFAULT_GPT_MODEL,
+  ERROR_MESSAGES,
+  fetchBatchJobConfigsAPI,
+  isEditDisabled,
+  SUCCESS_MESSAGES
+} from '@/components/batch-job/utils/batchJobUtils';
 
 const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
 const API_PREVIEW_POSTFIX = "/preview/";
 const API_CONFIGS_POSTFIX = "/configs/";
-const SUCCESS_MESSAGES = {
-  updatedConfigs: "Configuration updated successfully.",
-  loadResult: "The preview has been requested; the result will be available in a moment.",
-};
-const ERROR_MESSAGES = {
-  loadBatchJob: "Failed to load Batch Job details. Please try again later.",
-  loadPreview: "Failed to load Preview data. Please try again later.",
-  noColumn: "Please select at least one column.",
-  emptyPrompt: "Prompt cannot be empty.",
-  noDataReceived: "No data received from Server.",
-  updatedConfigs: "Error updating configuration. Please try again later.",
-  loadResult: "Failed to load Preview data. Please try again later.",
-};
+
 
 export default {
   props: ['batch_id'],
@@ -202,14 +196,16 @@ export default {
     async fetchBatchJob() {
       try {
         this.clearMessages();
-        const response = await axios.get(`${API_BASE_URL_BATCH_JOBS}${this.batch_id}${API_CONFIGS_POSTFIX}`, {withCredentials: true});
-        this.batchJob = response.data;
 
-        this.previewData.work_unit = this.batchJob.config.work_unit ?? 1;
-        this.previewData.prompt = this.batchJob.config.prompt ?? '';
-        this.previewData.CSV.selectedColumns = this.batchJob.config.selected_headers ?? [];
+        const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
+        this.batchJob = batchJob;
+        this.previewData.work_unit = configs.work_unit ?? 1;
+        this.previewData.prompt = configs.prompt ?? '';
+        this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
+        this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
+
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.loadBatchJob);
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       } finally {
         this.loadingState.loading = false;
       }
@@ -323,7 +319,7 @@ export default {
           }
         });
 
-        this.handleMessages("success", SUCCESS_MESSAGES.loadResult);
+        this.handleMessages("success", SUCCESS_MESSAGES.loadPreviewResult);
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.loadResult);
       } finally {

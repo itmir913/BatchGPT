@@ -98,23 +98,18 @@
 import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
-import {isEditDisabled} from '@/components/batch-job/utils/batchJobUtils';
+import {
+  DEFAULT_GPT_MODEL,
+  ERROR_MESSAGES,
+  fetchBatchJobConfigsAPI,
+  isEditDisabled,
+  SUCCESS_MESSAGES
+} from '@/components/batch-job/utils/batchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 
 // 상수화 가능한 값 정의
 const API_BASE_URL = "/api/batch-jobs/";
 const API_CONFIG_URL = "configs/";
-
-const DEFAULT_GPT_MODEL = 'gpt-4o-mini';
-
-const SUCCESS_MESSAGES = {
-  saveConfigSuccess: "Configuration updated successfully.",
-};
-
-const ERROR_MESSAGES = {
-  fetchBatchJobError: "Failed to load Batch Job details. Please try again later.",
-  saveConfigError: "Error updating configuration: ",
-};
 
 export default {
   props: ['batch_id'],
@@ -177,19 +172,15 @@ export default {
     async fetchBatchJob() {
       try {
         this.loadingState.loading = true;
-        const response = await axios.get(`${API_BASE_URL}${this.batch_id}/${API_CONFIG_URL}`, {withCredentials: true});
-        this.batchJob = response.data;
-        if (!response.data) {
-          this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
-          return;
-        }
 
-        const config = this.batchJob.config ?? {};
-        this.work_unit = config.work_unit ?? 1;
-        this.prompt = config.prompt ?? '';
-        this.gpt_model = config.gpt_model ?? DEFAULT_GPT_MODEL;
+        const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
+        this.batchJob = batchJob;
+        this.work_unit = configs.work_unit ?? 1;
+        this.prompt = configs.prompt ?? '';
+        this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
+
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       } finally {
         this.loadingState.loading = false;
       }
@@ -217,7 +208,7 @@ export default {
         this.batchJob = response.data;
 
         if (!response.data) {
-          this.handleMessages("error", ERROR_MESSAGES.fetchBatchJobError);
+          this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
           return;
         }
 
@@ -226,9 +217,9 @@ export default {
         this.prompt = config.prompt ?? '';
         this.gpt_model = config.gpt_model ?? DEFAULT_GPT_MODEL;
 
-        this.handleMessages("success", SUCCESS_MESSAGES.saveConfigSuccess);
+        this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
       } catch (err) {
-        this.handleMessages("error", `${ERROR_MESSAGES.saveConfigError} ${err.message}`);
+        this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${err.message}`);
       } finally {
         this.loadingState.loadingSave = false;
       }

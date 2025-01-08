@@ -37,9 +37,14 @@
 </template>
 
 <script>
-import axios from "@/configs/axios";
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import BatchJobInputFields from "@/components/batch-job/components/BatchJobInputFields.vue";
+import {
+  ERROR_MESSAGES,
+  fetchBatchJobTitleAPI,
+  modifyBatchJobTitleAPI,
+  SUCCESS_MESSAGES
+} from "@/components/batch-job/utils/batchJobUtils";
 
 export default {
   components: {
@@ -50,7 +55,7 @@ export default {
   data() {
     return {
       currentStep: 0, // 현재 진행 중인 단계
-      batchJob: {title: "", description: ""}, // 배치 작업 초기값
+      batchJob: null, // 배치 작업 초기값
       success: null, // 성공 메시지 상태
       error: null, // 에러 메시지 상태
       loading: false, // 로딩 상태
@@ -72,11 +77,10 @@ export default {
     // 배치 작업 데이터를 가져오는 메서드
     async fetchBatchJob() {
       try {
-        const response = await axios.get(`/api/batch-jobs/${this.batch_id}/`, {withCredentials: true});
-        this.batchJob = response.data;
+        this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
         this.isButtonDisabled = false; // 버튼 활성화
       } catch (error) {
-        this.handleError("Failed to load Batch Job details. Please try again later.");
+        this.handleError(ERROR_MESSAGES.fetchBatchJob);
       }
     },
 
@@ -90,17 +94,20 @@ export default {
           'description': this.batchJob.description,
         };
 
-        await axios.patch(`/api/batch-jobs/${this.batch_id}/`, payload);
-        this.success = "Batch Job modified successfully!";
+        await modifyBatchJobTitleAPI(this.batch_id, payload);
+
+        this.success = SUCCESS_MESSAGES.modifyBatchJob;
         this.error = null;
 
         // 수정 후 자동으로 배치 작업 상세 페이지로 리다이렉트
         setTimeout(() => {
           this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 1000);
+
       } catch (error) {
         this.isButtonDisabled = false; // 버튼 활성화
-        this.handleError(`Error modifying Batch Job: ${error.response?.data?.error || "An unexpected error occurred."}`);
+        this.handleError(ERROR_MESSAGES.modifyBatchJob);
+        console.error(error.message)
       }
     },
 
