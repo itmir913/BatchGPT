@@ -4,7 +4,7 @@ import BatchJobDetailView from "@/components/batch-job/BatchJobDetailView.vue";
 import BatchJobEditView from "@/components/batch-job/BatchJobEditView.vue";
 import BatchJobConfigView from "@/components/batch-job/BatchJobConfigView.vue";
 import BatchJobPreView from "@/components/batch-job/BatchJobPreView.vue";
-import BatchJobRunning from "@/components/batch-job/BatchJobRunning.vue";
+import BatchJobResultView from "@/components/batch-job/BatchJobResultView.vue";
 
 export default [
     {
@@ -43,7 +43,7 @@ export default [
     {
         path: '/batch-jobs/:batch_id/run', // 동적 경로 정의
         name: 'BatchJob Result',
-        component: BatchJobRunning,
+        component: BatchJobResultView,
         props: true, // URL 파라미터를 컴포넌트의 props로 전달
     },
 ];
