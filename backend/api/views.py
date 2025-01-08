@@ -15,6 +15,7 @@ from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_prompt
+from api.utils.job_status_utils import get_task_status_counts
 from tasks.queue_batch_job_process import process_batch_job
 
 
@@ -206,6 +207,18 @@ class BatchJobConfigView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
+        if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
+            pending, in_progress, fail = get_task_status_counts(batch_id)
+
+            if pending > 0 or in_progress > 0:
+                pass
+            elif fail > 0:
+                batch_job.set_status(BatchJobStatus.FAILED)
+                batch_job.save()
+            else:
+                batch_job.set_status(BatchJobStatus.COMPLETED)
+                batch_job.save()
+
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
         # return Response(
@@ -348,14 +361,7 @@ class BatchJobPreView(APIView):
             generate_prompts = [get_prompt(prompt, item) for item in filtered_preview]
             json_formatted = []
 
-            logger.error("generate_prompts")
-            logger.error(generate_prompts)
-
             for idx, prompt in enumerate(generate_prompts, start=1):
-                logger.error("prompt")
-                logger.error(prompt)
-                logger.error(" ")
-
                 existing_task_units = TaskUnit.objects.filter(batch_job_id=batch_job, unit_index=idx)
                 if existing_task_units.exists():
                     existing_task_units.delete()
@@ -505,14 +511,8 @@ class BatchJobRunView(APIView):
         try:
             batch_job = BatchJob.objects.get(id=batch_id)
 
-            try:
-                batch_job.set_status(BatchJobStatus.PENDING)
-                batch_job.save()
-            except ValueError as e:
-                return Response(
-                    {"message": "BatchJob status already set to Pending."},
-                    status=HTTP_200_OK
-                )
+            batch_job.set_status(BatchJobStatus.PENDING)
+            batch_job.save()
 
             process_batch_job.apply_async(args=[batch_job.id])
 

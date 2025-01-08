@@ -1,7 +1,7 @@
 import os
 
 from celery import shared_task
-from django.db.models import Q
+from django.db import IntegrityError
 
 from api.utils.file_settings import FileSettings
 
@@ -27,7 +27,7 @@ def process_batch_job(self, batch_job_id):
         processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
 
         for index, prompt in enumerate(processor.process(batch_job_id, file_path), start=1):
-            if (prompt is not None) and (not TaskUnit.objects.filter(batch_job=batch_job, unit_index=index).exists()):
+            if str(prompt).strip():
                 task_unit = TaskUnit(
                     batch_job=batch_job,
                     unit_index=index,
@@ -42,13 +42,32 @@ def process_batch_job(self, batch_job_id):
 
     except BatchJob.DoesNotExist as e:
         pass
+    except IntegrityError as e:
+        pass
 
 
 @shared_task
-def resume_pending_tasks():
-    from api.models import BatchJob, BatchJobStatus
-    pending_or_in_progress_tasks = BatchJob.objects.filter(
+def resume_pending_jobs():
+    from api.models import BatchJob, BatchJobStatus, TaskUnit
+    from api.utils.job_status_utils import get_task_status_counts
+    from django.db.models import Q
+
+    pending_or_in_progress_jobs = BatchJob.objects.filter(
         Q(batch_job_status=BatchJobStatus.PENDING) | Q(batch_job_status=BatchJobStatus.IN_PROGRESS)
     )
-    for task in pending_or_in_progress_tasks:
-        process_batch_job.apply_async(args=[task.id])
+
+    for job in pending_or_in_progress_jobs:
+        if TaskUnit.objects.filter(batch_job=job).count() == 0:
+            process_batch_job.apply_async(args=[job.id])
+        else:
+            pending, in_progress, fail = get_task_status_counts(job)
+
+            if pending > 0 or in_progress > 0:
+                process_batch_job.apply_async(args=[job.id])
+                return
+            elif fail > 0:
+                job.set_status(BatchJobStatus.FAILED)
+                job.save()
+            else:
+                job.set_status(BatchJobStatus.COMPLETED)
+                job.save()

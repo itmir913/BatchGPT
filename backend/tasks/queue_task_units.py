@@ -3,7 +3,6 @@ import json
 import time
 
 from celery import shared_task
-from django.db.models import Q
 from openai import OpenAI
 
 from backend.settings import OPENAI_API_KEY
@@ -82,9 +81,8 @@ def process_task_unit(self, task_unit_id):
 @shared_task
 def resume_pending_tasks():
     from api.models import TaskUnit, TaskUnitStatus
-    pending_or_in_progress_tasks = TaskUnit.objects.filter(
-        Q(task_unit_status=TaskUnitStatus.PENDING) | Q(task_unit_status=TaskUnitStatus.IN_PROGRESS)
-    )
+
+    pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
     for task in pending_or_in_progress_tasks:
         process_task_unit.apply_async(args=[task.id])
 

@@ -251,9 +251,9 @@ export default {
       return responseData;
     },
     async handleRun() {
-      // this.tasks = []; // 기존 데이터를 초기화
-      // this.nextPage = null;
-      // this.hasMore = true;
+      this.tasks = []; // 기존 데이터를 초기화
+      this.nextPage = null;
+      this.hasMore = true;
 
       try {
         await runBatchJobProcess(this.batch_id);
