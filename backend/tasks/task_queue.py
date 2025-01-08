@@ -26,7 +26,7 @@ def process_task_unit(self, task_unit_id):
         task_unit.save()
 
         batch_job = BatchJob.objects.get(id=task_unit.batch_job_id)
-        batch_job_config = batch_job.config or {}
+        batch_job_config = batch_job.configs or {}
         model = batch_job_config['gpt_model']
 
         try:

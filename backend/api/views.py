@@ -162,7 +162,7 @@ class BatchJobFileUploadView(APIView):
 
             batch_job.file = file
             batch_job.file_name = file.name
-            batch_job.config = {}
+            batch_job.configs = {}
 
             batch_job.set_status(BatchJobStatus.UPLOADED)
             batch_job.save()
@@ -257,14 +257,14 @@ class BatchJobConfigView(APIView):
         if work_unit > total_size:
             return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
 
-        current_config = batch_job.config or {}
+        current_config = batch_job.configs or {}
 
         current_config['work_unit'] = work_unit
         current_config['prompt'] = prompt
         current_config['gpt_model'] = gpt_model
         current_config['selected_headers'] = selected_headers
 
-        batch_job.config = current_config
+        batch_job.configs = current_config
         batch_job.set_status(BatchJobStatus.CONFIGS)
         batch_job.save()
 
@@ -321,7 +321,7 @@ class BatchJobPreView(APIView):
             )
 
         try:
-            config = batch_job.config if batch_job.config is not None else {}
+            config = batch_job.configs if batch_job.configs is not None else {}
             work_unit = int(config['work_unit'])
             gpt_model = config['gpt_model']
 

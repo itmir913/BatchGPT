@@ -88,7 +88,7 @@ class BatchJob(TimestampedModel):
         null=True)
 
     """배치 작업 기본 설정"""
-    config = models.JSONField(
+    configs = models.JSONField(
         null=True,
         blank=True,
         verbose_name="Configurations for BatchJob"
