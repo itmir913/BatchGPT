@@ -11,6 +11,11 @@ class BatchJobSerializer(serializers.ModelSerializer):
         fields = ['id', 'created_at', 'updated_at', 'title', 'description', 'file_name', 'batch_job_status']
         read_only_fields = ['id', 'created_at', 'updated_at']  # 읽기 전용 필드 지정
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['batch_job_status'] = instance.get_batch_job_status_display()
+        return representation
+
 
 class BatchJobCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,3 +50,8 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise ValueError(f"Internal Server Error: {str(e)}")
         return 0
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['batch_job_status'] = instance.get_batch_job_status_display()
+        return representation

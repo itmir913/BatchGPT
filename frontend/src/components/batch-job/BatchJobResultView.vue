@@ -170,7 +170,7 @@ export default {
         description: "description.",
         file_name: "example_file.csv",
         total_size: "0",
-        batch_job_status: "CREATED", // Possible values: 'Completed', 'In Progress', 'Failed'
+        batch_job_status: "Created", // Possible values: 'Completed', 'In Progress', 'Failed'
         configs: {
           prompt: "Generate summary",
           work_unit: 1,
@@ -214,7 +214,7 @@ export default {
         this.batchJob = batchJob;
         this.work_unit = configs.work_unit ?? 1;
         this.prompt = configs.prompt ?? '';
-        this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'CREATED';
+        this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       } finally {
