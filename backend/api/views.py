@@ -2,7 +2,6 @@ import json
 import logging
 
 from django.core.exceptions import ValidationError
-from django.db.models import Subquery, OuterRef
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
@@ -422,14 +421,16 @@ class TaskUnitResponsePagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 
 
+from django.db.models import OuterRef, Subquery
+
 class TaskUnitResponseListAPIView(ListAPIView):
     pagination_class = TaskUnitResponsePagination
 
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
 
-        # TaskUnitResponse의 필드를 각각 Subquery로 가져옴
-        response_subquery = TaskUnitResponse.objects.filter(task_unit_id=OuterRef('pk'))
+        # TaskUnitResponse에서 가장 최신의 값을 가져오는 서브쿼리
+        response_subquery = TaskUnitResponse.objects.filter(task_unit_id=OuterRef('pk')).order_by('-created_at')
 
         queryset = TaskUnit.objects.filter(batch_job_id=batch_id).annotate(
             task_response_status=Subquery(response_subquery.values('task_response_status')[:1]),
@@ -437,7 +438,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
             response_data=Subquery(response_subquery.values('response_data')[:1]),
             error_message=Subquery(response_subquery.values('error_message')[:1]),
             processing_time=Subquery(response_subquery.values('processing_time')[:1]),
-        ).order_by('unit_index')
+        ).order_by('-created_at')  # 가장 최근에 생성된 TaskUnit만 가져오기 위해 정렬
 
         return queryset
 

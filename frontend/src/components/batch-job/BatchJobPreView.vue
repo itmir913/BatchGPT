@@ -89,12 +89,12 @@
 
       <!-- 버튼들 -->
       <div class="text-end mb-3 mt-3">
-        <button :disabled="batchJobStatus.isEditDisabled"
+        <button
                 class="btn btn-secondary me-3"
                 @click="configSave">
           Save
         </button>
-        <button :disabled="formStatus.isPreviewLoading|| batchJobStatus.isEditDisabled"
+        <button :disabled="formStatus.isPreviewLoading"
                 class="btn btn-primary me-3"
                 @click="previewRun">
           Preview
