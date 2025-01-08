@@ -291,7 +291,7 @@ export default {
           'selected_headers': this.previewData.CSV.selectedColumns,
         };
 
-        this.previewData.resultData = await fetchPreviewResultsAPI(payload, payload);
+        this.previewData.resultData = await fetchPreviewResultsAPI(this.batch_id, payload);
 
         if (!this.previewData.resultData) {
           this.handleMessages("error", ERROR_MESSAGES.noDataReceived);
