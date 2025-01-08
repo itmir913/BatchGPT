@@ -323,6 +323,18 @@ export default {
     },
 
     goToNextStep() {
+      const selectedHeader = this.batchJob?.configs?.selected_headers ?? []
+      if (selectedHeader.length <= 0) {
+        this.handleMessages("error", ERROR_MESSAGES.noColumn)
+        return
+      }
+
+      const prompt = this.batchJob?.configs?.prompt ?? ''
+      if (!prompt.trim()) {
+        this.handleMessages("error", ERROR_MESSAGES.emptyPrompt);
+        return;
+      }
+
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
   },
