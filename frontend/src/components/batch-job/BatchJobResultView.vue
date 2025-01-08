@@ -6,7 +6,6 @@
     </div>
 
     <!-- 정보 카드 -->
-    <!-- 정보 카드 -->
     <div class="card mb-4 shadow-lg border-0 rounded-4">
       <div class="card-header bg-gradient text-white bg-primary rounded-top">
         <h5 class="mb-0">Summary</h5>
@@ -94,6 +93,10 @@
       </div>
     </div>
 
+    <!-- Success/Failure Message -->
+    <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{ messages.success }}</div>
+    <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
+
     <!-- RUNNING 버튼 -->
     <div class="text-center mb-4">
       <button :disabled="formStatus.isLoading && formStatus.shouldDisableRunButton" class="btn btn-primary"
@@ -150,10 +153,13 @@ import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   fetchTasksAPI,
+  runBatchJobProcess,
   shouldDisableRunButton,
-  shouldDisplayResults
+  shouldDisplayResults,
+  SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
+import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
 
 export default {
   props: ["batch_id"],
@@ -162,8 +168,10 @@ export default {
     return {
       tasks: [],
       nextPage: null,
-      loadingState: {loading: false, loadingSave: false},
       hasMore: true,
+
+      loadingState: {loading: false, loadingSave: false},
+      messages: {success: null, error: null},
 
       batchJob: {
         title: "title",
@@ -178,6 +186,7 @@ export default {
           selected_headers: []
         }
       },
+      batchJobChecker: new BatchJobChecker(),
     };
   },
   computed: {
@@ -192,9 +201,8 @@ export default {
   },
   methods: {
     clearMessages() {
-      this.messages = {success: null, error: null};
-      this.loadingState.error = null;
-      this.loadingState.success = null;
+      this.messages.error = null;
+      this.messages.success = null;
     },
 
     handleMessages(type, message, details = "") {
@@ -202,8 +210,8 @@ export default {
 
       const fullMessage = details ? `${message} - ${details}` : message;
       this.messages[type] = fullMessage;
-      this.loadingState.error = type === "error" ? fullMessage : null;
-      this.loadingState.success = type === "success" ? fullMessage : null;
+      this.messages.error = type === "error" ? fullMessage : null;
+      this.messages.success = type === "success" ? fullMessage : null;
     },
 
     async fetchBatchJob() {
@@ -242,11 +250,33 @@ export default {
     parseResponseData(responseData) {
       return responseData;
     },
-    handleRun() {
+    async handleRun() {
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
       this.hasMore = true;
-      this.fetchTasks();
+
+      try {
+        await runBatchJobProcess(this.batch_id);
+        this.handleMessages("success", SUCCESS_MESSAGES.pendingTasks)
+
+        this.batchJobChecker.setOnCompleteCallback(this.handleBatchJobStatus);
+        this.batchJobChecker.startCheckingBatchJob(this.batch_id);
+
+      } catch (error) {
+        console.error(error.response);
+        this.handleMessages("error", ERROR_MESSAGES.pendingTasks)
+      }
+    },
+    async handleBatchJobStatus(batchJobId, status, result) {
+      this.batchJobStatus = {status, message: result};
+
+      if (status === 'Pending') {
+        console.log('Batch job started successfully.');
+        this.handleMessages("success", SUCCESS_MESSAGES.runTasks)
+        await this.fetchTasks();
+      } else if (status === 'FAILED') {
+        console.log('Batch job failed.');
+      }
     },
     formatKey(key) {
       return key

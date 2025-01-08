@@ -12,6 +12,7 @@ urlpatterns = [
     path('<int:batch_id>/configs/', batch_jobs.BatchJobConfigView.as_view(), name='batch-job-configs'),
     path('<int:batch_id>/preview/', batch_jobs.BatchJobPreView.as_view(), name='batch-job-preview'),
     path('<int:batch_id>/task-units/', batch_jobs.TaskUnitResponseListAPIView.as_view(), name='batch-job-task-units'),
-    path('<int:batch_id>/task-units/<int:task_unit_id>/', batch_jobs.TaskUnitDetailView.as_view(),
+    path('<int:batch_id>/task-units/<int:task_unit_id>/', batch_jobs.TaskUnitStatusView.as_view(),
          name='task-units-status'),
+    path('<int:batch_id>/run/', batch_jobs.BatchJobRunView.as_view(), name='batch-job-run'),
 ]

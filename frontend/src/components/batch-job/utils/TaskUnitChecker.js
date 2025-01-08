@@ -1,7 +1,4 @@
-import axios from "@/configs/axios";
-
-const API_BASE_URL_BATCH_JOBS = "/api/batch-jobs/";
-const API_BASE_URL_TASK_UNITS = "/task-units/";
+import {checkTaskUnitStatus} from "@/components/batch-job/utils/BatchJobUtils";
 
 class TaskUnitChecker {
 
@@ -23,7 +20,7 @@ class TaskUnitChecker {
             const randomInterval = Math.floor(Math.random() * 2500) + 1000; // 1초에서 3.5초 사이
             const intervalId = setInterval(async () => {
                 try {
-                    const response = await this.checkTaskUnitStatus(batchJobId, taskUnitId, controller.signal);
+                    const response = await checkTaskUnitStatus(batchJobId, taskUnitId);
                     const status = response.data.status;
                     const result = response.data.response_data ?? "";
 
@@ -36,6 +33,7 @@ class TaskUnitChecker {
                         console.log(`TaskUnit ${taskUnitId} completed.`);
                         this.stopCheckingTaskUnit(taskUnitId);
                     }
+
                 } catch (error) {
                     if (error.name === 'AbortError') {
                         console.warn(`Request for TaskUnit ${taskUnitId} was aborted.`);
@@ -52,10 +50,6 @@ class TaskUnitChecker {
         setTimeout(() => {
             this.stopAllChecking();
         }, 30000);
-    }
-
-    async checkTaskUnitStatus(batchJobId, taskUnitId, signal) {
-        return await axios.get(`${API_BASE_URL_BATCH_JOBS}${batchJobId}${API_BASE_URL_TASK_UNITS}${taskUnitId}/`, {signal});
     }
 
     stopCheckingTaskUnit(taskUnitId) {

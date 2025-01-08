@@ -1,19 +1,22 @@
 // BatchJobUtils.js
 import axios from "@/configs/axios";
 
-const API_BASE_URL = "/api/batch-jobs/";
+export const API_BASE_URL = "/api/batch-jobs/";
 const API_CREATE_URL = `${API_BASE_URL}create/`;
 const API_FILE_TYPES_URL = `${API_BASE_URL}supported-file-types/`;
 const API_UPLOAD = `/upload/`;
 const API_CONFIG_URL = "/configs/";
 const API_PREVIEW_POSTFIX = "/preview/";
-const API_TASK_UNITS_URL = "/task-units/";
+export const API_TASK_UNITS_URL = "/task-units/";
+const API_BATCH_JOB_RUN_URL = "/run/";
 
 
 export const SUCCESS_MESSAGES = {
     updatedConfigs: "Configuration updated successfully.",
     modifyBatchJob: "Batch Job modified successfully!",
     deleteBatchJob: "Batch Job deleted successfully!",
+    pendingTasks: "The Batch Job will start soon.",
+    runTasks: "Batch Job started successfully!",
     uploadFile: "File uploaded successfully!",
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
@@ -30,7 +33,8 @@ export const ERROR_MESSAGES = {
     emptyPrompt: "Prompt cannot be empty.",
     noDataReceived: "No data received from Server.",
     loadResult: "Failed to load Preview data. Please try again later.",
-    fetchTasks: "Error fetching tasks. Please try again later."
+    fetchTasks: "Error fetching tasks. Please try again later.",
+    pendingTasks: "Error Start tasks. Please try again later.",
 };
 
 const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress', 'Completed', 'Failed'];
@@ -132,6 +136,10 @@ export async function fetchPreviewResultsAPI(batch_id, payload) {
     return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
 }
 
+export async function checkTaskUnitStatus(batchJobId, taskUnitId) {
+    return await axios.get(`${API_BASE_URL}${batchJobId}${API_TASK_UNITS_URL}${taskUnitId}/`);
+}
+
 export async function fetchTasksAPI(batch_id) {
     const response = await axios.get(`${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`, {withCredentials: true});
     const data = response.data;
@@ -140,5 +148,19 @@ export async function fetchTasksAPI(batch_id) {
         tasks: data.results,
         nextPage: data.next,
         hasMore: !!data.next,
+    };
+}
+
+export async function runBatchJobProcess(batch_id) {
+    return await axios.post(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_RUN_URL}`, {withCredentials: true});
+}
+
+export async function fetchBatchJobProcessStatus(batch_id) {
+    const response = await axios.get(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_RUN_URL}`, {withCredentials: true});
+    const data = response.data;
+
+    return {
+        id: data.id,
+        batch_job_status: data.batch_job_status,
     };
 }

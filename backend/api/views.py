@@ -456,7 +456,8 @@ class TaskUnitResponseListAPIView(ListAPIView):
         return self.get_paginated_response(results)
 
 
-class TaskUnitDetailView(APIView):
+class TaskUnitStatusView(APIView):
+    # TODO 이름 바꾸기
     permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
     status_code_map = {
@@ -494,3 +495,49 @@ class TaskUnitDetailView(APIView):
 
         except TaskUnitResponse.DoesNotExist:
             return JsonResponse({"status": "ERROR", "message": "Task unit not found"}, status=HTTP_404_NOT_FOUND)
+
+
+class BatchJobRunView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, batch_id):
+        """작업을 시작"""
+        try:
+            batch_job = BatchJob.objects.get(id=batch_id)
+
+            batch_job.set_status(BatchJobStatus.PENDING)
+            batch_job.save()
+
+            # TODO 비동기 시작
+
+            return Response(
+                {"message": "BatchJob status set to Pending successfully."},
+                status=HTTP_200_OK
+            )
+        except BatchJob.DoesNotExist:
+            return Response(
+                {"error": "BatchJob not found."},
+                status=HTTP_404_NOT_FOUND
+            )
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+    def get(self, request, batch_id):
+        """작업 상태 점검"""
+        try:
+            batch_job = BatchJob.objects.get(id=batch_id)
+
+            return Response(
+                {"id": batch_id,
+                 "batch_job_status": batch_job.get_batch_job_status_display()},
+                status=HTTP_200_OK
+            )
+
+        except BatchJob.DoesNotExist:
+            return Response(
+                {"error": "BatchJob not found."},
+                status=HTTP_404_NOT_FOUND
+            )
