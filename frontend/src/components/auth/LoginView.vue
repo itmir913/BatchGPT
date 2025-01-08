@@ -60,7 +60,7 @@
 
 <script>
 
-import {login} from "@/components/auth/AuthUtils";
+import {loginAPI} from "@/components/auth/AuthUtils";
 
 export default {
   data() {
@@ -90,7 +90,7 @@ export default {
       this.isButtonDisabled = true;
 
       try {
-        const response = await login(this.email, this.password);
+        const response = await loginAPI(this.email, this.password);
 
         if (!response) {
           this.message = {type: 'alert-danget', text: "서버로부터 응답을 받지 못했습니다."};

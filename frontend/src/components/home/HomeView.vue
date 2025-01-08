@@ -80,7 +80,7 @@
 
 <script>
 import {fetchBatchJobListAPI} from "@/components/batch-job/utils/batchJobUtils";
-import {fetchAuth, logout} from "@/components/auth/AuthUtils";
+import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 
 export default {
   data() {
@@ -100,7 +100,7 @@ export default {
       // 인증 상태 확인
       this.loading = true;
 
-      const {isAuthenticated, email, balance} = await fetchAuth();
+      const {isAuthenticated, email, balance} = await fetchAuthAPI();
       this.isAuthenticated = isAuthenticated;
       this.user.email = email;
       this.user.balance = balance;
@@ -132,7 +132,7 @@ export default {
     },
     async logout() {
       try {
-        await logout();
+        await logoutAPI();
         this.isAuthenticated = false;
         this.email = "";
         alert("You have been logged out.");

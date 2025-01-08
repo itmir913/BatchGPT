@@ -5,7 +5,7 @@ const API_LOGIN_URL = "/api/auth/login/";
 const API_LOGOUT_URL = "/api/auth/logout/";
 
 
-export async function fetchAuth() {
+export async function fetchAuthAPI() {
     const response = await axios.get(`${API_AUTH_CHECK_URL}`, {withCredentials: true});
     const data = response.data;
 
@@ -16,7 +16,7 @@ export async function fetchAuth() {
     };
 }
 
-export async function login(email, password) {
+export async function loginAPI(email, password) {
     const response = await axios.post(`${API_LOGIN_URL}`, {
         email: email,
         password: password,
@@ -24,6 +24,6 @@ export async function login(email, password) {
     return response.data;
 }
 
-export async function logout() {
+export async function logoutAPI() {
     await axios.post(`${API_LOGOUT_URL}`, {}, {withCredentials: true});
 }
