@@ -60,8 +60,9 @@ class BatchJobChecker {
     }
 
     stopAllChecking() {
+        // this.intervals는 Map 객체이므로, forEach의 콜백 함수는 (value, key) 순으로 값을 전달
         // eslint-disable-next-line no-unused-vars
-        this.intervals.forEach((intervalId, batchJobId) => {
+        this.intervals.forEach((intervalId, _) => {
             clearInterval(intervalId);
         });
         this.intervals.clear();
