@@ -4,16 +4,18 @@
     <h1 class="text-center cursor-pointer hover-effect mb-3" @click="goToHome">BatchGPT</h1>
 
     <!-- 진행 상태 표시 -->
-    <div class="progress-indicator d-flex justify-content-between my-3">
-      <div
-          v-for="(step, index) in steps"
-          :key="index"
-          :class="['step', getStepClass(index)]"
-      >
-        <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
-          {{ step }}
-        </a>
-        <span v-else>{{ step }}</span>
+    <div class="progress-indicator-wrapper">
+      <div class="progress-indicator d-flex justify-content-between my-3">
+        <div
+            v-for="(step, index) in steps"
+            :key="index"
+            :class="['step', getStepClass(index)]"
+        >
+          <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
+            {{ step }}
+          </a>
+          <span v-else>{{ step }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -61,9 +63,16 @@ export default {
 </script>
 
 <style scoped>
+.progress-indicator-wrapper {
+  overflow-x: auto; /* 수평 스크롤 허용 */
+  -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
+  margin-bottom: 20px;
+}
+
 .progress-indicator {
   display: flex;
   justify-content: space-between;
+  min-width: 100%; /* 모든 step이 한 줄에 보이도록 최소 너비 설정 */
 }
 
 .step {
@@ -72,11 +81,30 @@ export default {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  min-width: 120px; /* 각 step의 최소 너비 */
+  display: flex;
+  justify-content: center; /* 수평 중앙 정렬 */
+  align-items: center; /* 수직 중앙 정렬 */
 }
 
 .step + .step {
   margin-left: 10px;
 }
+
+.step-current {
+  background-color: #007bff; /* 강조 색상 */
+  color: white;
+}
+
+.step-past {
+  background-color: #e9ecef; /* 흐림 없이 표시 */
+}
+
+.step-future {
+  background-color: #f8f9fa; /* 흐리게 표시 */
+  color: #6c757d; /* 흐린 텍스트 색상 */
+}
+
 
 .cursor-pointer {
   cursor: pointer; /* 마우스 포인터가 손가락으로 바뀌도록 설정 */
