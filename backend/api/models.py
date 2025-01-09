@@ -41,8 +41,8 @@ class BatchJobStatus:
         CREATED: [UPLOADED],
         UPLOADED: [UPLOADED, CONFIGS],
         CONFIGS: [CONFIGS, UPLOADED, PENDING, IN_PROGRESS],
-        PENDING: [IN_PROGRESS, COMPLETED, FAILED],
-        IN_PROGRESS: [IN_PROGRESS, PENDING, COMPLETED, FAILED],
+        PENDING: [PENDING, IN_PROGRESS, COMPLETED, FAILED],
+        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
         COMPLETED: [COMPLETED, CONFIGS, PENDING, IN_PROGRESS],
         FAILED: [FAILED, PENDING, IN_PROGRESS],
     }
@@ -170,10 +170,6 @@ class BatchJob(TimestampedModel):
 
         return method(self.file)
 
-    def process(self):
-        """파일 타입에 맞는 처리 로직 실행"""
-        return self._process_file_method('process')
-
     def get_size(self):
         """파일 타입에 맞는 Total Size 로직 실행"""
         return self._process_file_method('get_total_size')
@@ -198,10 +194,10 @@ class TaskUnitStatus:
     ]
 
     VALID_TRANSITIONS = {
-        PENDING: [IN_PROGRESS, FAILED],
-        IN_PROGRESS: [IN_PROGRESS, PENDING, COMPLETED, FAILED],
-        COMPLETED: [PENDING],
-        FAILED: [PENDING, IN_PROGRESS],
+        PENDING: [PENDING, IN_PROGRESS, FAILED],
+        IN_PROGRESS: [IN_PROGRESS, COMPLETED, FAILED],
+        COMPLETED: [],
+        FAILED: [],
     }
 
     @classmethod
@@ -224,9 +220,10 @@ class TaskUnit(TimestampedModel):
     text_data = models.TextField(
         null=True,
         blank=True,
-        verbose_name="Text Data")  # CSV 행 데이터
+        verbose_name="Text Data")
+
     file_data = models.FileField(
-        upload_to=FileSettings.get_taskunit_path,
+        upload_to=FileSettings.get_task_unit_path,
         null=True,
         blank=True,
         verbose_name="File Data"
@@ -246,6 +243,7 @@ class TaskUnit(TimestampedModel):
         indexes = [
             models.Index(fields=['batch_job']),  # 배치 작업별 조회 최적화
             models.Index(fields=['created_at']),  # 생성 날짜별 조회 최적화
+            models.Index(fields=['unit_index']),  # 작업 순서별 정렬 최적화
             models.Index(fields=['task_unit_status']),  # 상태별 조회 최적화
         ]
 
@@ -266,13 +264,6 @@ class TaskUnit(TimestampedModel):
             process_task_unit.apply_async(args=[self.id])
 
 
-# @receiver(post_save, sender=TaskUnit)
-# def start_celery_task(sender, instance, created, **kwargs):
-#     if created:
-#         process_task_unit.delay(instance.id)
-
-
-# TODO TaskUnitResponse가 삭제될 때, 남아있는 Prompt를 어떻게 할 것인지 고려해야 함.
 class TaskUnitResponse(TimestampedModel):
     """TaskUnit에 대한 ChatGPT 응답 저장"""
     task_unit = models.ForeignKey(

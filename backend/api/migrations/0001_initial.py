@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('unit_index', models.IntegerField(verbose_name='Unit Index')),
                 ('text_data', models.TextField(blank=True, null=True, verbose_name='Text Data')),
                 ('file_data', models.FileField(blank=True, null=True,
-                                               upload_to=api.utils.file_settings.FileSettings.get_taskunit_path,
+                                               upload_to=api.utils.file_settings.FileSettings.get_task_unit_path,
                                                verbose_name='File Data')),
                 ('status', models.CharField(
                     choices=[('PENDING', 'Pending'), ('IN_PROGRESS', 'In Progress'), ('COMPLETED', 'Completed'),

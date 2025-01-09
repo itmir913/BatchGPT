@@ -31,7 +31,7 @@ class FileSettings:
         return f"uploads/user_{instance.user.id}/batch_{instance.id}/{hashed_name}{ext}"
 
     @staticmethod
-    def get_taskunit_path(instance, filename):
+    def get_task_unit_path(instance, filename):
         """사용자 ID별 파일 업로드 경로 설정"""
         name, ext = os.path.splitext(filename)
         hashed_name = hashlib.sha256(name.encode('utf-8')).hexdigest()
