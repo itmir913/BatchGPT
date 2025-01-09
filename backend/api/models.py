@@ -2,7 +2,7 @@ import os
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
-from django.db import models
+from django.db import models, transaction
 
 from api.utils.file_settings import FileSettings
 from tasks.queue_task_units import process_task_unit
@@ -236,6 +236,13 @@ class TaskUnit(TimestampedModel):
         verbose_name="Status"
     )
 
+    latest_response = models.ForeignKey(
+        'TaskUnitResponse',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+')
+
     class Meta:
         db_table = 'task_unit'
         verbose_name = 'Task Unit'
@@ -334,3 +341,16 @@ class TaskUnitResponse(TimestampedModel):
             raise ValueError(f"Invalid status transition from {self.task_response_status} to {new_status}")
         self.task_response_status = new_status
         self.save()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.update_task_unit_latest_response()
+
+    def update_task_unit_latest_response(self):
+        """Update the latest_response field of the related TaskUnit"""
+        with transaction.atomic():
+            task_unit = self.task_unit
+
+            if task_unit.latest_response != self:
+                task_unit.latest_response = self
+                task_unit.save()
