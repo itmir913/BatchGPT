@@ -4,6 +4,12 @@ from api.models import BatchJob
 from api.utils.file_settings import FileSettings
 
 
+class BatchJobCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BatchJob
+        fields = ['title', 'description']  # 필요한 필드만 포함
+
+
 class BatchJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = BatchJob
@@ -15,12 +21,6 @@ class BatchJobSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['batch_job_status'] = instance.get_batch_job_status_display()
         return representation
-
-
-class BatchJobCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BatchJob
-        fields = ['title', 'description']  # 필요한 필드만 포함
 
 
 class BatchJobConfigSerializer(serializers.ModelSerializer):
