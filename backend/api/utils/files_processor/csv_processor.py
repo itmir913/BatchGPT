@@ -49,12 +49,7 @@ class CSVProcessor(FileProcessor):
 
         try:
             total_rows = 0
-
-            # 파일 경로 설정
-            if isinstance(file, InMemoryUploadedFile):
-                file_path = file  # InMemoryUploadedFile은 경로가 필요 없으므로 그대로 사용
-            else:
-                file_path = os.path.join(settings.BASE_DIR, file.path)
+            file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
             # 파일을 청크 단위로 읽기
             chunks = pd.read_csv(file_path, chunksize=CHUNK_SIZE)
@@ -72,11 +67,7 @@ class CSVProcessor(FileProcessor):
         # TODO 리팩토링 대상
 
         try:
-            # 파일 경로 설정
-            if isinstance(file, InMemoryUploadedFile):
-                file_path = file  # InMemoryUploadedFile은 경로가 필요 없으므로 그대로 사용
-            else:
-                file_path = os.path.join(settings.BASE_DIR, file.path)
+            file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
             # 파일을 읽어 3행만 가져오기
             df = pd.read_csv(file_path, nrows=3)

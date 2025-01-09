@@ -142,7 +142,7 @@ class BatchJob(TimestampedModel):
         try:
             if self.file and os.path.isfile(self.file.path):
                 self.file.delete()
-        except Exception as e:
+        except (OSError, AttributeError) as e:
             pass
 
         super().delete(*args, **kwargs)  # 부모 클래스의 delete 호출

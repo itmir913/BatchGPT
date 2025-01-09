@@ -184,5 +184,5 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 # Pagination
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # 한 페이지에 표시할 데이터 개수
+    'PAGE_SIZE': 100,  # 한 페이지에 표시할 데이터 개수
 }

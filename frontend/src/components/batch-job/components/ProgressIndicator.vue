@@ -78,20 +78,6 @@ export default {
   margin-left: 10px;
 }
 
-.step-current {
-  background-color: #007bff; /* 강조 색상 */
-  color: white;
-}
-
-.step-past {
-  background-color: #e9ecef; /* 흐림 없이 표시 */
-}
-
-.step-future {
-  background-color: #f8f9fa; /* 흐리게 표시 */
-  color: #6c757d; /* 흐린 텍스트 색상 */
-}
-
 .cursor-pointer {
   cursor: pointer; /* 마우스 포인터가 손가락으로 바뀌도록 설정 */
 }

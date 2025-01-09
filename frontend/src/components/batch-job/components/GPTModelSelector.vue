@@ -70,8 +70,4 @@ export default {
 .card-body {
   padding: 1.25rem;
 }
-
-.card.selected {
-  border: 2px solid #007bff;
-}
 </style>
