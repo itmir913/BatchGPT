@@ -69,6 +69,7 @@ class CSVProcessor(FileProcessor):
 
     def get_preview(self, file):
         logger = logging.getLogger(__name__)
+        # TODO 리팩토링 대상
 
         try:
             # 파일 경로 설정

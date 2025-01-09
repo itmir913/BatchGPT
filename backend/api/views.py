@@ -1,21 +1,28 @@
-import json
 import logging
+import os
 
 from django.core.exceptions import ValidationError
+from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
 
 from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
+from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.file_settings import FileSettings
-from api.utils.generate_prompt import get_prompt
+from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts
+from backend import settings
 from tasks.queue_batch_job_process import process_batch_job
+
+logger = logging.getLogger(__name__)
 
 
 class UserBatchJobsView(APIView):
@@ -24,14 +31,15 @@ class UserBatchJobsView(APIView):
     - GET: Retrieve all batch jobs for the authenticated user.
     - POST: Create a new batch job for the authenticated user.
     """
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
         Retrieve all batch jobs for the authenticated user.
         현재 사용자의 모든 BatchJob 목록을 반환하는 기능
         """
-        # 현재 로그인된 사용자와 연결된 BatchJob 가져오기
+        logger.log(logging.DEBUG, f"{request.user.email} has requested the BatchJob list.")
+
         batch_jobs = BatchJob.objects.filter(user=request.user).order_by('-updated_at')
         serializer = BatchJobSerializer(batch_jobs, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
@@ -44,10 +52,8 @@ class UserBatchJobsView(APIView):
         :param kwargs:
         :return:
         """
-        # 요청 데이터를 직렬화
         serializer = BatchJobCreateSerializer(data=request.data)
-        if serializer.is_valid():  # 데이터 검증
-            # 현재 요청의 사용자와 함께 저장
+        if serializer.is_valid():
             batch_job = serializer.save(user=request.user)
             return Response(
                 {"message": "BatchJob created successfully", "id": batch_job.id},
@@ -57,7 +63,7 @@ class UserBatchJobsView(APIView):
 
 
 class BatchJobDetailView(APIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
         """
@@ -66,17 +72,14 @@ class BatchJobDetailView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
-        # 직렬화하여 응답 반환
         serializer = BatchJobSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
@@ -87,20 +90,17 @@ class BatchJobDetailView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
-        # 직렬화하여 데이터 업데이트
-        serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
+        serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()  # 변경 사항 저장
+            serializer.save()
             return Response(status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
@@ -120,12 +120,12 @@ class BatchJobDetailView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        batch_job.delete()  # BatchJob 객체 삭제
-        return Response(status=HTTP_204_NO_CONTENT)  # 성공적으로 삭제되었음을 알림
+        batch_job.delete()
+        return Response(status=HTTP_204_NO_CONTENT)
 
 
 class BatchJobFileUploadView(APIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, batch_id):
         """
@@ -134,17 +134,14 @@ class BatchJobFileUploadView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
-        # 파일이 요청에 포함되어 있는지 확인
         file = request.FILES.get('file')
         if not file:
             return Response(
@@ -152,7 +149,6 @@ class BatchJobFileUploadView(APIView):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        # 파일 저장
         try:
             total_size = FileSettings.get_size(file)
             if total_size <= 0:
@@ -162,13 +158,14 @@ class BatchJobFileUploadView(APIView):
 
             batch_job.file = file
             batch_job.file_name = file.name
-            batch_job.configs = {}
-
+            batch_job.configs = {}  # 파일이 새로 업로드 되었다면, 기존 설정 초기화
             batch_job.set_status(BatchJobStatus.UPLOADED)
+
             batch_job.save()
         except ValidationError as e:
             return Response(
-                {"error": e.message},
+                {"error": ("The BatchJob cannot be modified at this time."
+                           "Please check again to see if the task is running.")},
                 status=HTTP_400_BAD_REQUEST,
             )
         except ValueError as e:
@@ -187,7 +184,7 @@ class BatchJobFileUploadView(APIView):
 
 
 class BatchJobConfigView(APIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
         """
@@ -196,17 +193,16 @@ class BatchJobConfigView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
-        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+        if batch_job.batch_job_status in [BatchJobStatus.IN_PROGRESS]:
+            # 현재 BatchJob의 설정을 반환할 때마다 진행중인 BatchJob의 Status 갱신
             if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
                 pending, in_progress, fail = get_task_status_counts(batch_id)
 
@@ -221,20 +217,6 @@ class BatchJobConfigView(APIView):
 
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
-        # return Response(
-        #     {
-        #         "id": batch_job.id,
-        #         "title": batch_job.title,
-        #         "description": batch_job.description,
-        #         "file_name": batch_job.file.name if batch_job.file else None,
-        #         "file_type": FileSettings.get_file_extension(batch_job.file.name) if batch_job.file.name else None,
-        #         "total_size": batch_job.get_total_size() if batch_job.file else -1,
-        #         "config": batch_job.config if batch_job.config else None,
-        #         "created_at": batch_job.created_at,
-        #         "updated_at": batch_job.updated_at,
-        #     },
-        #     status=HTTP_200_OK,
-        # )
 
     def patch(self, request, batch_id):
         """
@@ -243,22 +225,21 @@ class BatchJobConfigView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
-
-        # 클라이언트로부터 JSON 데이터 받기
         data = request.data
+
         work_unit = int(data.get('work_unit', 1))
-        prompt = data.get('prompt', None)
+        prompt = data.get('prompt', "")
         gpt_model = data.get('gpt_model', 'gpt-4o-mini')
         selected_headers = data.get('selected_headers', None)
 
         if prompt is None:
             return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
 
-        # 파일 존재 여부 및 사이즈 확인
         try:
             total_size = batch_job.get_size() if batch_job.file else 0
+            if work_unit > total_size:
+                return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -266,9 +247,6 @@ class BatchJobConfigView(APIView):
                 {"error": str(e)},
                 status=HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        if work_unit > total_size:
-            return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
 
         current_config = batch_job.configs or {}
 
@@ -279,14 +257,14 @@ class BatchJobConfigView(APIView):
 
         batch_job.configs = current_config
         batch_job.set_status(BatchJobStatus.CONFIGS)
-        batch_job.save()
 
+        batch_job.save()
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
 
 class BatchJobPreView(APIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, batch_id):
         """
@@ -295,10 +273,8 @@ class BatchJobPreView(APIView):
         :param batch_id:
         :return:
         """
-        # ID로 BatchJob 객체 가져오기 (404 처리 포함)
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
@@ -317,16 +293,14 @@ class BatchJobPreView(APIView):
 
     def post(self, request, batch_id):
         """
-        사용자가 CSV의 헤더, 혹은 PDF의 작업 단위를 결정하고 GPT 미리보기를 요청하는 기능
+        사용자가 CSV의 헤더, 혹은 PDF의 작업 단위를 결정한 후
+        GPT 결과 미리보기를 요청하는 기능
         :param request:
         :param batch_id:
         :return:
         """
-        logger = logging.getLogger(__name__)
-
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
-        # 현재 요청한 사용자가 소유자인지 확인
         if batch_job.user != request.user:
             return Response(
                 {"error": "You do not have permission to access this resource."},
@@ -334,56 +308,50 @@ class BatchJobPreView(APIView):
             )
 
         try:
-            # TODO FileProcessor의 process 함수를 활용하도록 수정해야 함.
-
-            config = batch_job.configs if batch_job.configs is not None else {}
-            work_unit = int(config['work_unit'])
-            gpt_model = config['gpt_model']
-
             data = request.data
             prompt = data.get('prompt', None)
-            selected_headers = data.get('selected_headers', None)
 
-            if prompt is None or selected_headers is None:
+            if prompt is None:
                 return Response(
-                    {"error": "The request is invalid as the prompt is empty or no headers were selected."},
+                    {"error": "The request is invalid as the prompt is empty."},
                     status=HTTP_400_BAD_REQUEST,
                 )
+            else:
+                batch_job.configs['prompt'] = prompt
+                batch_job.configs['selected_headers'] = data.get('selected_headers', None)
+                batch_job.save()
 
-            preview = batch_job.get_preview()
-            preview = json.loads(preview)
-
-            filtered_preview = [
-                {key: str(value) for key, value in item.items() if key in selected_headers}
-                for item in preview
-            ]
-
-            generate_prompts = [get_prompt(prompt, item) for item in filtered_preview]
+            file = batch_job.file
+            file_path = os.path.join(settings.BASE_DIR, file.path)
             json_formatted = []
 
-            for idx, prompt in enumerate(generate_prompts, start=1):
-                existing_task_units = TaskUnit.objects.filter(batch_job_id=batch_job, unit_index=idx)
-                if existing_task_units.exists():
-                    existing_task_units.delete()
+            processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
+            for index, prompt in enumerate(processor.process(batch_job.id, file_path), start=1):
+                if str(prompt).strip():
+                    task_unit, created = TaskUnit.objects.update_or_create(
+                        batch_job=batch_job,
+                        unit_index=index,
+                        defaults={
+                            'text_data': prompt,
+                            'file_data': None,
+                            'task_unit_status': TaskUnitStatus.PENDING,
+                            'latest_response': None,
+                        }
+                    )
 
-                task_unit = TaskUnit(
-                    batch_job=batch_job,
-                    unit_index=idx,
-                    text_data=prompt,
-                    file_data=None,
-                    task_unit_status=TaskUnitStatus.PENDING,
-                )
-                task_unit.save()
+                    json_formatted.append({
+                        "task_unit_id": task_unit.id,
+                        "prompt": prompt,
+                        "result": "",
+                        "status": TaskUnitStatus.PENDING
+                    })
 
-                json_formatted.append({
-                    "task_unit_id": task_unit.id,
-                    "prompt": prompt,
-                    "result": "",
-                    "status": TaskUnitStatus.PENDING
-                })
+                if index >= 3:
+                    break  # Stop after 3 iterations
 
             batch_job.set_status(BatchJobStatus.CONFIGS)
             batch_job.save()
+
             return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
 
         except Exception as e:
@@ -394,7 +362,7 @@ class BatchJobPreView(APIView):
 
 
 class BatchJobSupportFileType(APIView):
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -410,18 +378,10 @@ class TaskUnitPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 
 
-from rest_framework.generics import ListAPIView
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-from api.models import TaskUnit, TaskUnitResponse
-
-
 class TaskUnitResponsePagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'
 
-
-from django.db.models import OuterRef, Subquery
 
 class TaskUnitResponseListAPIView(ListAPIView):
     pagination_class = TaskUnitResponsePagination
@@ -429,16 +389,14 @@ class TaskUnitResponseListAPIView(ListAPIView):
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
 
-        # TaskUnitResponse에서 가장 최신의 값을 가져오는 서브쿼리
-        response_subquery = TaskUnitResponse.objects.filter(task_unit_id=OuterRef('pk')).order_by('-created_at')
-
+        # TaskUnit 모델에서 최신 응답을 가져오는 방식으로 수정
         queryset = TaskUnit.objects.filter(batch_job_id=batch_id).annotate(
-            task_response_status=Subquery(response_subquery.values('task_response_status')[:1]),
-            request_data=Subquery(response_subquery.values('request_data')[:1]),
-            response_data=Subquery(response_subquery.values('response_data')[:1]),
-            error_message=Subquery(response_subquery.values('error_message')[:1]),
-            processing_time=Subquery(response_subquery.values('processing_time')[:1]),
-        ).order_by('-created_at')  # 가장 최근에 생성된 TaskUnit만 가져오기 위해 정렬
+            task_response_status=F('latest_response__task_response_status'),
+            request_data=F('latest_response__request_data'),
+            response_data=F('latest_response__response_data'),
+            error_message=F('latest_response__error_message'),
+            processing_time=F('latest_response__processing_time'),
+        ).order_by('unit_index')  # 가장 최근에 생성된 TaskUnit만 가져오기 위해 정렬
 
         return queryset
 
@@ -453,8 +411,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
                 "unit_index": item.unit_index,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "request_data": item.text_data if item.text_data is not None else item.file_data,
-                "response_data": item.response_data.get('choices', [])[0].get('message', {}).get('content',
-                                                                                                 None) if item.response_data is not None else None,
+                "response_data": get_openai_result(item.response_data),
                 "error_message": item.error_message,
                 "processing_time": item.processing_time,
             }
@@ -466,7 +423,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
 
 class TaskUnitStatusView(APIView):
     # TODO 이름 바꾸기
-    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
+    permission_classes = [IsAuthenticated]
 
     status_code_map = {
         TaskUnitStatus.PENDING: HTTP_202_ACCEPTED,
@@ -512,10 +469,6 @@ class BatchJobRunView(APIView):
         """작업을 시작"""
         try:
             batch_job = BatchJob.objects.get(id=batch_id)
-
-            # TODO 여러 개의 결과를 저장하려면 삭제해야 함.
-            if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
-                TaskUnit.objects.filter(batch_job_id=batch_job).delete()
 
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()

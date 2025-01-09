@@ -18,11 +18,11 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.conf.beat_schedule = {
     'resume-task-units-every-5-minutes': {
         'task': 'tasks.queue_task_units.resume_pending_tasks',
-        'schedule': crontab(minute='*/1'),
+        'schedule': crontab(minute='*/5'),
     },
     'resume-batch-jobs-every-5-minutes': {
         'task': 'tasks.queue_batch_job_process.resume_pending_jobs',
-        'schedule': crontab(minute='*/1'),
+        'schedule': crontab(minute='*/5'),
     },
 }
 

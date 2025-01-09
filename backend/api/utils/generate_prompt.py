@@ -16,3 +16,9 @@ def get_prompt(prompt, data):
         return f"{prompt}\n\n{str(data)}"
     except Exception as e:
         raise ValueError(f"An unexpected error occurred: {e}")
+
+
+def get_openai_result(response_data):
+    return response_data.get('choices',
+                             [])[0].get('message', {}).get('content', None) \
+        if response_data is not None else None
