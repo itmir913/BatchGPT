@@ -35,11 +35,10 @@ class TaskUnitChecker {
                     }
 
                 } catch (error) {
-                    // if (error.name === 'AbortError') {
-                    //     console.warn(`Request for TaskUnit ${taskUnitId} was aborted.`);
-                    // } else {
-                    //     console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
-                    // }
+                    if (error.response && error.response.status === 404) {
+                        // 404 오류일 경우 아무 동작도 하지 않거나, 특정 동작 수행
+
+                    }
                 }
             }, randomInterval);
 

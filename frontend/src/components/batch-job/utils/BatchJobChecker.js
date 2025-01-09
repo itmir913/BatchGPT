@@ -33,11 +33,10 @@ class BatchJobChecker {
                 }
 
             } catch (error) {
-                // if (error.name === 'AbortError') {
-                //     console.warn(`Request for BatchJob ${batchJobId} was aborted.`);
-                // } else {
-                //     console.error(`Error checking BatchJob ${batchJobId}:`, error);
-                // }
+                if (error.response && error.response.status === 404) {
+                    // 404 오류일 경우 아무 동작도 하지 않거나, 특정 동작 수행
+
+                }
             }
         }, randomInterval);
 
