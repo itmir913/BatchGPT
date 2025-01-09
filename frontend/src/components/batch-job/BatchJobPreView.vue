@@ -90,11 +90,11 @@
       <!-- 버튼들 -->
       <div class="text-end mb-3 mt-3">
         <button
-                class="btn btn-secondary me-3"
-                @click="configSave">
+            class="btn btn-secondary me-3"
+            @click="configSave">
           Save
         </button>
-        <button :disabled="formStatus.isPreviewLoading"
+        <button :disabled="formStatus.isPreviewLoading || !formStatus.isEditable"
                 class="btn btn-primary me-3"
                 @click="previewRun">
           Preview
@@ -116,8 +116,8 @@ import {
   fetchBatchJobConfigsAPI,
   fetchPreviewAPI,
   fetchPreviewResultsAPI,
-  isEditDisabled,
   modifyBatchJobConfigsAPI,
+  shouldEditDisabled,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
@@ -154,6 +154,7 @@ export default {
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
         isPreviewLoading: this.loadingState.previewLoading,
         isResultLoading: this.loadingState.resultLoading,
+        isEditable: !shouldEditDisabled(this.batchJob?.batch_job_status),
       };
     },
     filteredData() {
@@ -170,7 +171,7 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: isEditDisabled(this.batchJob.batch_job_status)
+        isEditDisabled: shouldEditDisabled(this.batchJob.batch_job_status)
       };
     },
   },

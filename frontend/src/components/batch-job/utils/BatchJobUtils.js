@@ -26,6 +26,7 @@ export const ERROR_MESSAGES = {
     deleteBatchJob: "Error deleting batch job: ",
     fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
     uploadFile: "Error uploading file: ",
+    unsupportedFileType: "Unsupported file type. Allowed:",
     missingFile: "The uploaded file is missing. Please select a file to upload.",
     updatedConfigs: "Error updating configuration. Please try again later.",
     loadPreview: "Failed to load Preview data. Please try again later.",
@@ -37,9 +38,14 @@ export const ERROR_MESSAGES = {
     pendingTasks: "Error Start tasks. Please try again later.",
 };
 
+export const CONFIRM_MESSAGE = {
+    loadingMessage: "Loading data, please wait...",
+    deleteBatchJob: "Are you sure you want to delete this batch job?",
+}
+
 const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress', 'Completed', 'Failed'];
 
-export function isEditDisabled(status) {
+export function shouldEditDisabled(status) {
     return EDIT_DISABLED_STATUSES.includes(status);
 }
 

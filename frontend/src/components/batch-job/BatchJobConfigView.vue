@@ -90,8 +90,8 @@ import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
-  isEditDisabled,
   modifyBatchJobConfigsAPI,
+  shouldEditDisabled,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
 import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
@@ -132,7 +132,7 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: isEditDisabled(this.batchJob.batch_job_status)
+        isEditDisabled: shouldEditDisabled(this.batchJob.batch_job_status)
       };
     },
   },
