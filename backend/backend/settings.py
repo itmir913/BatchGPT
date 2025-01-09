@@ -34,7 +34,7 @@ SECRET_KEY = 'django-insecure-8g4(1o%l!dz7u@&v++ktyf4s@@&p#li0d3#$ryt*7k$0^#7ooq
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # Section: ALLOWED_HOSTS
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0']
 
 # Section: Application definition
 INSTALLED_APPS = [
@@ -118,7 +118,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'dist/')]
+STATICFILES_DIRS = os.path.join(BASE_DIR, 'dist', 'static'),
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
@@ -161,8 +161,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = os.getenv('CORS_ALLOWED_ORIGIN_REGEXES', r"^http:/
 CORS_ALLOW_CREDENTIALS = True
 
 # Section: Celery
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
