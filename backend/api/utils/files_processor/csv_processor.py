@@ -28,13 +28,15 @@ class CSVProcessor(FileProcessor):
             batch_job = BatchJob.objects.get(id=batch_job_id)
             prompt = batch_job.configs['prompt']
             selected_headers = batch_job.configs['selected_headers']
+            selected_headers = [header.strip() for header in selected_headers]
 
             if prompt is None or selected_headers is None:
                 raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
 
             for chunk in pd.read_csv(file, chunksize=1):  # 한 행씩 읽음
                 for _, row in chunk.iterrows():
-                    filtered = {key: str(value) for key, value in row.to_dict().items() if key in selected_headers}
+                    filtered = {key.strip(): str(value) for key, value in row.to_dict().items() if
+                                key.strip() in selected_headers}
                     yield get_prompt(prompt, filtered)
 
         except BatchJob.DoesNotExist as e:
