@@ -10,9 +10,9 @@ def get_prompt(prompt, data):
             # 포매팅 기호가 있는 경우, format_map 사용
             formatted_prompt = prompt.format_map(data)
 
+        return formatted_prompt
+
     except KeyError as e:
-        return prompt
+        return f"{prompt}\n\n{str(data)}"
     except Exception as e:
         raise ValueError(f"An unexpected error occurred: {e}")
-
-    return formatted_prompt
