@@ -50,7 +50,7 @@ export function shouldEditDisabled(status) {
 }
 
 export function shouldDisableRunButton(batch_job_status) {
-    return ["Pending", "In Progress"].includes(batch_job_status);
+    return !["Pending", "In Progress"].includes(batch_job_status);
 }
 
 export function shouldDisplayResults(batch_job_status) {

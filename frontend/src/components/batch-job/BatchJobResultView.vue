@@ -99,7 +99,8 @@
 
     <!-- RUNNING 버튼 -->
     <div class="text-center mb-4">
-      <button :disabled="formStatus.isLoading && formStatus.shouldDisableRunButton" class="btn btn-primary"
+      <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
+              class="btn btn-primary"
               @click="handleRun">
         {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
       </button>
@@ -176,7 +177,7 @@ export default {
         inProgressTasks: [],
       },
 
-      loadingState: {loading: false, loadingSave: false},
+      loadingState: {loading: false, loadingSave: false, isStartTask: false},
       messages: {success: null, error: null},
 
       batchJob: {
@@ -201,7 +202,7 @@ export default {
         isLoading: this.loadingState.loading,
         hasMore: this.hasMore,
         isReady: !this.loadingState.loading && this.hasMore,
-        shouldDisableRunButton: shouldDisableRunButton(this.batchJob.batch_job_status),
+        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status),
       };
     },
   },
@@ -284,6 +285,7 @@ export default {
       this.taskUnits.taskUnitChecker.stopAllChecking()
 
       try {
+        this.loadingState.isStartTask = true;
         this.batchJob = await runBatchJobProcess(this.batch_id);
         this.handleMessages("success", SUCCESS_MESSAGES.pendingTasks)
 
