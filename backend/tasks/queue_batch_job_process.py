@@ -7,23 +7,20 @@ from celery import shared_task
 def process_batch_job(self, batch_job_id):
     # ImportError: cannot import name 'BatchJob' from partially initialized module 'api.models' (most likely due to a circular import)
     from django.core.files.uploadedfile import InMemoryUploadedFile
-    from django.db import transaction, IntegrityError
     from django.shortcuts import get_object_or_404
     from api.models import BatchJob, BatchJobStatus, TaskUnit, TaskUnitStatus
     from api.utils.file_settings import FileSettings
     from backend import settings
+    from tasks.queue_task_units import process_task_unit
 
     try:
-        with transaction.atomic():
-            batch_job = get_object_or_404(BatchJob, id=batch_job_id)
-            if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
-                return
+        batch_job = get_object_or_404(BatchJob, id=batch_job_id)
+        if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
+            return
 
+        try:
             file = batch_job.file
-            if isinstance(file, InMemoryUploadedFile):
-                file_path = file  # InMemoryUploadedFile은 경로가 필요 없으므로 그대로 사용
-            else:
-                file_path = os.path.join(settings.BASE_DIR, file.path)
+            file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
             processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
 
@@ -36,16 +33,21 @@ def process_batch_job(self, batch_job_id):
                             'text_data': prompt,
                             'file_data': None,
                             'task_unit_status': TaskUnitStatus.PENDING,
+                            'latest_response': None,
                         }
                     )
+                    process_task_unit.apply_async(args=[task_unit.id])
 
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
+        except Exception as e:
+            batch_job.set_status(BatchJobStatus.FAILED)
+            batch_job.save()
+            return
+
     except BatchJob.DoesNotExist as e:
-        pass
-    except IntegrityError as e:
-        pass
+        return
 
 
 @shared_task

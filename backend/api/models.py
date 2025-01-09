@@ -2,10 +2,9 @@ import os
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
-from django.db import models, transaction
+from django.db import models
 
 from api.utils.file_settings import FileSettings
-from tasks.queue_task_units import process_task_unit
 from users.models import User
 
 
@@ -266,10 +265,6 @@ class TaskUnit(TimestampedModel):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if self.pk is None:
-            # 새로운 인스턴스가 저장되었으면 apply_async 호출
-            process_task_unit.apply_async(args=[self.id])
-
 
 class TaskUnitResponse(TimestampedModel):
     """TaskUnit에 대한 ChatGPT 응답 저장"""
@@ -341,16 +336,3 @@ class TaskUnitResponse(TimestampedModel):
             raise ValueError(f"Invalid status transition from {self.task_response_status} to {new_status}")
         self.task_response_status = new_status
         self.save()
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.update_task_unit_latest_response()
-
-    def update_task_unit_latest_response(self):
-        """Update the latest_response field of the related TaskUnit"""
-        with transaction.atomic():
-            task_unit = self.task_unit
-
-            if task_unit.latest_response != self:
-                task_unit.latest_response = self
-                task_unit.save()

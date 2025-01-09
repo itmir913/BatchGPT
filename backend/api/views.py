@@ -396,7 +396,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
             response_data=F('latest_response__response_data'),
             error_message=F('latest_response__error_message'),
             processing_time=F('latest_response__processing_time'),
-        ).order_by('unit_index')  # 가장 최근에 생성된 TaskUnit만 가져오기 위해 정렬
+        ).order_by('unit_index')
 
         return queryset
 
@@ -407,9 +407,9 @@ class TaskUnitResponseListAPIView(ListAPIView):
         # 결과를 직렬화
         results = [
             {
-                "id": item.id,
-                "unit_index": item.unit_index,
+                "task_unit_id": item.id,
                 "task_unit_status": item.get_task_unit_status_display(),
+                "unit_index": item.unit_index,
                 "request_data": item.text_data if item.text_data is not None else item.file_data,
                 "response_data": get_openai_result(item.response_data),
                 "error_message": item.error_message,
@@ -442,8 +442,12 @@ class TaskUnitStatusView(APIView):
         :return:
         """
         try:
-            task_unit = TaskUnit.objects.get(id=task_unit_id)
-            task_unit_result = TaskUnitResponse.objects.get(task_unit_id=task_unit_id)
+            task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
+
+            if task_unit.latest_response is None:
+                return JsonResponse({"error": "Task response not found"}, status=HTTP_404_NOT_FOUND)
+
+            task_unit_result = get_object_or_404(TaskUnitResponse, id=task_unit.latest_response.id)
             status = task_unit_result.task_response_status
 
             response_data = {
@@ -458,8 +462,11 @@ class TaskUnitStatusView(APIView):
 
             return JsonResponse(response_data, status=self.status_code_map.get(status, HTTP_500_INTERNAL_SERVER_ERROR))
 
+        except TaskUnit.DoesNotExist:
+            return JsonResponse({"error": "Task unit not found"}, status=HTTP_404_NOT_FOUND)
+
         except TaskUnitResponse.DoesNotExist:
-            return JsonResponse({"status": "ERROR", "message": "Task unit not found"}, status=HTTP_404_NOT_FOUND)
+            return JsonResponse({"error": "Task response not found"}, status=HTTP_404_NOT_FOUND)
 
 
 class BatchJobRunView(APIView):
@@ -468,17 +475,16 @@ class BatchJobRunView(APIView):
     def post(self, request, batch_id):
         """작업을 시작"""
         try:
-            batch_job = BatchJob.objects.get(id=batch_id)
+
+            batch_job = get_object_or_404(BatchJob, id=batch_id)
 
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
             process_batch_job.apply_async(args=[batch_job.id])
 
-            return Response(
-                {"message": "BatchJob status set to Pending successfully."},
-                status=HTTP_200_OK
-            )
+            serializer = BatchJobConfigSerializer(batch_job)
+            return Response(serializer.data, status=HTTP_200_OK)
         except BatchJob.DoesNotExist:
             return Response(
                 {"error": "BatchJob not found."},

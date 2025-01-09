@@ -161,6 +161,7 @@ import {
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
+import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 
 export default {
   props: ["batch_id"],
@@ -170,6 +171,10 @@ export default {
       tasks: [],
       nextPage: null,
       hasMore: true,
+      taskUnits: {
+        taskUnitChecker: null,
+        inProgressTasks: [],
+      },
 
       loadingState: {loading: false, loadingSave: false},
       messages: {success: null, error: null},
@@ -238,6 +243,27 @@ export default {
         const {tasks, nextPage, hasMore} = await fetchTasksAPI(this.batch_id);
 
         this.tasks.push(...tasks);
+
+        this.taskUnits.inProgressTasks = tasks.filter(task =>
+            ['Pending', 'In Progress'].includes(task.task_unit_status)
+        ).map(task => task.task_unit_id);
+
+        console.error("this.taskUnits.inProgressTasks")
+        console.error(this.taskUnits.inProgressTasks)
+
+        if (this.taskUnits.inProgressTasks?.length > 0) {
+          this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.batch_id, this.taskUnits.inProgressTasks);
+          this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
+            const previewItem = this.tasks.find(item => item.task_unit_id === taskId);
+            if (previewItem) {
+              previewItem.response_data = result;
+              previewItem.task_unit_status = status;
+            } else {
+              console.error(`Task ID ${taskId} not found in taskUnits.taskUnitChecker`);
+            }
+          });
+        }
+
         this.nextPage = nextPage;
         this.hasMore = hasMore;
       } catch (error) {
@@ -255,8 +281,10 @@ export default {
       this.nextPage = null;
       this.hasMore = true;
 
+      this.taskUnits.taskUnitChecker.stopAllChecking()
+
       try {
-        await runBatchJobProcess(this.batch_id);
+        this.batchJob = await runBatchJobProcess(this.batch_id);
         this.handleMessages("success", SUCCESS_MESSAGES.pendingTasks)
 
         this.batchJobChecker.setOnCompleteCallback(this.handleBatchJobStatus);
@@ -285,9 +313,11 @@ export default {
     },
   },
   async mounted() {
+    this.taskUnits.taskUnitChecker = new TaskUnitChecker();
     await this.fetchBatchJob();
-    if (shouldDisplayResults(this.batchJob.batch_job_status))
+    if (shouldDisplayResults(this.batchJob.batch_job_status)) {
       await this.fetchTasks();
+    }
   },
 };
 </script>

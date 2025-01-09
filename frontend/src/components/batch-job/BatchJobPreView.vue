@@ -307,7 +307,6 @@ export default {
         this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
           const previewItem = this.previewData.resultData.find(item => item.task_unit_id === taskId);
           if (previewItem) {
-            // previewItem.status = status;
             previewItem.result = result;
           } else {
             console.error(`Task ID ${taskId} not found in previewData.resultData`);
@@ -339,10 +338,10 @@ export default {
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
   },
-  mounted() {
-    this.fetchBatchJob();
-    this.fetchPreviewData();
+  async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
+    await this.fetchBatchJob();
+    await this.fetchPreviewData();
   },
   beforeUnmount() {
     this.taskUnits.taskUnitChecker.stopAllChecking();

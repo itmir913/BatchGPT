@@ -1,21 +1,26 @@
+import re
+
+
 def get_prompt(prompt, data):
     try:
-        selected_header = list(data.keys())
+        # 데이터의 키를 문자열로 변환 및 공백 제거
+        data = {str(key).strip(): str(value).strip() for key, value in data.items()}
 
-        # 하나의 키가 있고 포매팅 기호가 없을 때, 값과 템플릿을 \n\n으로 연결
-        if len(data) == 1 and not any(f"{{{header}}}" in prompt for header in selected_header):
-            # 줄바꿈 두 번 추가
-            formatted_prompt = prompt + "\n\n" + ''.join(data[header] for header in selected_header)
-        else:
-            # 포매팅 기호가 있는 경우, format_map 사용
-            formatted_prompt = prompt.format_map(data)
+        # 중괄호 안의 키 추출
+        keys_in_prompt = re.findall(r"{(.+?)}", prompt)
 
-        return formatted_prompt
+        # 점을 포함한 키를 안전하게 대체
+        for key in keys_in_prompt:
+            if key in data:
+                prompt = prompt.replace(f"{{{key}}}", data[key])
+            else:
+                # 키가 없는 경우 에러 메시지 반환
+                raise ValueError(f"Missing key: {key} in prompt or data. Data provided: {data}")
 
-    except KeyError as e:
-        return f"{prompt}\n\n{str(data)}"
+        return prompt
+
     except Exception as e:
-        raise ValueError(f"An unexpected error occurred: {e}")
+        return f"An unexpected error occurred when generating prompt: {e}"
 
 
 def get_openai_result(response_data):

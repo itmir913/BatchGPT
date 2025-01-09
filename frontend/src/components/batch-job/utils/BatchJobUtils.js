@@ -158,7 +158,8 @@ export async function fetchTasksAPI(batch_id) {
 }
 
 export async function runBatchJobProcess(batch_id) {
-    return await axios.post(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_RUN_URL}`, {withCredentials: true});
+    const response = await axios.post(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_RUN_URL}`, {withCredentials: true});
+    return response.data
 }
 
 export async function fetchBatchJobProcessStatus(batch_id) {
