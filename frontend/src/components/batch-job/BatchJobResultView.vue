@@ -154,6 +154,7 @@ import ProgressIndicator from "@/components/batch-job/components/ProgressIndicat
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  fetchTaskAPIUrl,
   fetchTasksAPI,
   runBatchJobProcess,
   shouldDisableRunButton,
@@ -172,6 +173,7 @@ export default {
       tasks: [],
       nextPage: null,
       hasMore: true,
+
       taskUnits: {
         taskUnitChecker: null,
         inProgressTasks: [],
@@ -238,19 +240,20 @@ export default {
     },
 
     async fetchTasks() {
+      if (!this.hasMore) return;
+
       this.loadingState.loading = true;
 
       try {
-        const {tasks, nextPage, hasMore} = await fetchTasksAPI(this.batch_id);
+        const {tasks, nextPage, hasMore} = await fetchTasksAPI(this.nextPage ?? fetchTaskAPIUrl(this.batch_id));
 
         this.tasks.push(...tasks);
+        this.nextPage = nextPage;
+        this.hasMore = hasMore;
 
         this.taskUnits.inProgressTasks = tasks.filter(task =>
             ['Pending', 'In Progress'].includes(task.task_unit_status)
         ).map(task => task.task_unit_id);
-
-        console.error("this.taskUnits.inProgressTasks")
-        console.error(this.taskUnits.inProgressTasks)
 
         if (this.taskUnits.inProgressTasks?.length > 0) {
           this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.batch_id, this.taskUnits.inProgressTasks);
@@ -265,8 +268,6 @@ export default {
           });
         }
 
-        this.nextPage = nextPage;
-        this.hasMore = hasMore;
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.fetchTasks)
         console.error(ERROR_MESSAGES.fetchTasks, error);
@@ -303,6 +304,7 @@ export default {
       if (status !== 'Pending') {
         console.log('Batch job started successfully.', result);
         this.handleMessages("success", SUCCESS_MESSAGES.runTasks)
+        this.loadingState.isStartTask = false;
         await this.fetchTasks();
       } else if (status === 'Failed') {
         console.log('Batch job failed.');
@@ -313,14 +315,30 @@ export default {
           .replace(/_/g, ' ')  // 언더스코어(_)를 공백으로 변경
           .replace(/\b\w/g, char => char.toUpperCase());  // 첫 글자 대문자로 변환
     },
+    async onScroll() {
+      const bottom = this.$el.getBoundingClientRect().bottom;
+      const windowHeight = window.innerHeight;
+
+      // 스크롤이 끝에 가까워지면 데이터를 가져옵니다.
+      if (bottom <= windowHeight
+          && this.tasks?.length > 0 && this.hasMore
+          && !this.loadingState.loading && !this.loadingState.isStartTask) {
+        await this.fetchTasks();
+      }
+    },
   },
   async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
+    window.addEventListener('scroll', this.onScroll);
+
     await this.fetchBatchJob();
     if (shouldDisplayResults(this.batchJob.batch_job_status)) {
       await this.fetchTasks();
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.onScroll);
+  }
 };
 </script>
 
@@ -331,6 +349,7 @@ export default {
 
 .infinite-scroll-container {
   padding: 20px;
+  overflow-y: auto;
 }
 
 .table-responsive {

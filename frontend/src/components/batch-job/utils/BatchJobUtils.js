@@ -146,8 +146,13 @@ export async function checkTaskUnitStatus(batchJobId, taskUnitId) {
     return await axios.get(`${API_BASE_URL}${batchJobId}${API_TASK_UNITS_URL}${taskUnitId}/`);
 }
 
-export async function fetchTasksAPI(batch_id) {
-    const response = await axios.get(`${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`, {withCredentials: true});
+
+export function fetchTaskAPIUrl(batch_id) {
+    return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`;
+}
+
+export async function fetchTasksAPI(nextPage) {
+    const response = await axios.get(nextPage, {withCredentials: true});
     const data = response.data;
 
     return {

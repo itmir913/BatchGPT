@@ -33,11 +33,11 @@ class BatchJobChecker {
                 }
 
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    console.warn(`Request for BatchJob ${batchJobId} was aborted.`);
-                } else {
-                    console.error(`Error checking BatchJob ${batchJobId}:`, error);
-                }
+                // if (error.name === 'AbortError') {
+                //     console.warn(`Request for BatchJob ${batchJobId} was aborted.`);
+                // } else {
+                //     console.error(`Error checking BatchJob ${batchJobId}:`, error);
+                // }
             }
         }, randomInterval);
 

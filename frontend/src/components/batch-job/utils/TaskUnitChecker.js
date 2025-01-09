@@ -35,11 +35,11 @@ class TaskUnitChecker {
                     }
 
                 } catch (error) {
-                    if (error.name === 'AbortError') {
-                        console.warn(`Request for TaskUnit ${taskUnitId} was aborted.`);
-                    } else {
-                        console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
-                    }
+                    // if (error.name === 'AbortError') {
+                    //     console.warn(`Request for TaskUnit ${taskUnitId} was aborted.`);
+                    // } else {
+                    //     console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
+                    // }
                 }
             }, randomInterval);
 
