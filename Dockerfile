@@ -1,5 +1,5 @@
 # Step 1: Frontend Build
-FROM node:16-alpine AS frontend-build
+FROM node:22-alpine AS frontend-build
 
 WORKDIR /frontend
 COPY frontend/package*.json ./
@@ -8,7 +8,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Step 2: Backend Build
-FROM python:3.10-alpine
+FROM python:3.12-alpine
 
 WORKDIR /app
 COPY backend/ /app/
