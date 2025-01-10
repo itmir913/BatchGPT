@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.core.exceptions import ValidationError
@@ -117,12 +118,16 @@ class BatchJob(TimestampedModel):
     def set_status(self, new_status):
         """상태 변경 메서드"""
         if not BatchJobStatus.is_valid_transition(self.batch_job_status, new_status):
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Invalid status transition from {self.batch_job_status} to {new_status}")
             raise ValueError(f"Invalid status transition from {self.batch_job_status} to {new_status}")
         self.batch_job_status = new_status
 
     def clean(self):
         """유효성 검사: 파일 확장자 확인"""
         if self.file and not FileSettings.is_valid_extension(self.file.name):
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Unsupported file type: {self.file.name}.")
             raise ValidationError(f"Unsupported file type: {self.file.name}."
                                   f"Only {', '.join(FileSettings.FILE_TYPES.values()).upper()} files are allowed.")
 
@@ -156,6 +161,8 @@ class BatchJob(TimestampedModel):
     def _process_file_method(self, method_name):
         """파일 타입에 맞는 처리 로직을 실행하는 공통 메서드"""
         if not self.file:
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: File type not defined for processing: {str(self.file)}")
             raise ValueError("File type not defined for processing.")
 
         method_map = {
@@ -165,6 +172,8 @@ class BatchJob(TimestampedModel):
 
         method = method_map.get(method_name)
         if not method:
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Unsupported method: {method_name}")
             raise ValueError(f"Unsupported method: {method_name}")
 
         return method(self.file)
@@ -259,6 +268,8 @@ class TaskUnit(TimestampedModel):
     def set_status(self, new_status):
         """상태 변경 메서드"""
         if not TaskUnitStatus.is_valid_transition(self.task_unit_status, new_status):
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Invalid status transition from {self.task_unit_status} to {new_status}")
             raise ValueError(f"Invalid status transition from {self.task_unit_status} to {new_status}")
         self.task_unit_status = new_status
 
@@ -333,6 +344,9 @@ class TaskUnitResponse(TimestampedModel):
     def set_status(self, new_status):
         """상태 변경 메서드"""
         if not TaskUnitStatus.is_valid_transition(self.task_response_status, new_status):
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR,
+                       f"API: Invalid status transition from {self.task_response_status} to {new_status}")
             raise ValueError(f"Invalid status transition from {self.task_response_status} to {new_status}")
         self.task_response_status = new_status
         self.save()

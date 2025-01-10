@@ -1,3 +1,4 @@
+import logging
 import re
 
 
@@ -15,12 +16,16 @@ def get_prompt(prompt, data):
                 prompt = prompt.replace(f"{{{key}}}", data[key])
             else:
                 # 키가 없는 경우 에러 메시지 반환
+                logger = logging.getLogger(__name__)
+                logger.log(logging.ERROR, f"API: Missing key: {key} in prompt or data. Data provided: {data}")
                 raise ValueError(f"Missing key: {key} in prompt or data. Data provided: {data}")
 
         return prompt
 
     except Exception as e:
-        return f"An unexpected error occurred when generating prompt: {e}"
+        logger = logging.getLogger(__name__)
+        logger.log(logging.ERROR, f"API: An unexpected error occurred when generating prompt: {e}")
+        raise ValueError(f"An unexpected error occurred when generating prompt: {e}")
 
 
 def get_openai_result(response_data):

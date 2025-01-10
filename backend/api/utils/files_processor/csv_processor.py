@@ -10,6 +10,7 @@ from api.utils.generate_prompt import get_prompt
 from backend import settings
 
 CHUNK_SIZE = 1000
+logger = logging.getLogger(__name__)
 
 
 class CSVProcessor(FileProcessor):
@@ -31,6 +32,7 @@ class CSVProcessor(FileProcessor):
             selected_headers = [header.strip() for header in selected_headers]
 
             if prompt is None or selected_headers is None:
+                logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
                 raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
 
             for chunk in pd.read_csv(file, chunksize=1):  # 한 행씩 읽음
@@ -40,13 +42,18 @@ class CSVProcessor(FileProcessor):
                     yield get_prompt(prompt, filtered)
 
         except BatchJob.DoesNotExist as e:
+            logger.log(logging.ERROR, f"API: BatchJob.DoesNotExist. {str(e)}")
             raise e
         except Exception as e:
+            logger.log(logging.ERROR, f"API: Unknown error: {str(e)}")
             raise e
 
     def get_size(self, file):
-        logger = logging.getLogger(__name__)
-
+        """
+        CSV 파일의 전체 열 개수 반환
+        :param file:
+        :return:
+        """
         try:
             total_rows = 0
             file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
@@ -59,13 +66,15 @@ class CSVProcessor(FileProcessor):
             return total_rows
 
         except Exception as e:
-            logger.error(f"Error reading file: {str(file)}")
+            logger.log(logging.ERROR, f"API: Cannot read CSV files: {str(e)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
     def get_preview(self, file):
-        logger = logging.getLogger(__name__)
-        # TODO 리팩토링 대상
-
+        """
+        CSV 파일의 미리보기 반환(초반 3개 열)
+        :param file:
+        :return:
+        """
         try:
             file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
@@ -76,5 +85,5 @@ class CSVProcessor(FileProcessor):
             return df.to_json(orient='records')
 
         except Exception as e:
-            logger.error(f"Error reading file: {str(file)}")
+            logger.log(logging.ERROR, f"API: Cannot read CSV files: {str(e)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")

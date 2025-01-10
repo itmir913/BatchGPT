@@ -11,6 +11,7 @@ from users.serializers import RegisterSerializer
 
 
 class RegisterView(APIView):
+
     def post(self, request):
         """
         회원가입 기능
@@ -18,12 +19,14 @@ class RegisterView(APIView):
         :return:
         """
         serializer = RegisterSerializer(data=request.data)
+        logger = logging.getLogger(__name__)
+
         if serializer.is_valid():
             serializer.save()
+            logger.log(logging.DEBUG, f"API: User registered successfully.")
             return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
         else:
-            logger = logging.getLogger(__name__)
-            logger.warning(serializer.errors)
+            logger.log(logging.ERROR, f"API: User registration failed: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -33,6 +36,8 @@ def check_authentication(request):
     :param request:
     :return:
     """
+    logger = logging.getLogger(__name__)
+
     if request.user.is_authenticated:
         return JsonResponse(
             {'is_authenticated': True,
@@ -50,14 +55,14 @@ def login_view(request):
     :param request:
     :return:
     """
+    logger = logging.getLogger(__name__)
+
     email = request.data.get('email')
     password = request.data.get('password')
-
-    # 사용자 인증
     user = authenticate(request, username=email, password=password)
 
     if user is not None:
-        # 인증 성공
+        logger.log(logging.DEBUG, f"API: {email} has logged in.")
         login(request, user)
         return Response({
             'message': 'Login successful',
@@ -65,7 +70,7 @@ def login_view(request):
             'balance': user.balance,
         }, status=status.HTTP_200_OK)
     else:
-        # 인증 실패
+        logger.log(logging.DEBUG, f"API: An attempt to log in with {email} was made, but authentication failed.")
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -75,7 +80,12 @@ def logout_view(request):
     :param request:
     :return:
     """
+    logger = logging.getLogger(__name__)
+
     if request.method == 'POST':
+        logger.log(logging.DEBUG, f"API: {request.user.email} has logged out.")
         logout(request)
         return JsonResponse({'message': 'Logged out successfully.'}, status=200)
+
+    logger.log(logging.ERROR, f"API: The logout for {request.user} has failed.")
     return JsonResponse({'error': 'Invalid request method.'}, status=400)

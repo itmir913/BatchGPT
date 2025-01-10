@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import serializers
 
 from api.models import BatchJob
@@ -46,8 +48,12 @@ class BatchJobConfigSerializer(serializers.ModelSerializer):
             try:
                 return obj.get_size()
             except ValueError as e:
+                logger = logging.getLogger(__name__)
+                logger.log(logging.ERROR, f"API: Unsupported File Type: {str(e)}")
                 raise ValueError(f"Unsupported File Type: {str(e)}")
             except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.log(logging.ERROR, f"API: Internal Server Error: {str(e)}")
                 raise ValueError(f"Internal Server Error: {str(e)}")
         return 0
 

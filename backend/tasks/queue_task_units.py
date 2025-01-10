@@ -1,9 +1,12 @@
 # tasks/queue_task_units.py
 import json
+import logging
 import time
 
 from celery import shared_task
 from openai import OpenAI
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
@@ -18,6 +21,7 @@ def process_task_unit(self, task_unit_id):
 
         task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
         if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED, TaskUnitStatus.FAILED]:
+            logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
 
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
@@ -54,13 +58,14 @@ def process_task_unit(self, task_unit_id):
             task_unit.latest_response = task_unit_response
             task_unit.save()
 
+            logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
+
         except Exception as e:
             # 예외 처리: 요청 실패 및 오류 발생 시 처리
             task_unit_response = TaskUnitResponse.objects.create(
                 task_unit=task_unit,
                 task_response_status=TaskUnitStatus.FAILED,
                 request_data=task_unit.text_data,
-                error_code="500",  # 예시로 500번 에러 코드
                 error_message=str(e),
                 processing_time=calculate_processing_time(start_time),
             )
@@ -68,6 +73,9 @@ def process_task_unit(self, task_unit_id):
             task_unit.set_status(TaskUnitStatus.FAILED)
             task_unit.latest_response = task_unit_response
             task_unit.save()
+
+            logger.log(logging.INFO,
+                       f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
 
             raise self.retry(exc=e, countdown=1)
 
@@ -81,6 +89,8 @@ def resume_pending_tasks():
 
     pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
     for task in pending_or_in_progress_tasks:
+        logger.log(logging.INFO,
+                   f"Celery: Pending task {task.id} has been recognized and is now starting.")
         process_task_unit.apply_async(args=[task.id])
 
 

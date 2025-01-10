@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 
 from api.utils.files_processor.csv_processor import CSVProcessor
@@ -53,6 +54,8 @@ class FileSettings:
         """파일 타입에 따라 파일 처리 로직을 실행"""
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
         if not processor_class:
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Unsupported file type: {file_type}")
             raise ValueError(f"Unsupported file type: {file_type}")
         return processor_class()
 
@@ -62,12 +65,16 @@ class FileSettings:
         file_type = FileSettings.get_file_extension(file.name)
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
         if not processor_class:
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Unsupported file type: {file_type}")
             raise ValueError(f"Unsupported file type: {file_type}")
 
         try:
             processor = processor_class()
             return getattr(processor, method)(file)
         except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.log(logging.ERROR, f"API: Error processing file: {str(e)}")
             raise ValueError(f"Error processing file: {str(e)}")
 
     @staticmethod

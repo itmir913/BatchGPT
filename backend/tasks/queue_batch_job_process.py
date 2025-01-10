@@ -1,6 +1,9 @@
+import logging
 import os
 
 from celery import shared_task
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
@@ -16,6 +19,7 @@ def process_batch_job(self, batch_job_id):
     try:
         batch_job = get_object_or_404(BatchJob, id=batch_job_id)
         if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
+            logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
             return
 
         try:
@@ -41,7 +45,11 @@ def process_batch_job(self, batch_job_id):
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
+            logger.log(logging.INFO, f"Celery: All tasks for job with ID {batch_job_id} have been completed.")
+
         except Exception as e:
+            logger.log(logging.INFO,
+                       f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
             batch_job.set_status(BatchJobStatus.FAILED)
             batch_job.save()
             return

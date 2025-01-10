@@ -10,7 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, \
-    HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
+    HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_423_LOCKED
 from rest_framework.views import APIView
 
 from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
@@ -38,7 +38,7 @@ class UserBatchJobsView(APIView):
         Retrieve all batch jobs for the authenticated user.
         현재 사용자의 모든 BatchJob 목록을 반환하는 기능
         """
-        logger.log(logging.DEBUG, f"{request.user.email} has requested the BatchJob list.")
+        logger.log(logging.DEBUG, f"API: {request.user.email} has requested the BatchJob list.")
 
         batch_jobs = BatchJob.objects.filter(user=request.user).order_by('-updated_at')
         serializer = BatchJobSerializer(batch_jobs, many=True)
@@ -55,10 +55,12 @@ class UserBatchJobsView(APIView):
         serializer = BatchJobCreateSerializer(data=request.data)
         if serializer.is_valid():
             batch_job = serializer.save(user=request.user)
+            logger.log(logging.DEBUG, f"API: BatchJob created successfully.")
             return Response(
                 {"message": "BatchJob created successfully", "id": batch_job.id},
                 status=HTTP_201_CREATED
             )
+        logger.log(logging.ERROR, f"API: BatchJob create failed: {serializer.errors}")
         return Response({"message": serializer.errors}, status=HTTP_400_BAD_REQUEST)
 
 
@@ -75,6 +77,7 @@ class BatchJobDetailView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
@@ -93,6 +96,7 @@ class BatchJobDetailView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
@@ -101,8 +105,10 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            logger.log(logging.DEBUG, f"API: {request.user.id} is Successfully updated BatchJob.")
             return Response(status=HTTP_200_OK)
 
+        logger.log(logging.ERROR, f"API: Failed to update BatchJob: {serializer.errors}")
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     def delete(self, request, batch_id):
@@ -115,12 +121,14 @@ class BatchJobDetailView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to delete this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
         batch_job.delete()
+        logger.log(logging.DEBUG, f"API: {request.user.id} is Successfully deleted BatchJob.")
         return Response(status=HTTP_204_NO_CONTENT)
 
 
@@ -137,13 +145,22 @@ class BatchJobFileUploadView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
             )
 
+        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+            logger.log(logging.ERROR, f"API: The file cannot be modified because it is currently in use.")
+            return Response(
+                {"error": "Warning: The file cannot be modified because it is currently in use."},
+                status=HTTP_423_LOCKED,
+            )
+
         file = request.FILES.get('file')
         if not file:
+            logger.log(logging.ERROR, f"API: No file provided.")
             return Response(
                 {"error": "No file provided."},
                 status=HTTP_400_BAD_REQUEST,
@@ -152,6 +169,8 @@ class BatchJobFileUploadView(APIView):
         try:
             total_size = FileSettings.get_size(file)
             if total_size <= 0:
+                logger.log(logging.ERROR, f"API: The file cannot be read because its size is 0 or less."
+                                          f"It seems to be an invalid file. Please try with a different file.")
                 raise ValidationError(
                     "The file cannot be read because its size is 0 or less."
                     "It seems to be an invalid file. Please try with a different file.")
@@ -196,6 +215,7 @@ class BatchJobConfigView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
@@ -227,6 +247,13 @@ class BatchJobConfigView(APIView):
         """
         batch_job = get_object_or_404(BatchJob, id=batch_id)
         data = request.data
+
+        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+            logger.log(logging.ERROR, f"API: You cannot change the settings because it is already in operation.")
+            return Response(
+                {"error": "Warning: You cannot change the settings because it is already in operation."},
+                status=HTTP_423_LOCKED,
+            )
 
         work_unit = int(data.get('work_unit', 1))
         prompt = data.get('prompt', "")
@@ -276,6 +303,7 @@ class BatchJobPreView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
@@ -283,11 +311,15 @@ class BatchJobPreView(APIView):
 
         try:
             preview = batch_job.get_preview()
+            logger.log(logging.DEBUG,
+                       f"API: The file preview was successfully returned for the user {request.user.email}.")
             return JsonResponse(preview, safe=False, status=HTTP_200_OK)
         except Exception as e:
+            logger.log(logging.ERROR, f"API: The preview cannot be fetched."
+                                      f"An error occurred while processing the file on the server: {str(e)}")
             return Response(
                 {"error": f"The preview cannot be fetched."
-                          f"An error occurred while processing the file on the server.: {str(e)}"},
+                          f"An error occurred while processing the file on the server: {str(e)}"},
                 status=HTTP_400_BAD_REQUEST,
             )
 
@@ -302,9 +334,17 @@ class BatchJobPreView(APIView):
         batch_job = get_object_or_404(BatchJob, id=batch_id)
 
         if batch_job.user != request.user:
+            logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
             return Response(
                 {"error": "You do not have permission to access this resource."},
                 status=HTTP_403_FORBIDDEN,
+            )
+
+        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+            logger.log(logging.ERROR, f"API: We cannot show the preview because it is currently in operation.")
+            return Response(
+                {"error": "Warning: We cannot show the preview because it is currently in operation."},
+                status=HTTP_423_LOCKED,
             )
 
         try:
@@ -312,6 +352,7 @@ class BatchJobPreView(APIView):
             prompt = data.get('prompt', None)
 
             if prompt is None:
+                logger.log(logging.ERROR, f"API: The request is invalid as the prompt is empty.")
                 return Response(
                     {"error": "The request is invalid as the prompt is empty."},
                     status=HTTP_400_BAD_REQUEST,
@@ -352,9 +393,12 @@ class BatchJobPreView(APIView):
             batch_job.set_status(BatchJobStatus.CONFIGS)
             batch_job.save()
 
+            logger.log(logging.DEBUG, f"API: The user {request.user.email} requested a preview operation,"
+                                      f"and the task has been successfully completed.")
             return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
 
         except Exception as e:
+            logger.log(logging.ERROR, f"API: We cannot return the preview: {str(e)}")
             return Response(
                 {"error": f"cannot retrive preview: {str(e)}"},
                 status=HTTP_400_BAD_REQUEST,
@@ -418,6 +462,8 @@ class TaskUnitResponseListAPIView(ListAPIView):
             for item in page
         ]
 
+        logger.log(logging.DEBUG, f"API: The user {request.user.email} requested the list of task results,"
+                                  f"and it has been successfully returned.")
         return self.get_paginated_response(results)
 
 
@@ -445,7 +491,8 @@ class TaskUnitStatusView(APIView):
             task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
 
             if task_unit.latest_response is None:
-                return JsonResponse({"error": "Task response not found"}, status=HTTP_404_NOT_FOUND)
+                logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found")
+                return JsonResponse({"error": "Task response is not found"}, status=HTTP_404_NOT_FOUND)
 
             task_unit_result = get_object_or_404(TaskUnitResponse, id=task_unit.latest_response.id)
             status = task_unit_result.task_response_status
@@ -476,27 +523,25 @@ class BatchJobRunView(APIView):
         """작업을 시작"""
         try:
             batch_job = get_object_or_404(BatchJob, id=batch_id)
+            serializer = BatchJobConfigSerializer(batch_job)
 
             if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
-                return Response(
-                    {"id": batch_id,
-                     "batch_job_status": batch_job.get_batch_job_status_display()},
-                    status=HTTP_202_ACCEPTED
-                )
+                return Response(serializer.data, status=HTTP_202_ACCEPTED)
 
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
             process_batch_job.apply_async(args=[batch_job.id])
 
-            serializer = BatchJobConfigSerializer(batch_job)
-            return Response(serializer.data, status=HTTP_200_OK)
+            return Response(serializer.data, status=HTTP_202_ACCEPTED)
         except BatchJob.DoesNotExist:
+            logger.log(logging.ERROR, f"API: BatchJob not found.")
             return Response(
                 {"error": "BatchJob not found."},
                 status=HTTP_404_NOT_FOUND
             )
         except ValueError as e:
+            logger.log(logging.ERROR, f"API: ValueError: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=HTTP_400_BAD_REQUEST
@@ -514,6 +559,7 @@ class BatchJobRunView(APIView):
             )
 
         except BatchJob.DoesNotExist:
+            logger.log(logging.ERROR, f"API: BatchJob not found.")
             return Response(
                 {"error": "BatchJob not found."},
                 status=HTTP_404_NOT_FOUND
