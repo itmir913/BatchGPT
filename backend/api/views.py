@@ -475,8 +475,14 @@ class BatchJobRunView(APIView):
     def post(self, request, batch_id):
         """작업을 시작"""
         try:
-
             batch_job = get_object_or_404(BatchJob, id=batch_id)
+
+            if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
+                return Response(
+                    {"id": batch_id,
+                     "batch_job_status": batch_job.get_batch_job_status_display()},
+                    status=HTTP_202_ACCEPTED
+                )
 
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
