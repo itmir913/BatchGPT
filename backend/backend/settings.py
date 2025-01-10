@@ -28,8 +28,16 @@ SECRET_KEY = 'django-insecure-8g4(1o%l!dz7u@&v++ktyf4s@@&p#li0d3#$ryt*7k$0^#7ooq
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # Section: ALLOWED_HOSTS
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] + [host.strip() for host in
-                                              os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] + [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+                                              if host.strip()]
+
+# Section: CSRF/CORS
+CSRF_TRUSTED_ORIGINS = ['https://localhost'] + ['https://' + host.strip() for host in
+                                                os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if host.strip()]
+CORS_ALLOWED_ORIGIN_REGEXES = [host.strip() for host in
+                               os.getenv('DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', r"^http://localhost:\d+$").split(',') if
+                               host.strip()]
+CORS_ALLOW_CREDENTIALS = True
 
 # Section: Application definition
 INSTALLED_APPS = [
@@ -149,11 +157,6 @@ LOGGING = {
         },
     },
 }
-
-# Section: CSRF/CORS
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8080').split(',')
-CORS_ALLOWED_ORIGIN_REGEXES = os.getenv('CORS_ALLOWED_ORIGIN_REGEXES', r"^http://localhost:\d+$").split(',')
-CORS_ALLOW_CREDENTIALS = True
 
 # Section: Celery
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
