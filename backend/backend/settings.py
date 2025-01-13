@@ -32,7 +32,7 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] + [host.strip() for host in os.getenv
                                               if host.strip()]
 
 # Section: CSRF/CORS
-CSRF_TRUSTED_ORIGINS = ['https://localhost'] + ['https://' + host.strip() for host in
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080'] + ['https://' + host.strip() for host in
                                                 os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if host.strip()]
 CORS_ALLOWED_ORIGIN_REGEXES = [host.strip() for host in
                                os.getenv('DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', r"^http://localhost:\d+$").split(',') if
