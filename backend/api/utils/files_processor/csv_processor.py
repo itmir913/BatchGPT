@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Generator
 
+import chardet
 import pandas as pd
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
@@ -10,10 +11,30 @@ from api.utils.generate_prompt import get_prompt
 from backend import settings
 
 CHUNK_SIZE = 1000
+DEFAULT_ENCODING = "utf-8"
 logger = logging.getLogger(__name__)
 
 
 class CSVProcessor(FileProcessor):
+
+    def detect_encoding(self, file_path):
+
+        try:
+            with open(file_path, 'rb') as f:
+                raw_data = f.read(10000)
+                result = chardet.detect(raw_data)
+                encoding = result.get('encoding', DEFAULT_ENCODING)
+
+                if not encoding:
+                    logger.log(logging.ERROR,
+                               f"API: Encoding detection failed. Using default encoding: {DEFAULT_ENCODING}.")
+                    return DEFAULT_ENCODING
+
+                return encoding
+        except Exception as e:
+            logger.log(logging.ERROR, f"API: Cannot detect CSV encoding for file '{file_path}'. "
+                                      f"Using default encoding: {DEFAULT_ENCODING}. Error: {e}")
+            return DEFAULT_ENCODING
 
     def process(self, batch_job_id, file, work_unit=1) -> Generator[dict, None, None]:
         """
@@ -59,7 +80,7 @@ class CSVProcessor(FileProcessor):
             file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
             # 파일을 청크 단위로 읽기
-            chunks = pd.read_csv(file_path, chunksize=CHUNK_SIZE)
+            chunks = pd.read_csv(file_path, encoding=self.detect_encoding(file_path), chunksize=CHUNK_SIZE)
             for chunk in chunks:
                 total_rows += len(chunk)
 
@@ -79,7 +100,7 @@ class CSVProcessor(FileProcessor):
             file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
 
             # 파일을 읽어 3행만 가져오기
-            df = pd.read_csv(file_path, nrows=3)
+            df = pd.read_csv(file_path, encoding=self.detect_encoding(file_path), nrows=3)
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
             return df.to_json(orient='records')
