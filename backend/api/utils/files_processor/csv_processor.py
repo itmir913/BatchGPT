@@ -56,9 +56,9 @@ class CSVProcessor(FileProcessor):
                 logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
                 raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
 
-            for chunk in pd.read_csv(file, chunksize=1):  # 한 행씩 읽음
-                for _, row in chunk.iterrows():
-                    filtered = {key.strip(): str(value) for key, value in row.to_dict().items() if
+            for chunk in pd.read_csv(file, chunksize=CHUNK_SIZE):
+                for row in chunk.itertuples(index=False):
+                    filtered = {key.strip(): str(value) for key, value in zip(chunk.columns, row) if
                                 key.strip() in selected_headers}
                     yield get_prompt(prompt, filtered)
 
