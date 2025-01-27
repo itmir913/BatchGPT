@@ -1,5 +1,5 @@
 <template>
-  <div id="login" class="wrapper d-flex align-items-center justify-content-center vh-100">
+  <div id="login" class="wrapper d-flex align-items-center justify-content-center">
     <div class="container" style="max-width: 400px;">
       <!-- 제목 -->
       <h2 class="text-center mb-4">로그인</h2>

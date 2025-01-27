@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper d-flex align-items-center justify-content-center vh-100">
+  <div class="wrapper d-flex align-items-center justify-content-center">
     <div class="container" style="max-width: 500px;">
       <!-- 제목 -->
       <h2 class="text-center mb-4">회원가입</h2>
