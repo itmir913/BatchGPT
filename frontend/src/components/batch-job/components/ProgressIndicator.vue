@@ -36,10 +36,6 @@ export default {
     },
   },
   methods: {
-    goToHome() {
-      this.$router.push('/home'); // Vue Router를 사용하여 /home으로 이동
-    },
-
     getStepClass(index) {
       const stepClasses = ['step-future', 'step-past', 'step-current'];
       return stepClasses[this.currentStep === index ? 2 : index < this.currentStep ? 1 : 0];
