@@ -53,13 +53,6 @@
           @update:gpt_model="gpt_model = $event"
       />
 
-      <!-- Input Prompt 컴포넌트 -->
-      <InputPrompt
-          :disabled="batchJobStatus.isEditDisabled"
-          :prompt="prompt"
-          @update:prompt="(newPrompt) => (prompt = newPrompt)"
-      />
-
       <!-- Success/Failure Message -->
       <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
         {{ messages.success }}
@@ -94,7 +87,6 @@ import {
   shouldEditDisabled,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
-import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 import GPTModelSelector from "@/components/batch-job/components/GPTModelSelector.vue";
 
@@ -102,7 +94,6 @@ export default {
   props: ['batch_id'],
   components: {
     GPTModelSelector,
-    InputPrompt,
     WorkUnitSettings,
     ProgressIndicator,
   },
@@ -114,7 +105,6 @@ export default {
       messages: {success: null, error: null},
 
       work_unit: 1,
-      prompt: '',
       gpt_model: DEFAULT_GPT_MODEL,
       models: MODELS,
     };
@@ -127,7 +117,7 @@ export default {
         isReady: !this.loadingState.loading && this.batchJob,
         isNextButtonDisabled: !!(this.batchJob && this.batchJob.config &&
             Object.keys(this.batchJob.config).length === 0 && !this.loadingState.loadingSave),
-        isSaveButtonDisabled: this.loadingState.loadingSave || !this.prompt.trim(),
+        isSaveButtonDisabled: this.loadingState.loadingSave,
       };
     },
     batchJobStatus() {
@@ -158,7 +148,6 @@ export default {
         const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
         this.batchJob = batchJob;
         this.work_unit = configs.work_unit ?? 1;
-        this.prompt = configs.prompt ?? '';
         this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
       } catch (error) {
@@ -173,16 +162,11 @@ export default {
         return this.handleMessages("error", "The work unit cannot exceed the total size.");
       }
 
-      if (!this.prompt.trim()) {
-        return this.handleMessages("error", "Prompt cannot be empty.");
-      }
-
       try {
         this.loadingState.loadingSave = true;
 
         const payload = {
           work_unit: this.work_unit,
-          prompt: this.prompt,
           gpt_model: this.gpt_model,
         };
 
@@ -195,7 +179,6 @@ export default {
         }
 
         this.work_unit = configs.work_unit ?? 1;
-        this.prompt = configs.prompt ?? '';
         this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
