@@ -48,9 +48,12 @@
                       class="d-none"
                       type="file"
                       @change="handleFileChange"
+                      multiple
                   />
-                  <span v-if="!selectedFile">Drag and drop a file or click to select</span>
-                  <span v-else>{{ selectedFile.name }}</span>
+                  <span v-if="!selectedFiles">Drag and drop files or click to select</span>
+                  <span v-else style="white-space: pre-line;">
+                    {{ selectedFiles.map(file => file.name).join(',\n') }}
+                  </span>
                 </div>
 
                 <button
@@ -150,6 +153,7 @@
 </style>
 
 <script>
+import JSZip from 'jszip';
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import {
   CONFIRM_MESSAGE,
@@ -170,7 +174,7 @@ export default {
     return {
       batchJob: null,
       allowedFileTypes: [],
-      selectedFile: null,
+      selectedFiles: null,
       isDragOver: false,
       state: {
         isLoading: true,
@@ -233,22 +237,43 @@ export default {
     },
     handleDrop(event) {
       this.isDragOver = false;
-      const file = event.dataTransfer.files[0];
-      this.handleFileChange({target: {files: [file]}});
+      const files = event.dataTransfer.files;
+      this.handleFileChange({target: {files}});
     },
     handleFileChange(event) {
-      this.selectedFile = event.target.files[0];
+      this.selectedFiles = event.target.files.length ? Array.from(event.target.files) : null;
     },
     triggerFileInputClick() {
       this.$refs.fileInput.click(); // 숨겨진 파일 입력 클릭
     },
 
+    async compressFiles(files, zipFileName = 'compressed_files.zip') {
+      const zip = new JSZip();
+
+      files.forEach((file) => {
+        zip.file(file.name, file);
+      });
+
+      // 압축 파일을 지정한 이름으로 생성
+      const compressedBlob = await zip.generateAsync({type: 'blob'});
+
+      // ZIP 파일에 이름을 지정하여 반환
+      return new File([compressedBlob], zipFileName, {type: 'application/zip'});
+    },
+
     validateFile() {
-      if (!this.selectedFile) return `${ERROR_MESSAGES.missingFile}`;
-      const fileExtension = this.selectedFile.name.split(".").pop().toLowerCase();
-      if (!this.allowedFileTypes.includes(fileExtension)) {
-        return `${ERROR_MESSAGES.unsupportedFileType} ${this.allowedFileTypes.join(", ")}`;
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        return `${ERROR_MESSAGES.missingFile}`;
       }
+
+      for (const file of this.selectedFiles) {
+        const fileExtension = file.name.split(".").pop().toLowerCase();
+
+        if (!this.allowedFileTypes.includes(fileExtension)) {
+          return `${ERROR_MESSAGES.unsupportedFileType} ${this.allowedFileTypes.join(", ")}`;
+        }
+      }
+
       return null;
     },
 
@@ -258,7 +283,19 @@ export default {
 
       try {
         this.state.isUploading = true;
-        this.batchJob = await uploadFilesAPI(this.batch_id, this.selectedFile);
+
+        let filesToUpload = this.selectedFiles;
+        if (this.selectedFiles.length > 1) {
+          const zipFile = await this.compressFiles(this.selectedFiles, 'batch_files.zip');
+          if (zipFile.size === 0) {
+            return this.handleMessages("error", ERROR_MESSAGES.compressFiles);
+          }
+          filesToUpload = zipFile
+        } else {
+          filesToUpload = this.selectedFiles[0]
+        }
+
+        this.batchJob = await uploadFilesAPI(this.batch_id, filesToUpload);
         this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
         if (error.response) {
@@ -273,7 +310,7 @@ export default {
     },
 
     resetFileInputHelper() {
-      this.selectedFile = null;
+      this.selectedFiles = null;
       if (this.$refs.fileInput) this.$refs.fileInput.value = "";
     },
 

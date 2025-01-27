@@ -28,6 +28,7 @@ export const ERROR_MESSAGES = {
     uploadFile: "Error uploading file:",
     unsupportedFileType: "Unsupported file type. Allowed:",
     missingFile: "The uploaded file is missing. Please select a file to upload.",
+    compressFiles: "Unable to compress the file. Please try again.",
     updatedConfigs: "Error updating configuration. Please try again later.",
     loadPreview: "Failed to load Preview data. Please try again later.",
     noColumn: "Please select at least one column.",
