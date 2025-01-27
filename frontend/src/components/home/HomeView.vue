@@ -1,8 +1,5 @@
 <template>
   <div class="container mt-5">
-    <!-- 배치 GPT 타이틀 -->
-    <h1 class="text-center cursor-pointer hover-effect mb-3">BatchGPT</h1>
-
     <!-- 인증되지 않은 상태 -->
     <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center">
       <p>Please log in.</p>
