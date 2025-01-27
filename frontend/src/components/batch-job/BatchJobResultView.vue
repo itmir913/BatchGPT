@@ -35,11 +35,11 @@
                     <td>{{ batchJob.title }}</td>
                   </tr>
                   <tr>
-                    <th>Description</th>
+                    <th>Desc</th>
                     <td>{{ batchJob.description }}</td>
                   </tr>
                   <tr>
-                    <th>File Name</th>
+                    <th>File</th>
                     <td>{{ batchJob.file_name }}</td>
                   </tr>
                   <tr>
@@ -47,7 +47,7 @@
                     <td>{{ batchJob.total_size }}</td>
                   </tr>
                   <tr>
-                    <th>Batch Job Status</th>
+                    <th>Status</th>
                     <td>
               <span :class="{
                 'badge bg-success': batchJob.batch_job_status === 'Completed',
