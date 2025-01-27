@@ -1,6 +1,6 @@
 <template>
   <div v-if="isReady && supportedFileTypes.includes(fileType)">
-    <h3 class="text-center my-3">Select Number of Items per Task</h3>
+    <h2 class="mb-3">Select Number of Items per Task</h2>
     <div class="d-flex justify-content-center align-items-center mb-3">
       <!-- 라디오 버튼들 -->
       <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
@@ -46,7 +46,7 @@
     <div v-if="remainder !== 0" class="text-danger mb-1">
       {{ remainder }} items will remain in the last request.
     </div>
-    <div v-if="localWorkUnit > batchJob.total_size" class="text-danger mb-1">
+    <div v-if="localWorkUnit > localTotalSize" class="text-danger mb-1">
       The work unit size cannot exceed the total size.
     </div>
   </div>
@@ -58,24 +58,23 @@ export default {
     batchJob: Object,
     isReady: Boolean,
     work_unit: Number,
+    fileType: String,
   },
   computed: {
     totalRequests() {
-      return this.batchJob ? Math.ceil(this.batchJob.total_size / this.work_unit) : 0;
+      return this.batchJob ? Math.ceil(this.localTotalSize / this.localWorkUnit) : 0;
     },
     remainder() {
-      return this.batchJob.total_size % this.work_unit;
+      return this.localTotalSize % this.localWorkUnit;
     },
     isSupportedType() {
       return !this.supportedFileTypes.includes(this.fileType);
-    },
-    fileType() {
-      return this.batchJob.file_type;
     },
   },
   data() {
     return {
       localWorkUnit: this.work_unit,
+      localTotalSize: this.batchJob.total_size,
       supportedFileTypes: ['pdf']
     };
   },
