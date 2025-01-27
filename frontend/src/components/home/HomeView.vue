@@ -64,7 +64,7 @@
         <!-- 배치 작업 리스트 -->
         <div v-if="batchJobs.length > 0" class="row">
           <div v-for="job in batchJobs" :key="job.id" class="col-md-6 mb-4">
-            <a :href="`/batch-jobs/${job.id}`" class="text-decoration-none">
+            <a :href="getJobLink(job)" class="text-decoration-none">
               <div class="card h-100 shadow-sm rounded-3 border">
                 <div class="card-body">
                   <h5 class="card-title text-primary">
@@ -77,6 +77,14 @@
                     Created: {{ formatDate(job.created_at) }}<br/>
                     Updated: {{ formatDate(job.updated_at) }}
                   </p>
+                  <span :class="{
+                  'badge bg-success': job.batch_job_status === 'Completed',
+                  'badge bg-warning text-dark': job.batch_job_status === 'In Progress',
+                  'badge bg-danger': job.batch_job_status === 'Failed',
+                  'badge bg-secondary': !['Completed', 'In Progress', 'Failed'].includes(job.batch_job_status)
+                   }">
+                  {{ job.batch_job_status }}
+                </span>
                 </div>
               </div>
             </a>
@@ -211,6 +219,19 @@ export default {
     goToCreateBatchJob() {
       // /batch-job/create 경로로 이동
       this.$router.push("/batch-jobs/create");
+    },
+    getJobLink(job) {
+      switch (job.batch_job_status) {
+        case 'Pending':
+        case 'In Progress':
+        case 'Completed':
+        case 'Failed':
+          return `/batch-jobs/${job.id}/run`;
+        case 'Standby':
+          return `/batch-jobs/${job.id}/configs`;
+        default:
+          return `/batch-jobs/${job.id}`;
+      }
     },
     formatDate(dateString) {
       const options = {year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric"};
