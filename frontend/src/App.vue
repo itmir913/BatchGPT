@@ -1,47 +1,58 @@
 <template>
-  <!-- 배치 GPT 타이틀 -->
-  <h1 class="text-center cursor-pointer hover-effect mb-3" @click="goToHome">BatchGPT</h1>
+  <nav v-show="!isAuthPage" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <router-link class="navbar-brand" to="/home">BatchGPT</router-link>
+      <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
+              data-bs-target="#navbarSupportedContent" data-bs-toggle="collapse" type="button"><span
+          class="navbar-toggler-icon"></span></button>
+      <div id="navbarSupportedContent" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="https://github.com/itmir913/BatchGPT/" rel="noopener noreferrer"
+                                  target="_blank">Github</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <router-view></router-view>  <!-- 라우터 뷰 -->
+  <transition
+      name="custom-fade"
+      @enter="enter"
+      @leave="leave"
+      @before-enter="beforeEnter"
+  >
+    <router-view/>
+  </transition>
 </template>
 
 <script>
-
 export default {
   name: 'App',
+  computed: {
+    isAuthPage() {
+      return this.$route.path === '/login' || this.$route.path === '/register';
+    }
+  },
   methods: {
-    goToHome() {
-      this.$router.push('/home'); // Vue Router를 사용하여 /home으로 이동
+    beforeEnter(el) {
+      el.style.opacity = 0;
     },
+    enter(el, done) {
+      el.offsetHeight;
+      el.style.transition = 'opacity 1s ease-in-out';
+      el.style.opacity = 1;
+      done();
+    },
+    leave(el, done) {
+      el.style.transition = 'opacity 1s ease-in-out';
+      el.style.opacity = 0;
+      done();
+    }
   },
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
-</style>
-
-<style>
 html {
-  overflow-y: scroll; /* 항상 세로 스크롤바 표시 */
-}
-
-.cursor-pointer {
-  cursor: pointer; /* 마우스 포인터가 손가락으로 바뀌도록 설정 */
-}
-
-.hover-effect {
-  transition: color 0.3s ease, background-color 0.3s ease; /* 색상과 배경색 변화에 부드러운 전환 효과 추가 */
-}
-
-.hover-effect:hover {
-  color: white; /* 호버 시 텍스트 색상 변경 */
-  background-color: rgba(0, 123, 255, 0.7); /* 호버 시 배경색 변경 (Bootstrap의 primary 색상 사용) */
+  overflow-y: scroll;
 }
 </style>
