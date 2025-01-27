@@ -44,7 +44,7 @@
                 >
                   <input
                       ref="fileInput"
-                      :disabled="!state.isEditable"
+                      :disabled="state.isEditable"
                       class="d-none"
                       type="file"
                       @change="handleFileChange"
@@ -54,7 +54,7 @@
                 </div>
 
                 <button
-                    :disabled="state.isUploading || !state.isEditable"
+                    :disabled="state.isUploading || state.isEditable"
                     class="btn btn-primary"
                     style="white-space: nowrap;"
                     type="submit"
@@ -185,7 +185,7 @@ export default {
   watch: {
     batchJob(newVal) {
       this.state.isNextEnabled = !!(newVal && newVal.file_name);
-      this.state.isEditable = !shouldEditDisabled(newVal?.batch_job_status);
+      this.state.isEditable = shouldEditDisabled(newVal?.batch_job_status);
     },
   },
   methods: {

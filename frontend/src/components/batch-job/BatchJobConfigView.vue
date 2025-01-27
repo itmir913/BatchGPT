@@ -48,7 +48,7 @@
           <div class="p-2 mb-3">
             <WorkUnitSettings
                 :batchJob="batchJob"
-                :disabled="batchJobStatus.isEditDisabled"
+                :disabled="batchJobStatus.isEditable"
                 :isReady="formStatus.isReady"
                 :work_unit="work_unit"
             />
@@ -56,7 +56,7 @@
 
           <!-- GPT Model Selection -->
           <GPTModelSelector
-              :disabled="batchJobStatus.isEditDisabled"
+              :disabled="batchJobStatus.isEditable"
               :gpt_model="gpt_model"
               :models="models"
               @update:gpt_model="gpt_model = $event"
@@ -64,7 +64,7 @@
 
           <!-- Action Buttons -->
           <div class="text-end my-3">
-            <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
+            <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditable"
                     class="btn btn-primary me-3"
                     @click="configSave">
               Save
@@ -128,7 +128,7 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: shouldEditDisabled(this.batchJob.batch_job_status)
+        isEditable: shouldEditDisabled(this.batchJob?.batch_job_status),
       };
     },
   },

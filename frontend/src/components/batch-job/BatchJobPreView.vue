@@ -79,7 +79,7 @@
                 @click="configSave">
               Save
             </button>
-            <button :disabled="formStatus.isPreviewLoading || !formStatus.isEditable"
+            <button :disabled="formStatus.isPreviewLoading || formStatus.isEditable"
                     class="btn btn-primary me-3"
                     @click="previewRun">
               Preview
@@ -142,7 +142,7 @@ export default {
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
         isPreviewLoading: this.loadingState.previewLoading,
         isResultLoading: this.loadingState.resultLoading,
-        isEditable: !shouldEditDisabled(this.batchJob?.batch_job_status),
+        isEditable: shouldEditDisabled(this.batchJob?.batch_job_status),
       };
     },
     filteredData() {
@@ -159,7 +159,7 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: shouldEditDisabled(this.batchJob.batch_job_status)
+        isEditDisabled: shouldEditDisabled(this.batchJob?.batch_job_status)
       };
     },
   },

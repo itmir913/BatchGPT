@@ -43,7 +43,7 @@ export const CONFIRM_MESSAGE = {
     deleteBatchJob: "Are you sure you want to delete this batch job?",
 }
 
-const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress', 'Completed', 'Failed'];
+const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress'];
 
 export function shouldEditDisabled(status) {
     return EDIT_DISABLED_STATUSES.includes(status);
