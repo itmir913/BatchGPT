@@ -48,6 +48,7 @@ def check_authentication(request):
     if request.user.is_authenticated:
         return JsonResponse(
             {'is_authenticated': True,
+             'username': request.user.username,
              'email': request.user.email,
              'balance': request.user.balance
              })

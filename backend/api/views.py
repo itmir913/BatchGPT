@@ -23,6 +23,7 @@ from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts
 from backend import settings
 from tasks.queue_batch_job_process import process_batch_job
+from tasks.queue_task_units import process_task_unit
 
 logger = logging.getLogger(__name__)
 
@@ -358,6 +359,8 @@ class BatchJobPreView(APIView):
                         }
                     )
 
+                    process_task_unit.apply_async(args=[task_unit.id])
+
                     json_formatted.append({
                         "task_unit_id": task_unit.id,
                         "prompt": prompt,
@@ -371,7 +374,7 @@ class BatchJobPreView(APIView):
             batch_job.set_status(BatchJobStatus.CONFIGS)
             batch_job.save()
 
-            logger.log(logging.DEBUG, f"API: The user {request.user.email} requested a preview operation,"
+            logger.log(logging.DEBUG, f"API: The user {request.user.email} requested a preview operation, "
                                       f"and the task has been successfully completed.")
             return JsonResponse(json_formatted, safe=False, status=HTTP_200_OK)
 
@@ -467,11 +470,14 @@ class TaskUnitStatusView(APIView):
         """
         try:
             status = cache.get(task_unit_status_key(task_unit_id))
-            if not status or status in [TaskUnitStatus.PENDING, TaskUnitStatus.IN_PROGRESS]:
+            if status and status in [TaskUnitStatus.PENDING, TaskUnitStatus.IN_PROGRESS]:
                 logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found. cached.")
                 return JsonResponse({"error": "Task response is not found. cached."}, status=HTTP_404_NOT_FOUND)
 
             task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
+            task_unit_status = task_unit.task_unit_status
+            cache.set(task_unit_status_key(task_unit_id), task_unit_status, timeout=30)
+
             if task_unit.latest_response is None:
                 logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found.")
                 return JsonResponse({"error": "Task response is not found."}, status=HTTP_404_NOT_FOUND)
@@ -510,10 +516,10 @@ class BatchJobRunView(APIView):
             if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
                 return Response(serializer.data, status=HTTP_202_ACCEPTED)
 
-            cache.set(batch_status_key(batch_id), BatchJobStatus.PENDING_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
+            cache.set(batch_status_key(batch_id), BatchJobStatus.PENDING_DISPLAY, timeout=30)
             process_batch_job.apply_async(args=[batch_job.id])
 
             return Response(serializer.data, status=HTTP_202_ACCEPTED)

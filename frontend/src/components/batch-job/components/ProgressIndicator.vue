@@ -1,23 +1,17 @@
 <template>
-  <div>
-    <!-- 배치 GPT 타이틀 -->
-    <h1 class="text-center cursor-pointer hover-effect mb-3" @click="goToHome">BatchGPT</h1>
-
-    <!-- 진행 상태 표시 -->
-    <div class="progress-indicator-wrapper">
-      <div class="progress-indicator d-flex justify-content-between my-3">
-        <div
-            v-for="(step, index) in steps"
-            :key="index"
-            :class="['step', getStepClass(index)]"
+  <div class="progress-indicator-wrapper">
+    <ul class="nav nav-pills flex-column my-3">
+      <li v-for="(step, index) in steps" :key="index" class="nav-item">
+        <a
+            :class="['nav-link', getStepClass(index)]"
+            :href="index < currentStep ? getStepLink(index) : '#'"
+            role="tab"
+            v-bind:aria-selected="index === currentStep ? 'true' : 'false'"
         >
-          <a v-if="index < currentStep" :href="getStepLink(index)" class="text-decoration-none text-primary">
-            {{ step }}
-          </a>
-          <span v-else>{{ step }}</span>
-        </div>
-      </div>
-    </div>
+          {{ step }}
+        </a>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -35,14 +29,10 @@ export default {
   },
   computed: {
     steps() {
-      return ["Create BatchJob", "Upload File", "Prompt Configs", "Previews", "Run Tasks"];
+      return ["Create BatchJob", "Upload File", "Configs", "Previews", "Run Tasks"];
     },
   },
   methods: {
-    goToHome() {
-      this.$router.push('/home'); // Vue Router를 사용하여 /home으로 이동
-    },
-
     getStepClass(index) {
       const stepClasses = ['step-future', 'step-past', 'step-current'];
       return stepClasses[this.currentStep === index ? 2 : index < this.currentStep ? 1 : 0];
@@ -64,58 +54,54 @@ export default {
 
 <style scoped>
 .progress-indicator-wrapper {
+  margin-bottom: 20px;
   overflow-x: auto; /* 수평 스크롤 허용 */
   -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
-  margin-bottom: 20px;
 }
 
-.progress-indicator {
+.nav-pills {
   display: flex;
-  justify-content: space-between;
-  min-width: 100%; /* 모든 step이 한 줄에 보이도록 최소 너비 설정 */
+  flex-direction: column;
+  padding-left: 0;
 }
 
-.step {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
+.nav-item {
+  margin-bottom: 10px;
+}
+
+.nav-link {
+  background-color: #f8f9fa; /* 기본 배경색 */
+  color: #495057; /* 기본 텍스트 색상 */
+  padding: 10px 20px;
   border: 1px solid #ccc;
-  border-radius: 5px;
-  min-width: 120px; /* 각 step의 최소 너비 */
-  display: flex;
-  justify-content: center; /* 수평 중앙 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
+  text-align: left; /* 왼쪽 정렬 */
+  font-weight: 600;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.step + .step {
-  margin-left: 10px;
+.nav-link:hover {
+  transform: translateY(-5px);
 }
 
-.step-current {
-  background-color: #007bff; /* 강조 색상 */
-  color: white;
+.nav-link.active {
+  background-color: #007bff; /* 활성화된 탭 배경색 */
+  color: white; /* 텍스트 색상 */
 }
 
 .step-past {
-  background-color: #e9ecef; /* 흐림 없이 표시 */
+  background-color: #d6d8db; /* 더 어두운 회색 배경 */
+  color: #6c757d; /* 흐린 텍스트 색상 */
+  border: 1px solid #ced4da; /* 좀 더 부드러운 경계선 */
 }
 
 .step-future {
-  background-color: #f8f9fa; /* 흐리게 표시 */
-  color: #6c757d; /* 흐린 텍스트 색상 */
+  background-color: #f0f2f5; /* 더 밝은 흐린 배경 */
+  color: #adb5bd; /* 밝은 회색 텍스트 색상 */
+  border: 1px solid #ced4da; /* 경계선 색상 */
 }
 
-
-.cursor-pointer {
-  cursor: pointer; /* 마우스 포인터가 손가락으로 바뀌도록 설정 */
-}
-
-.hover-effect {
-  transition: color 0.3s ease, background-color 0.3s ease; /* 색상과 배경색 변화에 부드러운 전환 효과 추가 */
-}
-
-.hover-effect:hover {
-  color: white; /* 호버 시 텍스트 색상 변경 */
-  background-color: rgba(0, 123, 255, 0.7); /* 호버 시 배경색 변경 (Bootstrap의 primary 색상 사용) */
+.step-current {
+  background-color: #007bff; /* 활성화된 탭 색상 */
+  color: white;
 }
 </style>

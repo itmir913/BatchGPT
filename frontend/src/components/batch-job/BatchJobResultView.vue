@@ -1,50 +1,54 @@
 <template>
-  <div class="container mt-4 infinite-scroll-container">
-    <!-- 진행 상태 표시 -->
-    <div class="mb-4">
-      <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
-    </div>
+  <div class="container my-4 infinite-scroll-container">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
 
-    <!-- 정보 카드 -->
-    <div class="card mb-4 shadow-lg border-0 rounded-4">
-      <div class="card-header bg-gradient text-white bg-primary rounded-top">
-        <h5 class="mb-0">Summary</h5>
+    <div class="row">
+      <div class="col-md-3">
+        <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
       </div>
-      <div class="card-body p-4">
-        <!-- 반응형 테이블 레이아웃 -->
-        <div class="row">
-          <!-- General Information 테이블 -->
-          <div class="col-lg-6 mb-4 mb-lg-0">
-            <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
-              <colgroup>
-                <col style="width: 30%;"/>
-                <col style="width: 70%;"/>
-              </colgroup>
-              <thead class="table-light">
-              <tr>
-                <th class="text-center text-primary" colspan="2">General Information</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-                <th>Title</th>
-                <td>{{ batchJob.title }}</td>
-              </tr>
-              <tr>
-                <th>Description</th>
-                <td>{{ batchJob.description }}</td>
-              </tr>
-              <tr>
-                <th>File Name</th>
-                <td>{{ batchJob.file_name }}</td>
-              </tr>
-              <tr>
-                <th>Total Size</th>
-                <td>{{ batchJob.total_size }}</td>
-              </tr>
-              <tr>
-                <th>Batch Job Status</th>
-                <td>
+
+      <div class="col-md-9">
+        <!-- 정보 카드 -->
+        <h2 class="mb-3">Summary</h2>
+        <div class="card mb-4 rounded-4">
+          <div class="card-body p-4">
+            <!-- 반응형 테이블 레이아웃 -->
+            <div class="row">
+              <!-- General Information 테이블 -->
+              <div class="col-lg-6 mb-4 mb-lg-0">
+                <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
+                  <colgroup>
+                    <col style="width: 30%;"/>
+                    <col style="width: 70%;"/>
+                  </colgroup>
+                  <thead class="table-light">
+                  <tr>
+                    <th class="text-center text-primary" colspan="2">General Information</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <th>Title</th>
+                    <td>{{ batchJob.title }}</td>
+                  </tr>
+                  <tr>
+                    <th>Desc</th>
+                    <td>{{ batchJob.description }}</td>
+                  </tr>
+                  <tr>
+                    <th>File</th>
+                    <td>{{ batchJob.file_name }}</td>
+                  </tr>
+                  <tr>
+                    <th>Total Size</th>
+                    <td>{{ batchJob.total_size }}</td>
+                  </tr>
+                  <tr>
+                    <th>Status</th>
+                    <td>
               <span :class="{
                 'badge bg-success': batchJob.batch_job_status === 'Completed',
                 'badge bg-warning text-dark': batchJob.batch_job_status === 'In Progress',
@@ -53,72 +57,73 @@
               }">
                 {{ batchJob.batch_job_status }}
               </span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
 
-          <!-- Configuration 테이블 -->
-          <div v-if="batchJob && batchJob.configs" class="col-lg-6">
-            <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
-              <colgroup>
-                <col style="width: 30%;"/>
-                <col style="width: 70%;"/>
-              </colgroup>
-              <thead class="table-light">
-              <tr>
-                <th class="text-center text-primary" colspan="2">Configuration</th>
-              </tr>
-              </thead>
-              <tbody>
-              <!-- 동적 데이터 렌더링 -->
-              <tr v-for="(value, key) in batchJob.configs" :key="key">
-                <th>{{ formatKey(key) }}</th>
-                <td>
-                  <!-- 배열인 경우 -->
-                  <span v-if="Array.isArray(value)" class="badge bg-light text-dark">
+              <!-- Configuration 테이블 -->
+              <div v-if="batchJob && batchJob.configs" class="col-lg-6">
+                <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
+                  <colgroup>
+                    <col style="width: 30%;"/>
+                    <col style="width: 70%;"/>
+                  </colgroup>
+                  <thead class="table-light">
+                  <tr>
+                    <th class="text-center text-primary" colspan="2">Configuration</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <!-- 동적 데이터 렌더링 -->
+                  <tr v-for="(value, key) in batchJob.configs" :key="key">
+                    <th>{{ formatKey(key) }}</th>
+                    <td>
+                      <!-- 배열인 경우 -->
+                      <span v-if="Array.isArray(value)" class="badge bg-light text-dark">
                 {{ value.join(', ') }}
               </span>
-                  <!-- 배열이 아닌 경우 -->
-                  <span v-else>
+                      <!-- 배열이 아닌 경우 -->
+                      <span v-else>
                 {{ value }}
               </span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Success/Failure Message -->
-    <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{ messages.success }}</div>
-    <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
+        <div class="card mb-4 rounded-4">
+          <div class="card-body p-4">
+            <!-- RUNNING 버튼 -->
+            <div class="text-center">
+              <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
+                      class="btn btn-primary"
+                      @click="handleRun">
+                {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
+              </button>
+            </div>
+          </div>
+        </div>
 
-    <!-- RUNNING 버튼 -->
-    <div class="text-center mb-4">
-      <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
-              class="btn btn-primary"
-              @click="handleRun">
-        {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
-      </button>
-    </div>
-
-    <!-- CSV 표 형식 테이블 -->
-    <div v-if="tasks.length > 0" class="table-responsive">
-      <table class="table table-striped table-hover align-middle custom-table">
-        <thead class="table-dark">
-        <tr>
-          <th scope="col" style="width: 10%;">Status</th>
-          <th scope="col" style="width: 45%;">Request</th>
-          <th scope="col" style="width: 45%;">Response</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="task in tasks" :key="task.task_unit_id">
-          <td>
+        <!-- CSV 표 형식 테이블 -->
+        <div v-if="tasks.length > 0" class="table-responsive">
+          <h2 class="mb-3">Results</h2>
+          <table class="table table-striped table-hover align-middle custom-table">
+            <thead class="table-dark">
+            <tr>
+              <th scope="col" style="width: 10%;">Status</th>
+              <th scope="col" style="width: 45%;">Request</th>
+              <th scope="col" style="width: 45%;">Response</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="task in tasks" :key="task.task_unit_id">
+              <td>
               <span :class="{
                 'badge bg-warning text-dark': task.task_unit_status === 'Pending',
                 'badge bg-info': task.task_unit_status === 'In Progress',
@@ -127,24 +132,26 @@
               }">
                 {{ task.task_unit_status }}
               </span>
-          </td>
-          <td>{{ parseResponseData(task.request_data) }}</td>
-          <td>{{ parseResponseData(task.response_data) }}</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+              </td>
+              <td>{{ parseResponseData(task.request_data) }}</td>
+              <td>{{ parseResponseData(task.response_data) }}</td>
+            </tr>
+            </tbody>
+          </table>
 
-    <!-- 로딩 상태 표시 -->
-    <div v-if="formStatus.isLoading" class="text-center my-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+          <!-- 로딩 상태 표시 -->
+          <div v-if="formStatus.isLoading" class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <!-- 더 이상 데이터가 없을 때 -->
+          <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
+            <p class="text-muted">No more data</p>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- 더 이상 데이터가 없을 때 -->
-    <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
-      <p class="text-muted">No more data</p>
     </div>
   </div>
 </template>
@@ -164,10 +171,11 @@ import {
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {ProgressIndicator},
+  components: {ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],
@@ -233,7 +241,11 @@ export default {
         this.prompt = configs.prompt ?? '';
         this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -269,8 +281,11 @@ export default {
         }
 
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchTasks)
-        console.error(ERROR_MESSAGES.fetchTasks, error);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -294,8 +309,11 @@ export default {
         this.batchJobChecker.startCheckingBatchJob(this.batch_id);
 
       } catch (error) {
-        console.error(error.response);
-        this.handleMessages("error", ERROR_MESSAGES.pendingTasks)
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} No response received.`);
+        }
       }
     },
     async handleBatchJobStatus(batchJobId, status, result) {
@@ -343,12 +361,7 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  max-width: 1000px;
-}
-
 .infinite-scroll-container {
-  padding: 20px;
   overflow-y: auto;
 }
 

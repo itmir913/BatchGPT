@@ -33,11 +33,10 @@ app.autodiscover_tasks()
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Celery가 시작된 후, 자동으로 작업 실행
-    from .queue_task_units import resume_pending_tasks as task_units
-    task_units.apply_async()
-
-    from .queue_batch_job_process import resume_pending_jobs as batch_job
-    batch_job.apply_async()
+    from tasks.queue_batch_job_process import resume_pending_jobs
+    from tasks.queue_task_units import resume_pending_tasks
+    resume_pending_jobs.apply_async()
+    resume_pending_tasks.apply_async()
 
 # sudo apt install redis-server
 # sudo service redis-server start

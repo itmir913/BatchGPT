@@ -1,65 +1,138 @@
 <template>
   <div id="login" class="wrapper d-flex align-items-center justify-content-center vh-100">
-    <div class="container" style="max-width: 400px;">
-      <!-- 제목 -->
-      <h2 class="text-center mb-4">로그인</h2>
+    <div class="card" style="max-width: 400px; width: 100%;">
+      <div class="card-body">
+        <!-- 제목 -->
+        <h2 class="text-center mb-4">로그인</h2>
 
-      <!-- 메시지 -->
-      <div v-if="message" :class="message.type" class="alert text-center mt-4" role="alert">
-        {{ message.text }}
-      </div>
+        <!-- 메시지 -->
+        <div v-if="message" :class="`alert ${message.type} text-center mt-4`" role="alert">
+          {{ message.text }}
+        </div>
 
-      <!-- 로그인 폼 -->
-      <form @submit.prevent="login">
-        <!-- 이메일 입력 -->
-        <div class="mb-3">
-          <label class="form-label" for="email">이메일</label>
-          <input
-              id="email"
-              v-model="email"
-              :class="{ 'is-invalid': email && !isEmailValid }"
-              class="form-control"
-              placeholder="이메일을 입력하세요"
-              required
-              type="email"
-          />
-          <div v-if="email && !isEmailValid" class="invalid-feedback">
-            올바른 이메일을 입력하세요.
+        <!-- 로그인 폼 -->
+        <form @submit.prevent="login">
+          <!-- 이메일 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="email">이메일</label>
+            <input
+                id="email"
+                v-model="email"
+                :class="{ 'is-invalid': email && !isEmailValid }"
+                class="form-control"
+                placeholder="이메일을 입력하세요"
+                required
+                type="email"
+            />
+            <div v-if="email && !isEmailValid" class="invalid-feedback">
+              올바른 이메일을 입력하세요.
+            </div>
           </div>
+
+          <!-- 비밀번호 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="password">비밀번호</label>
+            <input
+                id="password"
+                v-model="password"
+                class="form-control"
+                placeholder="비밀번호를 입력하세요"
+                required
+                type="password"
+            />
+          </div>
+
+          <!-- 로그인 버튼 -->
+          <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">
+            로그인
+          </button>
+        </form>
+
+        <!-- 회원가입 링크 -->
+        <div class="text-center mt-3">
+          <p>
+            계정이 없으신가요?
+            <router-link class="link text-primary" to="/register">회원가입</router-link>
+          </p>
         </div>
-
-        <!-- 비밀번호 입력 -->
-        <div class="mb-3">
-          <label class="form-label" for="password">비밀번호</label>
-          <input
-              id="password"
-              v-model="password"
-              class="form-control"
-              placeholder="비밀번호를 입력하세요"
-              required
-              type="password"
-          />
-        </div>
-
-        <!-- 로그인 버튼 -->
-        <button :disabled="isButtonDisabled" class="btn btn-primary w-100" type="submit">
-          로그인
-        </button>
-      </form>
-
-      <!-- 회원가입 링크 -->
-      <div class="text-center mt-3">
-        <p>
-          계정이 없으신가요?
-          <router-link class="link text-primary" to="/register">회원가입</router-link>
-        </p>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<style scoped>
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
 
+.card {
+  margin: 0 auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-body {
+  padding: 30px;
+}
+
+h2 {
+  color: #333;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #66a6ff;
+}
+
+input.is-invalid {
+  border-color: red;
+}
+
+.invalid-feedback {
+  font-size: 0.875em;
+  color: red;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.alert {
+  margin-top: 15px;
+}
+</style>
+
+<script>
 import {loginAPI} from "@/components/auth/AuthUtils";
 
 export default {
@@ -120,75 +193,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fa;
-}
-
-.container {
-  max-width: 400px;
-  width: 100%;
-  background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-h2 {
-  text-align: center;
-  color: #333;
-}
-
-label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 5px;
-}
-
-input[type="email"],
-input[type="password"] {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-input[type="email"]:focus,
-input[type="password"]:focus {
-  outline: none;
-  border-color: #66a6ff;
-}
-
-input.is-invalid {
-  border-color: red;
-}
-
-.invalid-feedback {
-  font-size: 0.875em;
-  color: red;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-button {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  border: none;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-.alert {
-  margin-top: 15px;
-}
-</style>

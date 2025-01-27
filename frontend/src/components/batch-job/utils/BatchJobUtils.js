@@ -21,13 +21,14 @@ export const SUCCESS_MESSAGES = {
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
-    fetchBatchJob: "Failed to load Batch Job details. Please try again later.",
-    modifyBatchJob: "Error modifying Batch Job: ",
-    deleteBatchJob: "Error deleting batch job: ",
+    fetchBatchJob: "Failed to load Batch Job details. Please try again later:",
+    modifyBatchJob: "Error modifying Batch Job:",
+    deleteBatchJob: "Error deleting batch job:",
     fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
-    uploadFile: "Error uploading file: ",
+    uploadFile: "Error uploading file:",
     unsupportedFileType: "Unsupported file type. Allowed:",
     missingFile: "The uploaded file is missing. Please select a file to upload.",
+    compressFiles: "Unable to compress the file. Please try again.",
     updatedConfigs: "Error updating configuration. Please try again later.",
     loadPreview: "Failed to load Preview data. Please try again later.",
     noColumn: "Please select at least one column.",
@@ -43,7 +44,7 @@ export const CONFIRM_MESSAGE = {
     deleteBatchJob: "Are you sure you want to delete this batch job?",
 }
 
-const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress', 'Completed', 'Failed'];
+const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress'];
 
 export function shouldEditDisabled(status) {
     return EDIT_DISABLED_STATUSES.includes(status);

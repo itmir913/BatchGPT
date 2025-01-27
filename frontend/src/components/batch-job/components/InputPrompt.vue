@@ -1,6 +1,6 @@
 <template>
   <div class="mb-3 g-3 p-2">
-    <h3>Input Prompt</h3>
+    <h2 class="mb-3">Input Prompt</h2>
     <textarea
         v-model="localPrompt"
         class="form-control"
