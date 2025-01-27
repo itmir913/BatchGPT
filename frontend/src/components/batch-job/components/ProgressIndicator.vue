@@ -29,7 +29,7 @@ export default {
   },
   computed: {
     steps() {
-      return ["Create BatchJob", "Upload File", "Prompt Configs", "Previews", "Run Tasks"];
+      return ["Create BatchJob", "Upload File", "Configs", "Previews", "Run Tasks"];
     },
   },
   methods: {
