@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="3"/>
@@ -67,18 +72,6 @@
             </div>
           </div>
 
-          <!-- 메시지 표시 -->
-          <div>
-            <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{
-                messages.success
-              }}
-            </div>
-            <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{
-                messages.error
-              }}
-            </div>
-          </div>
-
           <!-- 버튼들 -->
           <div class="text-end mb-3 mt-3">
             <button
@@ -115,11 +108,12 @@ import {
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 
 export default {
   props: ['batch_id'],
-  components: {WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
+  components: {ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
       batchJob: null,

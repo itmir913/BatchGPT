@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
@@ -12,14 +17,6 @@
             <span class="visually-hidden">Loading...</span>
           </div>
           <p>{{ formStatus.loadingMessage }}</p>
-        </div>
-
-        <!-- Success/Failure Message -->
-        <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-3" role="alert">
-          {{ messages.success }}
-        </div>
-        <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">
-          {{ messages.error }}
         </div>
 
         <!-- 배치 작업 폼 -->
@@ -50,6 +47,7 @@
 import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
 import BatchJobInputFields from '@/components/batch-job/components/BatchJobInputFields.vue';
 import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",
@@ -60,7 +58,7 @@ const ERROR_MESSAGES = {
 };
 
 export default {
-  components: {ProgressIndicator, BatchJobInputFields},
+  components: {ToastView, ProgressIndicator, BatchJobInputFields},
   data() {
     return {
       batch_id: 0,
@@ -110,7 +108,10 @@ export default {
         this.batch_id = batch_id;
 
         this.handleMessages("success", SUCCESS_MESSAGES.createBatchJob);
-        this.$router.push(`/batch-jobs/${this.batch_id}/`);
+
+        setTimeout(() => {
+          this.$router.push(`/batch-jobs/${this.batch_id}/`);
+        }, 1000);
       } catch (error) {
         this.handleMessages("error", ERROR_MESSAGES.createBatchJob);
       } finally {

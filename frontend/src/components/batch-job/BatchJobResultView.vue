@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4 infinite-scroll-container">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
@@ -92,13 +97,6 @@
           </div>
         </div>
 
-        <!-- Success/Failure Message -->
-        <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">{{
-            messages.success
-          }}
-        </div>
-        <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
-
         <div class="card mb-4 rounded-4">
           <div class="card-body p-4">
             <!-- RUNNING 버튼 -->
@@ -112,9 +110,9 @@
           </div>
         </div>
 
-        <h2 class="mb-3">Results</h2>
         <!-- CSV 표 형식 테이블 -->
         <div v-if="tasks.length > 0" class="table-responsive">
+          <h2 class="mb-3">Results</h2>
           <table class="table table-striped table-hover align-middle custom-table">
             <thead class="table-dark">
             <tr>
@@ -140,18 +138,18 @@
             </tr>
             </tbody>
           </table>
-        </div>
 
-        <!-- 로딩 상태 표시 -->
-        <div v-if="formStatus.isLoading" class="text-center my-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+          <!-- 로딩 상태 표시 -->
+          <div v-if="formStatus.isLoading" class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
           </div>
-        </div>
 
-        <!-- 더 이상 데이터가 없을 때 -->
-        <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
-          <p class="text-muted">No more data</p>
+          <!-- 더 이상 데이터가 없을 때 -->
+          <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
+            <p class="text-muted">No more data</p>
+          </div>
         </div>
       </div>
     </div>
@@ -173,10 +171,11 @@ import {
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {ProgressIndicator},
+  components: {ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],

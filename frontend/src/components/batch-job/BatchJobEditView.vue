@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
@@ -12,10 +17,6 @@
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
-
-        <!-- 메시지 표시 -->
-        <div v-if="success" class="alert alert-success text-center mt-3" role="alert">{{ success }}</div>
-        <div v-if="error" class="alert alert-danger text-center mt-3" role="alert">{{ error }}</div>
 
         <!-- 배치 작업 폼 -->
         <h2 class="mb-3">Modify Batch Job</h2>
@@ -50,9 +51,11 @@ import {
   modifyBatchJobTitleAPI,
   SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 export default {
   components: {
+    ToastView,
     BatchJobInputFields,
     ProgressIndicator,
   },
@@ -60,8 +63,9 @@ export default {
   data() {
     return {
       batchJob: null, // 배치 작업 초기값
-      success: null, // 성공 메시지 상태
-      error: null, // 에러 메시지 상태
+
+      messages: {success: null, error: null},
+
       loading: false, // 로딩 상태
       isButtonDisabled: true, // 버튼 비활성화 여부
     };
@@ -84,7 +88,7 @@ export default {
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
         this.isButtonDisabled = false; // 버튼 활성화
       } catch (error) {
-        this.handleError(ERROR_MESSAGES.fetchBatchJob);
+        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
       }
     },
 
@@ -100,8 +104,7 @@ export default {
 
         await modifyBatchJobTitleAPI(this.batch_id, payload);
 
-        this.success = SUCCESS_MESSAGES.modifyBatchJob;
-        this.error = null;
+        this.handleMessages("success", SUCCESS_MESSAGES.modifyBatchJob);
 
         // 수정 후 자동으로 배치 작업 상세 페이지로 리다이렉트
         setTimeout(() => {
@@ -110,15 +113,18 @@ export default {
 
       } catch (error) {
         this.isButtonDisabled = false; // 버튼 활성화
-        this.handleError(ERROR_MESSAGES.modifyBatchJob);
+        this.handleMessages("error", ERROR_MESSAGES.modifyBatchJob);
         console.error(error.message)
       }
     },
 
-    // 에러 처리 메서드
-    handleError(message) {
-      this.error = message;
-      this.success = null; // 성공 메시지 초기화
+    clearMessages() {
+      this.messages = {success: null, error: null};
+    },
+
+    handleMessages(type, message) {
+      this.clearMessages();
+      this.messages[type] = message;
     },
 
     // 취소 버튼 처리

@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4">
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="2"/>
@@ -57,12 +62,6 @@
               @update:gpt_model="gpt_model = $event"
           />
 
-          <!-- Success/Failure Message -->
-          <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
-            {{ messages.success }}
-          </div>
-          <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
-
           <!-- Action Buttons -->
           <div class="text-end mt-3">
             <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
@@ -94,10 +93,12 @@ import {
 } from '@/components/batch-job/utils/BatchJobUtils';
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 import GPTModelSelector from "@/components/batch-job/components/GPTModelSelector.vue";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 export default {
   props: ['batch_id'],
   components: {
+    ToastView,
     GPTModelSelector,
     WorkUnitSettings,
     ProgressIndicator,

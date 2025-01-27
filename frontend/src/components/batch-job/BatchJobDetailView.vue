@@ -1,5 +1,10 @@
 <template>
   <div class="container mt-4">
+    <ToastView
+        ref="toast"
+        :message="state.messages"
+    />
+
     <div class="row">
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="1"/>
@@ -12,14 +17,6 @@
             <span class="visually-hidden">Loading...</span>
           </div>
           <p>{{ state.loadingMessage }}</p>
-        </div>
-
-        <!-- Message Display -->
-        <div v-if="state.messages.success" class="alert alert-success text-center mt-3" role="alert">
-          {{ state.messages.success }}
-        </div>
-        <div v-if="state.messages.error" class="alert alert-danger text-center mt-3" role="alert">
-          {{ state.messages.error }}
         </div>
 
         <!-- Batch Job Details -->
@@ -126,10 +123,11 @@ import {
   SUCCESS_MESSAGES,
   uploadFilesAPI,
 } from "@/components/batch-job/utils/BatchJobUtils";
+import ToastView from "@/components/batch-job/components/ToastView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {ProgressIndicator},
+  components: {ToastView, ProgressIndicator},
   data() {
     return {
       batchJob: null,
