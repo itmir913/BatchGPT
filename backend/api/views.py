@@ -248,7 +248,7 @@ class BatchJobConfigView(APIView):
         :return:
         """
         batch_job = get_object_or_404(BatchJob, id=batch_id)
-        data = request.data
+        updated_data = request.data
 
         if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
             logger.log(logging.ERROR, f"API: You cannot change the settings because it is already in operation.")
@@ -257,34 +257,10 @@ class BatchJobConfigView(APIView):
                 status=HTTP_423_LOCKED,
             )
 
-        work_unit = int(data.get('work_unit', 1))
-        prompt = data.get('prompt', "")
-        gpt_model = data.get('gpt_model', 'gpt-4o-mini')
-        selected_headers = data.get('selected_headers', None)
+        current_data = batch_job.configs or {}
+        current_data.update(updated_data)
 
-        if prompt is None:
-            return Response({'error': 'No prompt provided.'}, status=HTTP_400_BAD_REQUEST)
-
-        try:
-            total_size = batch_job.get_size() if batch_job.file else 0
-            if work_unit > total_size:
-                return Response({'error': 'The work unit exceeds the total size.'}, status=HTTP_400_BAD_REQUEST)
-        except ValueError as e:
-            return Response({'error': f"File processing error: {str(e)}"}, status=HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        current_config = batch_job.configs or {}
-
-        current_config['work_unit'] = work_unit
-        current_config['prompt'] = prompt
-        current_config['gpt_model'] = gpt_model
-        current_config['selected_headers'] = selected_headers
-
-        batch_job.configs = current_config
+        batch_job.configs = current_data
         batch_job.set_status(BatchJobStatus.CONFIGS)
 
         batch_job.save()
@@ -350,8 +326,8 @@ class BatchJobPreView(APIView):
             )
 
         try:
-            data = request.data
-            prompt = data.get('prompt', None)
+            updated_data = request.data
+            prompt = updated_data.get('prompt', None)
 
             if prompt is None:
                 logger.log(logging.ERROR, f"API: The request is invalid as the prompt is empty.")
@@ -359,10 +335,10 @@ class BatchJobPreView(APIView):
                     {"error": "The request is invalid as the prompt is empty."},
                     status=HTTP_400_BAD_REQUEST,
                 )
-            else:
-                batch_job.configs['prompt'] = prompt
-                batch_job.configs['selected_headers'] = data.get('selected_headers', None)
-                batch_job.save()
+
+            current_data = batch_job.configs or {}
+            current_data.update(updated_data)
+            batch_job.configs = current_data
 
             file = batch_job.file
             file_path = os.path.join(settings.BASE_DIR, file.path)
