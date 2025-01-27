@@ -137,7 +137,7 @@ export default {
       try {
         await logoutAPI();
         this.isAuthenticated = false;
-        this.email = "";
+        this.user.email = "";
         alert("You have been logged out.");
         await this.$router.push("/login");
       } catch (error) {
