@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from backend import settings
 from users.serializers import RegisterSerializer
 
 
@@ -20,6 +21,12 @@ class RegisterView(APIView):
         """
         serializer = RegisterSerializer(data=request.data)
         logger = logging.getLogger(__name__)
+
+        if not settings.ALLOW_USER_REGISTRATION:
+            return Response(
+                {"error": "User registration is not allowed at this time."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         if serializer.is_valid():
             serializer.save()

@@ -39,7 +39,8 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] + [host.strip() for host in os.getenv
 
 # Section: CSRF/CORS
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8080'] + ['https://' + host.strip() for host in
-                                                os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if host.strip()]
+                                                    os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if
+                                                    host.strip()]
 CORS_ALLOWED_ORIGIN_REGEXES = [host.strip() for host in
                                os.getenv('DJANGO_CORS_ALLOWED_ORIGIN_REGEXES', r"^http://localhost:\d+$").split(',') if
                                host.strip()]
@@ -199,3 +200,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
 }
+
+# Section: Allow Registration
+ALLOW_USER_REGISTRATION = os.getenv('ALLOW_USER_REGISTRATION', 'False') == 'True'
