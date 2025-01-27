@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container my-4">
     <ToastView
         ref="toast"
         :message="messages"

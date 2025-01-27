@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container my-4">
     <ToastView
         ref="toast"
         :message="messages"
@@ -63,7 +63,7 @@
           />
 
           <!-- Action Buttons -->
-          <div class="text-end mt-3">
+          <div class="text-end my-3">
             <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
                     class="btn btn-primary me-3"
                     @click="configSave">

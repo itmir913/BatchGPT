@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container my-4">
     <ToastView
         ref="toast"
         :message="state.messages"
@@ -90,6 +90,7 @@
 
 .card-text {
   font-size: 1rem;
+  white-space: pre-line;
 }
 
 .mt-3 {

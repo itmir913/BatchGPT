@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container my-4">
     <ToastView
         ref="toast"
         :message="messages"
@@ -73,7 +73,7 @@
           </div>
 
           <!-- 버튼들 -->
-          <div class="text-end mb-3 mt-3">
+          <div class="text-end my-3">
             <button
                 class="btn btn-secondary me-3"
                 @click="configSave">

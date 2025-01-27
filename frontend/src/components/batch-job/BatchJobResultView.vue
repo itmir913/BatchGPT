@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4 infinite-scroll-container">
+  <div class="container my-4 infinite-scroll-container">
     <ToastView
         ref="toast"
         :message="messages"
