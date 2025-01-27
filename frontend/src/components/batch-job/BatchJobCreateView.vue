@@ -113,7 +113,11 @@ export default {
           this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 1000);
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.createBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.createBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.createBatchJob} No response received.`);
+        }
       } finally {
         this.loadingState.submitted = false;
       }

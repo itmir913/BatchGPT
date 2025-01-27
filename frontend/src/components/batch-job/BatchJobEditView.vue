@@ -88,7 +88,11 @@ export default {
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
         this.isButtonDisabled = false; // 버튼 활성화
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       }
     },
 
@@ -112,9 +116,12 @@ export default {
         }, 1000);
 
       } catch (error) {
-        this.isButtonDisabled = false; // 버튼 활성화
-        this.handleMessages("error", ERROR_MESSAGES.modifyBatchJob);
-        console.error(error.message)
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.modifyBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.modifyBatchJob} No response received.`);
+        }
+        this.isButtonDisabled = false;
       }
     },
 

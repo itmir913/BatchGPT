@@ -191,7 +191,11 @@ export default {
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
 
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -203,7 +207,11 @@ export default {
         this.loadingState.previewLoading = true;
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.loadPreview);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} No response received.`);
+        }
       } finally {
         this.loadingState.previewLoading = false;
       }
@@ -256,8 +264,12 @@ export default {
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
-      } catch (err) {
-        this.handleMessages("error", ERROR_MESSAGES.updatedConfigs);
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} No response received.`);
+        }
       } finally {
         this.loadingSave = false;
       }
@@ -303,7 +315,11 @@ export default {
 
         this.handleMessages("success", SUCCESS_MESSAGES.loadPreviewResult);
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.loadResult);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.loadResult} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.loadResult} No response received.`);
+        }
       } finally {
         this.loadingState.resultLoading = false;
       }

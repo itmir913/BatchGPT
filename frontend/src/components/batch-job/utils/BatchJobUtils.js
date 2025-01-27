@@ -21,11 +21,11 @@ export const SUCCESS_MESSAGES = {
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
-    fetchBatchJob: "Failed to load Batch Job details. Please try again later.",
-    modifyBatchJob: "Error modifying Batch Job: ",
-    deleteBatchJob: "Error deleting batch job: ",
+    fetchBatchJob: "Failed to load Batch Job details. Please try again later:",
+    modifyBatchJob: "Error modifying Batch Job:",
+    deleteBatchJob: "Error deleting batch job:",
     fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
-    uploadFile: "Error uploading file: ",
+    uploadFile: "Error uploading file:",
     unsupportedFileType: "Unsupported file type. Allowed:",
     missingFile: "The uploaded file is missing. Please select a file to upload.",
     updatedConfigs: "Error updating configuration. Please try again later.",

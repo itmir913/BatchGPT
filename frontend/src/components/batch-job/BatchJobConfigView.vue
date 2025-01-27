@@ -157,7 +157,11 @@ export default {
         this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -188,8 +192,12 @@ export default {
         this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
-      } catch (err) {
-        this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${err.message}`);
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} No response received.`);
+        }
       } finally {
         this.loadingState.loadingSave = false;
       }

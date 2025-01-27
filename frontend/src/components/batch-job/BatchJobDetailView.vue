@@ -33,13 +33,26 @@
             <div class="mt-3">
               <h5>File Upload</h5>
               <form class="d-flex align-items-center gap-3" @submit.prevent="uploadFile">
-                <input
-                    ref="fileInput"
-                    :disabled="!state.isEditable"
-                    class="form-control flex-grow-1"
-                    type="file"
-                    @change="handleFileChange"
-                />
+                <div
+                    ref="dropZone"
+                    :class="{'drag-over': isDragOver}"
+                    class="file-upload-dropzone form-control flex-grow-1"
+                    @click="triggerFileInputClick"
+                    @dragover.prevent="handleDragOver"
+                    @dragleave.prevent="handleDragLeave"
+                    @drop.prevent="handleDrop"
+                >
+                  <input
+                      ref="fileInput"
+                      :disabled="!state.isEditable"
+                      class="d-none"
+                      type="file"
+                      @change="handleFileChange"
+                  />
+                  <span v-if="!selectedFile">Drag and drop a file or click to select</span>
+                  <span v-else>{{ selectedFile.name }}</span>
+                </div>
+
                 <button
                     :disabled="state.isUploading || !state.isEditable"
                     class="btn btn-primary"
@@ -112,6 +125,30 @@
 }
 </style>
 
+<style>
+.file-upload-dropzone {
+  position: relative;
+  min-height: 150px;
+  height: 150px;
+  border: 2px dashed #ccc;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.file-upload-dropzone span {
+  display: block;
+  font-size: 16px;
+  color: #666;
+}
+
+.file-upload-dropzone.drag-over {
+  background-color: #e0e0e0;
+}
+</style>
+
 <script>
 import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
 import {
@@ -134,6 +171,7 @@ export default {
       batchJob: null,
       allowedFileTypes: [],
       selectedFile: null,
+      isDragOver: false,
       state: {
         isLoading: true,
         isUploading: false,
@@ -164,8 +202,12 @@ export default {
       try {
         this.state.isLoading = true;
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
-      } catch {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       } finally {
         this.state.isLoading = false;
       }
@@ -174,13 +216,31 @@ export default {
     async fetchFileTypes() {
       try {
         this.allowedFileTypes = await fetchFileTypesAPI();
-      } catch {
-        this.handleMessages("error", ERROR_MESSAGES.fileTypes);
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fileTypes} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fileTypes} No response received.`);
+        }
       }
     },
 
+    handleDragOver() {
+      this.isDragOver = true;
+    },
+    handleDragLeave() {
+      this.isDragOver = false;
+    },
+    handleDrop(event) {
+      this.isDragOver = false;
+      const file = event.dataTransfer.files[0];
+      this.handleFileChange({target: {files: [file]}});
+    },
     handleFileChange(event) {
       this.selectedFile = event.target.files[0];
+    },
+    triggerFileInputClick() {
+      this.$refs.fileInput.click(); // 숨겨진 파일 입력 클릭
     },
 
     validateFile() {
@@ -201,7 +261,11 @@ export default {
         this.batchJob = await uploadFilesAPI(this.batch_id, this.selectedFile);
         this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.uploadFile);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} No response received.`);
+        }
       } finally {
         this.state.isUploading = false;
         this.resetFileInputHelper();
@@ -224,8 +288,12 @@ export default {
         await deleteBatchJobTitleAPI(this.batch_id);
         alert(SUCCESS_MESSAGES.deleteBatchJob);
         this.$router.push(`/home`);
-      } catch {
-        this.handleMessages("error", ERROR_MESSAGES.deleteBatchJob);
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.deleteBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.deleteBatchJob} No response received.`);
+        }
       }
     },
 

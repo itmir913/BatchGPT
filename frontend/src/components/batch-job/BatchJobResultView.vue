@@ -241,7 +241,11 @@ export default {
         this.prompt = configs.prompt ?? '';
         this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchBatchJob);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -277,8 +281,11 @@ export default {
         }
 
       } catch (error) {
-        this.handleMessages("error", ERROR_MESSAGES.fetchTasks)
-        console.error(ERROR_MESSAGES.fetchTasks, error);
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} No response received.`);
+        }
       } finally {
         this.loadingState.loading = false;
       }
@@ -302,8 +309,11 @@ export default {
         this.batchJobChecker.startCheckingBatchJob(this.batch_id);
 
       } catch (error) {
-        console.error(error.response);
-        this.handleMessages("error", ERROR_MESSAGES.pendingTasks)
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} No response received.`);
+        }
       }
     },
     async handleBatchJobStatus(batchJobId, status, result) {
