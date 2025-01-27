@@ -1,4 +1,18 @@
 <template>
+  <h2 class="mb-3">CSV Preview</h2>
+  <div>
+    <div v-if="selectedColumns.length > 0">
+      <div>The following columns will be included in the GPT request:</div>
+      <div>You can refer to them in the prompt as: {{
+          selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
+        }}
+      </div>
+    </div>
+    <div v-else>
+      <div>Please select the columns you want to include in the GPT request.</div>
+      <div>Once selected, you can use them in the prompt.</div>
+    </div>
+  </div>
   <table
       v-if="Array.isArray(filteredData) && filteredData.length > 0
               && supportedFileTypes.includes(fileType)"

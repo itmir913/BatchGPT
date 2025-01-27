@@ -17,20 +17,6 @@
         <div v-if="formStatus.isReady" class="mb-3">
           <!-- File Type이 CSV일 때 -->
           <div class="mb-3 g-3 p-2">
-            <h3 class="text-center mt-3 mb-2">CSV Preview</h3>
-            <div>
-              <div v-if="previewData.CSV.selectedColumns.length > 0" class="text-dark">
-                <div>The following columns will be included in the GPT request:</div>
-                <div>You can refer to them in the prompt as: {{
-                    previewData.CSV.selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
-                  }}
-                </div>
-              </div>
-              <div v-else class="text-dark">
-                <div>Please select the columns you want to include in the GPT request.</div>
-                <div>Once selected, you can use them in the prompt.</div>
-              </div>
-            </div>
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
                 :fileType="batchJob.file_type"

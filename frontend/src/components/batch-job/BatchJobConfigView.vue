@@ -15,7 +15,7 @@
         </div>
 
         <div v-if="formStatus.isReady" class="p-2 mb-3">
-          <h3>Uploaded File</h3>
+          <h2 class="mb-3">Uploaded File</h2>
           <table class="table table-striped table-bordered table-responsive mb-3">
             <thead class="table-light">
             <tr>

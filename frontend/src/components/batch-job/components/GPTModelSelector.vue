@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 mb-3">
-    <h3 class="text-center">Select GPT Model</h3>
+    <h2 class="mb-3">Select GPT Model</h2>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
       <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
         <div :class="{'border-primary': localGptModel === key}" class="card shadow-sm clickable-card"

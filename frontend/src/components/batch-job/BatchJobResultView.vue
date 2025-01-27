@@ -7,10 +7,8 @@
 
       <div class="col-md-9">
         <!-- 정보 카드 -->
+        <h2 class="mb-3">Summary</h2>
         <div class="card mb-4 shadow-lg border-0 rounded-4">
-          <div class="card-header bg-gradient text-white bg-primary rounded-top">
-            <h5 class="mb-0">Summary</h5>
-          </div>
           <div class="card-body p-4">
             <!-- 반응형 테이블 레이아웃 -->
             <div class="row">
@@ -110,6 +108,7 @@
           </button>
         </div>
 
+        <h2 class="mb-3">Results</h2>
         <!-- CSV 표 형식 테이블 -->
         <div v-if="tasks.length > 0" class="table-responsive">
           <table class="table table-striped table-hover align-middle custom-table">
