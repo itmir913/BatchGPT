@@ -200,10 +200,6 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  max-width: 1000px;
-}
-
 .table-responsive {
   overflow-x: auto;
 }

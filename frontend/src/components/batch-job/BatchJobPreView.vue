@@ -350,10 +350,6 @@ export default {
 </script>
 
 <style scoped>
-.container {
-  max-width: 1000px;
-}
-
 /* 열 구분선 추가 */
 .custom-table td,
 .custom-table th {
