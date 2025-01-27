@@ -11,6 +11,7 @@ export async function fetchAuthAPI() {
 
     return {
         isAuthenticated: data.is_authenticated,
+        username: data.username,
         email: data.email,
         balance: data.balance,
     };

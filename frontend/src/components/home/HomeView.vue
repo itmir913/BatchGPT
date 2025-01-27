@@ -24,9 +24,12 @@
 
         <div class="p-4 bg-light rounded-3 shadow-sm">
           <h4 class="text-primary mb-3">
-            <i class="bi bi-person-circle"></i> Welcome, {{ user.email }}!
+            <i class="bi bi-person-circle"></i> Welcome, {{ user.username }}!
           </h4>
           <ul class="list-group">
+            <li class="list-group-item bg-light">
+              <strong>Email:</strong> {{ user.email }}
+            </li>
             <li class="list-group-item bg-light">
               <strong>Balances:</strong> ${{ user.balance }}
             </li>
@@ -142,6 +145,7 @@ export default {
     return {
       isAuthenticated: false, // 사용자 인증 상태
       user: {
+        username: "",
         email: "",
         balance: 0,
       },
@@ -155,8 +159,9 @@ export default {
       // 인증 상태 확인
       this.loading = true;
 
-      const {isAuthenticated, email, balance} = await fetchAuthAPI();
+      const {isAuthenticated, username, email, balance} = await fetchAuthAPI();
       this.isAuthenticated = isAuthenticated;
+      this.user.username = username;
       this.user.email = email;
       this.user.balance = balance;
 
@@ -189,7 +194,13 @@ export default {
       try {
         await logoutAPI();
         this.isAuthenticated = false;
-        this.user.email = "";
+
+        this.user = {
+          username: "",
+          email: "",
+          balance: 0,
+        };
+
         alert("You have been logged out.");
         await this.$router.push("/login");
       } catch (error) {
