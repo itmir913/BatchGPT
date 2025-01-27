@@ -8,7 +8,7 @@
       <div class="col-md-9">
         <!-- 정보 카드 -->
         <h2 class="mb-3">Summary</h2>
-        <div class="card mb-4 shadow-lg border-0 rounded-4">
+        <div class="card mb-4 rounded-4">
           <div class="card-body p-4">
             <!-- 반응형 테이블 레이아웃 -->
             <div class="row">
@@ -99,13 +99,17 @@
         </div>
         <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
 
-        <!-- RUNNING 버튼 -->
-        <div class="text-center mb-4">
-          <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
-                  class="btn btn-primary"
-                  @click="handleRun">
-            {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
-          </button>
+        <div class="card mb-4 rounded-4">
+          <div class="card-body p-4">
+            <!-- RUNNING 버튼 -->
+            <div class="text-center">
+              <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
+                      class="btn btn-primary"
+                      @click="handleRun">
+                {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <h2 class="mb-3">Results</h2>
@@ -349,7 +353,6 @@ export default {
 
 <style scoped>
 .infinite-scroll-container {
-  padding: 20px;
   overflow-y: auto;
 }
 
