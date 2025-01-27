@@ -3,6 +3,8 @@ import os
 
 from celery import shared_task
 
+from tasks.celery import app
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,6 +23,7 @@ def process_batch_job(self, batch_job_id):
     try:
         batch_job = get_object_or_404(BatchJob, id=batch_job_id)
         if batch_job.batch_job_status in [BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
+            cache.set(batch_status_key(batch_job_id), batch_job.get_batch_job_status_display(), timeout=30)
             logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
             return
 
@@ -62,7 +65,7 @@ def process_batch_job(self, batch_job_id):
         return
 
 
-@shared_task
+@app.task
 def resume_pending_jobs():
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.job_status_utils import get_task_status_counts

@@ -6,6 +6,8 @@ import time
 from celery import shared_task
 from openai import OpenAI
 
+from tasks.celery import app
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,7 @@ def process_task_unit(self, task_unit_id):
 
         task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
         if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED, TaskUnitStatus.FAILED]:
-            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.COMPLETED, timeout=30)
+            cache.set(task_unit_status_key(task_unit_id), task_unit.task_unit_status, timeout=30)
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
 
@@ -89,7 +91,7 @@ def process_task_unit(self, task_unit_id):
         return
 
 
-@shared_task
+@app.task
 def resume_pending_tasks():
     from api.models import TaskUnit, TaskUnitStatus
 

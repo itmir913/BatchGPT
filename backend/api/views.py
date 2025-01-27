@@ -516,10 +516,10 @@ class BatchJobRunView(APIView):
             if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
                 return Response(serializer.data, status=HTTP_202_ACCEPTED)
 
-            cache.set(batch_status_key(batch_id), BatchJobStatus.PENDING_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
+            cache.set(batch_status_key(batch_id), BatchJobStatus.PENDING_DISPLAY, timeout=30)
             process_batch_job.apply_async(args=[batch_job.id])
 
             return Response(serializer.data, status=HTTP_202_ACCEPTED)
