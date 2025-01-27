@@ -164,11 +164,32 @@ LOGGING = {
     },
 }
 
+# Section: Redis
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/")
+if not REDIS_URL.endswith("/"):
+    REDIS_URL += "/"
+
+# Celery와 Django에서 사용할 Redis 주소
+REDIS_DB_CELERY = f"{REDIS_URL}0"  # Celery: DB 0 사용
+REDIS_DB_DJANGO = f"{REDIS_URL}1"  # Django: DB 1 사용
+
 # Section: Celery
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+CELERY_BROKER_URL = REDIS_DB_CELERY
+CELERY_RESULT_BACKEND = REDIS_DB_CELERY
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+# Section: Django Cache
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_DB_DJANGO,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "django_cache",
+    }
+}
 
 # Section: OPENAI_API_KEY
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

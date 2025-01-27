@@ -9,10 +9,12 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_batch_job(self, batch_job_id):
     # ImportError: cannot import name 'BatchJob' from partially initialized module 'api.models' (most likely due to a circular import)
+    from django.core.cache import cache
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from django.shortcuts import get_object_or_404
     from api.models import BatchJob, BatchJobStatus, TaskUnit, TaskUnitStatus
     from api.utils.file_settings import FileSettings
+    from api.utils.cache_keys import batch_status_key
     from backend import settings
     from tasks.queue_task_units import process_task_unit
 
@@ -42,6 +44,7 @@ def process_batch_job(self, batch_job_id):
                     )
                     process_task_unit.apply_async(args=[task_unit.id])
 
+            cache.set(batch_status_key(batch_job_id), BatchJobStatus.IN_PROGRESS_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
@@ -50,6 +53,7 @@ def process_batch_job(self, batch_job_id):
         except Exception as e:
             logger.log(logging.INFO,
                        f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
+            cache.set(batch_status_key(batch_job_id), BatchJobStatus.FAILED_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.FAILED)
             batch_job.save()
             return

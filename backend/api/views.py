@@ -1,6 +1,7 @@
 import logging
 import os
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models import F
 from django.http import JsonResponse
@@ -16,6 +17,7 @@ from rest_framework.views import APIView
 from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
+from api.utils.cache_keys import batch_status_key, task_unit_status_key
 from api.utils.file_settings import FileSettings
 from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts
@@ -488,11 +490,15 @@ class TaskUnitStatusView(APIView):
         :return:
         """
         try:
-            task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
+            status = cache.get(task_unit_status_key(task_unit_id))
+            if not status or status in [TaskUnitStatus.PENDING, TaskUnitStatus.IN_PROGRESS]:
+                logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found. cached.")
+                return JsonResponse({"error": "Task response is not found. cached."}, status=HTTP_404_NOT_FOUND)
 
+            task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
             if task_unit.latest_response is None:
-                logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found")
-                return JsonResponse({"error": "Task response is not found"}, status=HTTP_404_NOT_FOUND)
+                logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found.")
+                return JsonResponse({"error": "Task response is not found."}, status=HTTP_404_NOT_FOUND)
 
             task_unit_result = get_object_or_404(TaskUnitResponse, id=task_unit.latest_response.id)
             status = task_unit_result.task_response_status
@@ -528,6 +534,7 @@ class BatchJobRunView(APIView):
             if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
                 return Response(serializer.data, status=HTTP_202_ACCEPTED)
 
+            cache.set(batch_status_key(batch_id), BatchJobStatus.PENDING_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
@@ -550,11 +557,14 @@ class BatchJobRunView(APIView):
     def get(self, request, batch_id):
         """작업 상태 점검"""
         try:
-            batch_job = BatchJob.objects.get(id=batch_id)
+            status = cache.get(batch_status_key(batch_id))
+            if not status:
+                status = BatchJob.objects.get(id=batch_id).get_batch_job_status_display()
+                cache.set(batch_status_key(batch_id), status, timeout=30)
 
             return Response(
                 {"id": batch_id,
-                 "batch_job_status": batch_job.get_batch_job_status_display()},
+                 "batch_job_status": status},
                 status=HTTP_200_OK
             )
 

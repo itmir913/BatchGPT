@@ -17,7 +17,7 @@ class TaskUnitChecker {
             const controller = new AbortController();
             this.controllers.set(taskUnitId, controller);
 
-            const randomInterval = Math.floor(Math.random() * 7000) + 3000; // 3초에서 10초 사이
+            const randomInterval = Math.floor(Math.random() * 4000) + 1000; // 1초에서 5초 사이
             const intervalId = setInterval(async () => {
                 try {
                     const response = await checkTaskUnitStatus(batchJobId, taskUnitId);

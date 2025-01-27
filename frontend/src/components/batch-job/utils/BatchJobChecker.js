@@ -16,7 +16,7 @@ class BatchJobChecker {
         const controller = new AbortController();
         this.controllers.set(batchJobId, controller);
 
-        const randomInterval = Math.floor(Math.random() * 7000) + 3000; // 3초에서 10초 사이
+        const randomInterval = Math.floor(Math.random() * 2000) + 1000; // 1초에서 3초 사이
         const intervalId = setInterval(async () => {
             try {
                 const response = await fetchBatchJobProcessStatus(batchJobId);

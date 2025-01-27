@@ -27,14 +27,22 @@ class BatchJobStatus:
     COMPLETED = 'COMPLETED'
     FAILED = 'FAILED'
 
+    CREATED_DISPLAY = 'Created'
+    UPLOADED_DISPLAY = 'Uploaded'
+    CONFIGS_DISPLAY = 'Standby'
+    PENDING_DISPLAY = 'Pending'
+    IN_PROGRESS_DISPLAY = 'In Progress'
+    COMPLETED_DISPLAY = 'Completed'
+    FAILED_DISPLAY = 'Failed'
+
     CHOICES = [
-        (CREATED, 'Created'),
-        (UPLOADED, 'Uploaded'),
-        (CONFIGS, 'Standby'),
-        (PENDING, 'Pending'),
-        (IN_PROGRESS, 'In Progress'),
-        (COMPLETED, 'Completed'),
-        (FAILED, 'Failed'),
+        (CREATED, CREATED_DISPLAY),
+        (UPLOADED, UPLOADED_DISPLAY),
+        (CONFIGS, CONFIGS_DISPLAY),
+        (PENDING, PENDING_DISPLAY),
+        (IN_PROGRESS, IN_PROGRESS_DISPLAY),
+        (COMPLETED, COMPLETED_DISPLAY),
+        (FAILED, FAILED_DISPLAY),
     ]
 
     VALID_TRANSITIONS = {

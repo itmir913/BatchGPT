@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
+    from django.core.cache import cache
     from django.shortcuts import get_object_or_404
     from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob
+    from api.utils.cache_keys import task_unit_status_key
     from backend.settings import OPENAI_API_KEY
 
     try:
@@ -21,9 +23,11 @@ def process_task_unit(self, task_unit_id):
 
         task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
         if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED, TaskUnitStatus.FAILED]:
+            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.COMPLETED, timeout=30)
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
 
+        cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.IN_PROGRESS, timeout=30)
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
         task_unit.save()
 
@@ -58,6 +62,7 @@ def process_task_unit(self, task_unit_id):
             task_unit.latest_response = task_unit_response
             task_unit.save()
 
+            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.COMPLETED, timeout=30)
             logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
 
         except Exception as e:
@@ -74,6 +79,7 @@ def process_task_unit(self, task_unit_id):
             task_unit.latest_response = task_unit_response
             task_unit.save()
 
+            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
             logger.log(logging.INFO,
                        f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
 
