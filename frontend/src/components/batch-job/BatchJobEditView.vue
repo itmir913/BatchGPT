@@ -1,36 +1,41 @@
 <template>
   <div class="container mt-4">
-    <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
-
-    <!-- 로딩 상태 -->
-    <div v-if="loading" class="text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="row">
+      <div class="col-md-3">
+        <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
       </div>
-    </div>
 
-    <!-- 메시지 표시 -->
-    <div v-if="success" class="alert alert-success text-center mt-3" role="alert">{{ success }}</div>
-    <div v-if="error" class="alert alert-danger text-center mt-3" role="alert">{{ error }}</div>
-
-    <!-- 배치 작업 폼 -->
-    <h2 class="mb-3">Modify Batch Job</h2>
-    <div v-if="batchJob && isReady" class="card">
-      <div class="card-body">
-        <form @submit.prevent="modifyBatchJob">
-          <!-- 하위 컴포넌트 사용 -->
-          <BatchJobInputFields
-              :batchJob="batchJob"
-              :isTitleInvalid="formStatus.isCreateButtonDisabled"
-              @update:batchJob="batchJob = $event"
-          />
-          <!-- 버튼 -->
-          <div class="d-flex justify-content-end mt-3">
-            <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
-            <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+      <div class="col-md-9">
+        <!-- 로딩 상태 -->
+        <div v-if="loading" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
-        </form>
+        </div>
+
+        <!-- 메시지 표시 -->
+        <div v-if="success" class="alert alert-success text-center mt-3" role="alert">{{ success }}</div>
+        <div v-if="error" class="alert alert-danger text-center mt-3" role="alert">{{ error }}</div>
+
+        <!-- 배치 작업 폼 -->
+        <h2 class="mb-3">Modify Batch Job</h2>
+        <div v-if="batchJob && isReady" class="card">
+          <div class="card-body">
+            <form @submit.prevent="modifyBatchJob">
+              <!-- 하위 컴포넌트 사용 -->
+              <BatchJobInputFields
+                  :batchJob="batchJob"
+                  :isTitleInvalid="formStatus.isCreateButtonDisabled"
+                  @update:batchJob="batchJob = $event"
+              />
+              <!-- 버튼 -->
+              <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-secondary me-2" @click="cancelButton">Cancel</button>
+                <button :disabled="isButtonDisabled" class="btn btn-primary" type="submit">Edit Batch Job</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>

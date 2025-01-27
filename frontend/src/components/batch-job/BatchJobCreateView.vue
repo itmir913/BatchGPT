@@ -1,41 +1,46 @@
 <template>
   <div class="container mt-4">
-    <!-- 진행 상태 표시 -->
-    <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
-
-    <!-- 로딩 상태 -->
-    <div v-if="formStatus.isLoading" class="text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="row">
+      <div class="col-md-3">
+        <ProgressIndicator :batch_id="batch_id" :currentStep="0"/>
       </div>
-      <p>{{ formStatus.loadingMessage }}</p>
-    </div>
 
-    <!-- Success/Failure Message -->
-    <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-3" role="alert">
-      {{ messages.success }}
-    </div>
-    <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">
-      {{ messages.error }}
-    </div>
+      <div class="col-md-9">
+        <!-- 로딩 상태 -->
+        <div v-if="formStatus.isLoading" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p>{{ formStatus.loadingMessage }}</p>
+        </div>
 
-    <!-- 배치 작업 폼 -->
-    <h2 class="mb-3">Create a New Batch Job</h2>
-    <div class="card">
-      <div class="card-body">
-        <!-- Form 시작 -->
-        <form @submit.prevent="createBatchJob">
-          <!-- 하위 컴포넌트 사용 -->
-          <BatchJobInputFields
-              :batchJob="batchJob"
-              :isTitleInvalid="formStatus.isCreateButtonDisabled"
-              @update:batchJob="batchJob = $event"
-          />
-          <!-- Submit 버튼 -->
-          <button :disabled="formStatus.isFormDisabled" class="btn btn-primary" type="submit">
-            Create Batch Job
-          </button>
-        </form>
+        <!-- Success/Failure Message -->
+        <div v-if="messages.success && !messages.error" class="alert alert-success text-center mt-3" role="alert">
+          {{ messages.success }}
+        </div>
+        <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">
+          {{ messages.error }}
+        </div>
+
+        <!-- 배치 작업 폼 -->
+        <h2 class="mb-3">Create a New Batch Job</h2>
+        <div class="card">
+          <div class="card-body">
+            <!-- Form 시작 -->
+            <form @submit.prevent="createBatchJob">
+              <!-- 하위 컴포넌트 사용 -->
+              <BatchJobInputFields
+                  :batchJob="batchJob"
+                  :isTitleInvalid="formStatus.isCreateButtonDisabled"
+                  @update:batchJob="batchJob = $event"
+              />
+              <!-- Submit 버튼 -->
+              <button :disabled="formStatus.isFormDisabled" class="btn btn-primary" type="submit">
+                Create Batch Job
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>

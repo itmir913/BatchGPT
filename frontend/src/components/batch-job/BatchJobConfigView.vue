@@ -1,79 +1,84 @@
 <template>
   <div class="container mt-4">
-    <ProgressIndicator :batch_id="batch_id" :currentStep="2"/>
-
-    <!-- 로딩 상태 -->
-    <div v-if="formStatus.isLoading" class="text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="row">
+      <div class="col-md-3">
+        <ProgressIndicator :batch_id="batch_id" :currentStep="2"/>
       </div>
-      <p>{{ formStatus.loadingMessage }}</p>
+
+      <div class="col-md-9">
+        <!-- 로딩 상태 -->
+        <div v-if="formStatus.isLoading" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p>{{ formStatus.loadingMessage }}</p>
+        </div>
+
+        <div v-if="formStatus.isReady" class="p-2 mb-3">
+          <h3>Uploaded File</h3>
+          <table class="table table-striped table-bordered table-responsive mb-3">
+            <thead class="table-light">
+            <tr>
+              <th style="width: 30%;">Item</th>
+              <th style="width: 70%;">Information</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>File Name</td>
+              <td>{{ batchJob.file_name }}</td>
+            </tr>
+            <tr>
+              <td>Total Size</td>
+              <td>{{ batchJob.total_size }}</td>
+            </tr>
+            <tr>
+              <td>File Type</td>
+              <td>{{ batchJob.file_type }}</td>
+            </tr>
+            </tbody>
+          </table>
+
+          <!-- Work Unit Selection Section -->
+          <div class="p-2 mb-3">
+            <WorkUnitSettings
+                :batchJob="batchJob"
+                :disabled="batchJobStatus.isEditDisabled"
+                :isReady="formStatus.isReady"
+                :work_unit="work_unit"
+            />
+          </div>
+
+          <!-- GPT Model Selection -->
+          <GPTModelSelector
+              :disabled="batchJobStatus.isEditDisabled"
+              :gpt_model="gpt_model"
+              :models="models"
+              @update:gpt_model="gpt_model = $event"
+          />
+
+          <!-- Success/Failure Message -->
+          <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
+            {{ messages.success }}
+          </div>
+          <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
+
+          <!-- Action Buttons -->
+          <div class="text-end mt-3">
+            <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
+                    class="btn btn-primary me-3"
+                    @click="configSave">
+              Save
+            </button>
+            <button :disabled="formStatus.isNextButtonDisabled"
+                    class="btn btn-success"
+                    @click="goToNextStep">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div v-if="formStatus.isReady" class="p-2 mb-3">
-      <h3>Uploaded File</h3>
-      <table class="table table-striped table-bordered table-responsive mb-3">
-        <thead class="table-light">
-        <tr>
-          <th style="width: 30%;">Item</th>
-          <th style="width: 70%;">Information</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>File Name</td>
-          <td>{{ batchJob.file_name }}</td>
-        </tr>
-        <tr>
-          <td>Total Size</td>
-          <td>{{ batchJob.total_size }}</td>
-        </tr>
-        <tr>
-          <td>File Type</td>
-          <td>{{ batchJob.file_type }}</td>
-        </tr>
-        </tbody>
-      </table>
-
-      <!-- Work Unit Selection Section -->
-      <div class="p-2 mb-3">
-        <WorkUnitSettings
-            :batchJob="batchJob"
-            :disabled="batchJobStatus.isEditDisabled"
-            :isReady="formStatus.isReady"
-            :work_unit="work_unit"
-        />
-      </div>
-
-      <!-- GPT Model Selection -->
-      <GPTModelSelector
-          :disabled="batchJobStatus.isEditDisabled"
-          :gpt_model="gpt_model"
-          :models="models"
-          @update:gpt_model="gpt_model = $event"
-      />
-
-      <!-- Success/Failure Message -->
-      <div v-if="messages.success" class="alert alert-success text-center mt-3" role="alert">
-        {{ messages.success }}
-      </div>
-      <div v-if="messages.error" class="alert alert-danger text-center mt-3" role="alert">{{ messages.error }}</div>
-
-      <!-- Action Buttons -->
-      <div class="text-end mt-3">
-        <button :disabled="formStatus.isSaveButtonDisabled || batchJobStatus.isEditDisabled"
-                class="btn btn-primary me-3"
-                @click="configSave">
-          Save
-        </button>
-        <button :disabled="formStatus.isNextButtonDisabled"
-                class="btn btn-success"
-                @click="goToNextStep">
-          Next
-        </button>
-      </div>
-    </div>
-
   </div>
 </template>
 
