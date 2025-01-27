@@ -1,85 +1,131 @@
 <template>
-  <div class="wrapper d-flex align-items-center justify-content-center">
-    <div class="container" style="max-width: 500px;">
-      <!-- 제목 -->
-      <h2 class="text-center mb-4">회원가입</h2>
+  <div class="wrapper d-flex align-items-center justify-content-center vh-100 bg-light">
+    <div class="card" style="max-width: 500px; width: 100%;">
+      <div class="card-body">
+        <!-- 제목 -->
+        <h2 class="text-center mb-4">회원가입</h2>
 
-      <!-- 회원가입 폼 -->
-      <form @submit.prevent="register">
-        <!-- 아이디 입력 -->
-        <div class="mb-3">
-          <label class="form-label" for="username">아이디</label>
-          <input
-              id="username"
-              v-model="username"
-              class="form-control"
-              placeholder="아이디를 입력하세요"
-              required
-              type="text"
-          />
-        </div>
-
-        <!-- 이메일 입력 -->
-        <div class="mb-3">
-          <label class="form-label" for="email">이메일</label>
-          <input
-              id="email"
-              v-model="email"
-              class="form-control"
-              placeholder="이메일을 입력하세요"
-              required
-              type="email"
-          />
-        </div>
-
-        <!-- 비밀번호 입력 -->
-        <div class="mb-3">
-          <label class="form-label" for="password">비밀번호</label>
-          <input
-              id="password"
-              v-model="password"
-              class="form-control"
-              placeholder="비밀번호를 입력하세요"
-              required
-              type="password"
-          />
-        </div>
-
-        <!-- 비밀번호 확인 -->
-        <div class="mb-3">
-          <label class="form-label" for="passwordConfirm">비밀번호 확인</label>
-          <input
-              id="passwordConfirm"
-              v-model="passwordConfirm"
-              :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
-              class="form-control"
-              placeholder="비밀번호를 다시 입력하세요"
-              required
-              type="password"
-          />
-          <div v-if="passwordConfirm && passwordConfirm !== password" class="invalid-feedback">
-            비밀번호가 일치하지 않습니다.
+        <!-- 회원가입 폼 -->
+        <form @submit.prevent="register">
+          <!-- 아이디 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="username">아이디</label>
+            <input
+                id="username"
+                v-model="username"
+                class="form-control"
+                placeholder="아이디를 입력하세요"
+                required
+                type="text"
+            />
           </div>
-        </div>
 
-        <!-- 회원가입 버튼 -->
-        <button :disabled="isButtonDisabled || !isFormValid" class="btn btn-primary w-100" type="submit">
-          회원가입
-        </button>
+          <!-- 이메일 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="email">이메일</label>
+            <input
+                id="email"
+                v-model="email"
+                class="form-control"
+                placeholder="이메일을 입력하세요"
+                required
+                type="email"
+            />
+          </div>
 
-        <!-- 에러 메시지 -->
-        <div v-if="error" class="alert alert-danger mt-3">
-          {{ error }}
-        </div>
+          <!-- 비밀번호 입력 -->
+          <div class="mb-3">
+            <label class="form-label" for="password">비밀번호</label>
+            <input
+                id="password"
+                v-model="password"
+                class="form-control"
+                placeholder="비밀번호를 입력하세요"
+                required
+                type="password"
+            />
+          </div>
 
-        <!-- 성공 메시지 -->
-        <div v-if="success" class="alert alert-success mt-3">
-          {{ success }}
-        </div>
-      </form>
+          <!-- 비밀번호 확인 -->
+          <div class="mb-3">
+            <label class="form-label" for="passwordConfirm">비밀번호 확인</label>
+            <input
+                id="passwordConfirm"
+                v-model="passwordConfirm"
+                :class="{'is-invalid': passwordConfirm && passwordConfirm !== password}"
+                class="form-control"
+                placeholder="비밀번호를 다시 입력하세요"
+                required
+                type="password"
+            />
+            <div v-if="passwordConfirm && passwordConfirm !== password" class="invalid-feedback">
+              비밀번호가 일치하지 않습니다.
+            </div>
+          </div>
+
+          <!-- 회원가입 버튼 -->
+          <button :disabled="isButtonDisabled || !isFormValid" class="btn btn-primary w-100" type="submit">
+            회원가입
+          </button>
+
+          <!-- 에러 메시지 -->
+          <div v-if="error" class="alert alert-danger mt-3">
+            {{ error }}
+          </div>
+
+          <!-- 성공 메시지 -->
+          <div v-if="success" class="alert alert-success mt-3">
+            {{ success }}
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.card {
+  margin: 0 auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-body {
+  padding: 30px;
+}
+
+h2 {
+  color: #333;
+}
+
+button {
+  background-color: #4caf50;
+  color: white;
+  border-radius: 5px;
+  border: none;
+  padding: 10px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.alert {
+  margin-top: 15px;
+}
+</style>
 
 <script>
 import axios from '@/configs/axios';
@@ -130,46 +176,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fa;
-}
-
-.container {
-  max-width: 400px;
-  width: 100%;
-  background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-button {
-  background-color: #4caf50;
-  color: white;
-  border-radius: 5px;
-  border: none;
-  padding: 10px;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.alert {
-  margin-top: 15px;
-}
-</style>
