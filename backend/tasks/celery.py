@@ -26,6 +26,9 @@ app.conf.beat_schedule = {
     },
 }
 
+# Celery 작업 자동 발견
+app.autodiscover_tasks()
+
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -35,10 +38,6 @@ def setup_periodic_tasks(sender, **kwargs):
 
     from .queue_batch_job_process import resume_pending_jobs as batch_job
     batch_job.apply_async()
-
-
-# Celery 작업 자동 발견
-app.autodiscover_tasks()
 
 # sudo apt install redis-server
 # sudo service redis-server start
