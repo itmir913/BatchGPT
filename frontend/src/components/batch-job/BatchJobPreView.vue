@@ -20,8 +20,25 @@
         </div>
 
         <div v-if="formStatus.isReady" class="mb-3">
-          <!-- File Type이 CSV일 때 -->
-          <div class="mb-3 g-3 p-2">
+          <!-- Input Prompt 컴포넌트 -->
+          <InputPrompt
+              :disabled="batchJobStatus.isEditDisabled"
+              :prompt="previewData.prompt"
+              @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
+          />
+
+          <!-- 작업 단위 설정 컴포넌트 -->
+          <div class="mb-3">
+            <WorkUnitSettings
+                :batchJob="batchJob"
+                :disabled="batchJobStatus.isEditDisabled"
+                :isReady="formStatus.isReady"
+                :fileType="batchJob.file_type"
+                :work_unit="previewData.work_unit"
+            />
+          </div>
+
+          <div class="mb-3">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
                 :fileType="batchJob.file_type"
@@ -32,25 +49,8 @@
             />
           </div>
 
-          <!-- Input Prompt 컴포넌트 -->
-          <InputPrompt
-              :disabled="batchJobStatus.isEditDisabled"
-              :prompt="previewData.prompt"
-              @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
-          />
-
-          <!-- 작업 단위 설정 컴포넌트 -->
-          <div class="mb-3 g-3 p-2">
-            <WorkUnitSettings
-                :batchJob="batchJob"
-                :disabled="batchJobStatus.isEditDisabled"
-                :isReady="formStatus.isReady"
-                :work_unit="previewData.work_unit"
-            />
-          </div>
-
           <!-- 결과 미리보기 -->
-          <div v-if="!formStatus.isResultLoading && resultFilteredData.length !== 0" class="b-3 g-3 p-2">
+          <div v-if="!formStatus.isResultLoading && resultFilteredData.length !== 0" class="mb-3">
             <!-- File Type이 CSV일 때 -->
             <div class="table-responsive">
               <table class="table table-striped table-hover align-middle custom-table">
