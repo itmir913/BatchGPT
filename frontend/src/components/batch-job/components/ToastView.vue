@@ -32,14 +32,19 @@ export default {
   },
   methods: {
     showToast() {
-      if (this.toastTimeout) {
-        clearTimeout(this.toastTimeout);
-      }
+      this.clearTimeout();
       this.show = true;
       this.toastTimeout = setTimeout(this.hideToast, this.delay);
     },
     hideToast() {
+      this.clearTimeout();
       this.show = false;
+    },
+    clearTimeout() {
+      if (this.toastTimeout) {
+        clearTimeout(this.toastTimeout);
+        this.toastTimeout = null;
+      }
     },
     setMessage() {
       if (this.message.success) {
