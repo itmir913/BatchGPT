@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sed -i 's/\r$//' entrypoint.sh
+
 IMAGE_NAME=itmir913/batchgpt
 TAG=latest
 
