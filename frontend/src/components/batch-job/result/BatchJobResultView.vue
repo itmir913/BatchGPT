@@ -223,6 +223,9 @@ export default {
       return responseData;
     },
     async handleRun() {
+      if (this.loadingState.isStartTask) return;
+      this.loadingState.isStartTask = true;
+
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
       this.hasMore = true;
@@ -230,7 +233,6 @@ export default {
       this.taskUnits.taskUnitChecker.stopAllChecking()
 
       try {
-        this.loadingState.isStartTask = true;
         this.batchJob = await runBatchJobProcess(this.batch_id);
         this.handleMessages("success", SUCCESS_MESSAGES.pendingTasks)
 
@@ -264,7 +266,7 @@ export default {
       // 스크롤이 끝에 가까워지면 데이터를 가져옵니다.
       if (bottom <= windowHeight
           && this.tasks?.length > 0 && this.hasMore
-          && !this.loadingState.loading && !this.loadingState.isStartTask) {
+          && !this.loadingState.loading) {
         await this.fetchTasks();
       }
     },
