@@ -99,10 +99,10 @@
 </template>
 
 <script>
-import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
-import CsvPreview from "@/components/batch-job/components/CSVPreview.vue";
-import InputPrompt from "@/components/batch-job/components/InputPrompt.vue";
-import WorkUnitSettings from "@/components/batch-job/components/WorkUnitSettings.vue";
+import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
+import CsvPreview from "@/components/batch-job/previews/CSVPreviewTable.vue";
+import InputPrompt from "@/components/batch-job/previews/InputPrompt.vue";
+import WorkUnitSettings from "@/components/batch-job/previews/WorkUnitSelector.vue";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
 import {
   ERROR_MESSAGES,
@@ -113,13 +113,13 @@ import {
   shouldEditDisabled,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
-import ToastView from "@/components/batch-job/components/ToastView.vue";
+import ToastView from "@/components/batch-job/common/ToastView.vue";
 import {
   CSVSupportedFileTypes,
   DynamicTableSupportedFileTypes,
   WorkUnitSupportedFileTypes
 } from '@/components/batch-job/utils/SupportedFileTypes';
-import TableView from "@/components/batch-job/components/TableView.vue";
+import TableView from "@/components/batch-job/previews/FilePreviewTable.vue";
 
 export default {
   props: ['batch_id'],

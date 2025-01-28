@@ -86,7 +86,7 @@
 </template>
 
 <script>
-import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
+import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
@@ -100,9 +100,9 @@ import {
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
-import ToastView from "@/components/batch-job/components/ToastView.vue";
-import BatchJobInformationTableView from "@/components/batch-job/components/BatchJobInformationTableView.vue";
-import DynamicTableView from "@/components/batch-job/components/DynamicTableView.vue";
+import ToastView from "@/components/batch-job/common/ToastView.vue";
+import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
+import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
 
 export default {
   props: ["batch_id"],

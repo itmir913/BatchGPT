@@ -45,10 +45,10 @@
 </template>
 
 <script>
-import ProgressIndicator from '@/components/batch-job/components/ProgressIndicator.vue';
-import BatchJobInputFields from '@/components/batch-job/components/BatchJobInputFields.vue';
+import ProgressIndicator from '@/components/batch-job/common/ProgressIndicator.vue';
+import BatchJobInputFields from '@/components/batch-job/create/InputBatchJobTitleFields.vue';
 import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
-import ToastView from "@/components/batch-job/components/ToastView.vue";
+import ToastView from "@/components/batch-job/common/ToastView.vue";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",

@@ -1,10 +1,10 @@
 // router/auth.js
-import BatchJobCreateView from '@/components/batch-job/BatchJobCreateView.vue';
-import BatchJobDetailView from "@/components/batch-job/BatchJobDetailView.vue";
-import BatchJobEditView from "@/components/batch-job/BatchJobEditView.vue";
-import BatchJobConfigView from "@/components/batch-job/BatchJobConfigView.vue";
-import BatchJobPreView from "@/components/batch-job/BatchJobPreView.vue";
-import BatchJobResultView from "@/components/batch-job/BatchJobResultView.vue";
+import BatchJobCreateView from '@/components/batch-job/create/BatchJobCreateView.vue';
+import BatchJobDetailView from "@/components/batch-job/detail/BatchJobDetailView.vue";
+import BatchJobEditView from "@/components/batch-job/create/BatchJobEditView.vue";
+import BatchJobConfigView from "@/components/batch-job/configs/BatchJobConfigsView.vue";
+import BatchJobPreView from "@/components/batch-job/previews/BatchJobPreView.vue";
+import BatchJobResultView from "@/components/batch-job/result/BatchJobResultView.vue";
 
 export default [
     {

@@ -154,7 +154,7 @@
 
 <script>
 import JSZip from 'jszip';
-import ProgressIndicator from "@/components/batch-job/components/ProgressIndicator.vue";
+import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
 import {
   CONFIRM_MESSAGE,
   deleteBatchJobTitleAPI,
@@ -165,7 +165,7 @@ import {
   SUCCESS_MESSAGES,
   uploadFilesAPI,
 } from "@/components/batch-job/utils/BatchJobUtils";
-import ToastView from "@/components/batch-job/components/ToastView.vue";
+import ToastView from "@/components/batch-job/common/ToastView.vue";
 
 export default {
   props: ["batch_id"],
