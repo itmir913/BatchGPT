@@ -175,7 +175,6 @@ class BatchJob(TimestampedModel):
 
         method_map = {
             'get_total_size': FileSettings.get_size,
-            'get_preview': FileSettings.get_preview
         }
 
         method = method_map.get(method_name)
@@ -189,10 +188,6 @@ class BatchJob(TimestampedModel):
     def get_size(self):
         """파일 타입에 맞는 Total Size 로직 실행"""
         return self._process_file_method('get_total_size')
-
-    def get_preview(self):
-        """파일 타입에 맞는 Preview 로직 실행"""
-        return self._process_file_method('get_preview')
 
 
 class TaskUnitStatus:

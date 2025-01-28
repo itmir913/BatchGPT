@@ -96,10 +96,8 @@ class CSVProcessor(FileProcessor):
         :return:
         """
         try:
-            file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
-
             # 파일을 읽어 3행만 가져오기
-            df = pd.read_csv(file_path, encoding=self.detect_encoding(file_path), nrows=3)
+            df = pd.read_csv(file, encoding=self.detect_encoding(file), nrows=3)
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
             return df.to_json(orient='records')

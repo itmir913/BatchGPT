@@ -289,7 +289,12 @@ class BatchJobPreView(APIView):
             )
 
         try:
-            preview = batch_job.get_preview()
+            file = batch_job.file
+            file_path = os.path.join(settings.BASE_DIR, file.path)
+
+            processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
+            preview = processor.get_preview(file_path)
+
             logger.log(logging.DEBUG,
                        f"API: The file preview was successfully returned for the user {request.user.email}.")
             return JsonResponse(preview, safe=False, status=HTTP_200_OK)
