@@ -198,9 +198,7 @@ export default {
         batch_job_status: "Created", // Possible values: 'Completed', 'In Progress', 'Failed'
         configs: {
           prompt: "Generate summary",
-          work_unit: 1,
           gpt_model: DEFAULT_GPT_MODEL,
-          selected_headers: []
         }
       },
       batchJobChecker: new BatchJobChecker(),
