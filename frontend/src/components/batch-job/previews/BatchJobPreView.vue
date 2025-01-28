@@ -54,41 +54,12 @@
             <TableView :data="filteredData"/>
           </div>
 
-
-          <!-- 결과 미리보기 -->
-          <div v-if="!formStatus.isResultLoading && resultFilteredData.length !== 0" class="mb-3">
-            <!-- File Type이 CSV일 때 -->
-            <div class="table-responsive">
-              <table class="table table-striped table-hover align-middle custom-table">
-                <thead class="table-dark">
-                <tr>
-                  <!-- 열 헤더 -->
-                  <th scope="col" style="width: 50%;">Prompt</th>
-                  <th scope="col" style="width: 50%;">Result</th>
-                </tr>
-                </thead>
-                <tbody>
-                <!-- resultFilteredData를 사용하여 데이터 출력 -->
-                <tr v-for="(item, index) in resultFilteredData" :key="index">
-                  <td>{{ item.prompt }}</td>
-                  <td>{{ item.result }}</td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <!-- 버튼들 -->
           <div class="text-end my-3">
             <button
                 class="btn btn-secondary me-3"
                 @click="configSave">
               Save
-            </button>
-            <button :disabled="formStatus.isPreviewLoading || formStatus.isEditable"
-                    class="btn btn-primary me-3"
-                    @click="previewRun">
-              Preview
             </button>
             <button class="btn btn-success" @click="goToNextStep">Next</button>
           </div>
@@ -103,12 +74,10 @@ import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.v
 import CsvPreview from "@/components/batch-job/previews/CSVPreviewTable.vue";
 import InputPrompt from "@/components/batch-job/previews/InputPrompt.vue";
 import WorkUnitSettings from "@/components/batch-job/previews/WorkUnitSelector.vue";
-import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker"
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   fetchPreviewAPI,
-  fetchPreviewResultsAPI,
   modifyBatchJobConfigsAPI,
   shouldEditDisabled,
   SUCCESS_MESSAGES
@@ -127,7 +96,7 @@ export default {
   data() {
     return {
       batchJob: null,
-      loadingState: {loading: true, previewLoading: false, configSave: false, resultLoading: false},
+      loadingState: {loading: true, configSave: false},
       messages: {success: null, error: null},
       previewData: {
         fetchData: [],
@@ -136,11 +105,6 @@ export default {
         CSV: {
           selectedColumns: [],
         },
-        resultData: [],
-      },
-      taskUnits: {
-        taskUnitChecker: null,
-        taskUnitIds: [],
       },
     };
   },
@@ -150,9 +114,6 @@ export default {
         isReady: !this.loadingState.loading,
         isLoading: this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
-        isPreviewLoading: this.loadingState.previewLoading,
-        isResultLoading: this.loadingState.resultLoading,
-        isEditable: shouldEditDisabled(this.batchJob?.batch_job_status),
       };
     },
     filteredData() {
@@ -160,12 +121,6 @@ export default {
         return [];
       // eslint-disable-next-line no-unused-vars
       return this.previewData.fetchData.map(({index, ...rest}) => rest);
-    },
-    resultFilteredData() {
-      if (!Array.isArray(this.previewData.resultData ?? []))
-        return [];
-      // eslint-disable-next-line no-unused-vars
-      return this.previewData.resultData.map(({prompt, result, ...rest}) => ({prompt, result}));
     },
     batchJobStatus() {
       return {
@@ -179,22 +134,17 @@ export default {
   methods: {
     clearMessages() {
       this.messages = {success: null, error: null};
-      this.loadingState.error = null;
-      this.loadingState.success = null;
     },
 
     handleMessages(type, message, details = "") {
       this.clearMessages();
-
-      const fullMessage = details ? `${message} - ${details}` : message;
-      this.messages[type] = fullMessage;
-      this.loadingState.error = type === "error" ? fullMessage : null;
-      this.loadingState.success = type === "success" ? fullMessage : null;
+      this.messages[type] = details ? `${message} - ${details}` : message;
     },
 
     async fetchBatchJob() {
       try {
         this.clearMessages();
+        this.loadingState.loading = true;
 
         const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
         this.batchJob = batchJob;
@@ -215,8 +165,6 @@ export default {
 
     async fetchPreviewData() {
       try {
-        this.clearMessages();
-        this.loadingState.previewLoading = true;
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
       } catch (error) {
         if (error.response) {
@@ -225,7 +173,7 @@ export default {
           this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} No response received.`);
         }
       } finally {
-        this.loadingState.previewLoading = false;
+        this.loadingState.loading = false;
       }
     },
 
@@ -283,6 +231,8 @@ export default {
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
+
+        await this.fetchPreviewData();
       } catch (error) {
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${error.response.data.error}`);
@@ -295,82 +245,13 @@ export default {
 
     },
 
-    async previewRun() {
-      this.clearMessages();
-
-      // TODO 모든 점검 메소드로 합치기
-      if (CSVSupportedFileTypes.includes(this.batchJob.file_type)
-          && this.previewData.CSV.selectedColumns.length === 0) {
-        this.handleMessages("error", ERROR_MESSAGES.noColumn);
-        return;
-      }
-
-      try {
-        this.loadingState.resultLoading = true;
-        this.taskUnits.taskUnitChecker.stopAllChecking()
-
-        const payload = {
-          'prompt': this.previewData.prompt,
-          'selected_headers': this.previewData.CSV.selectedColumns,
-        };
-
-        this.previewData.resultData = await fetchPreviewResultsAPI(this.batch_id, payload);
-
-        if (!this.previewData.resultData) {
-          this.handleMessages("error", ERROR_MESSAGES.noDataReceived);
-          this.batchJob = null;
-          return;
-        }
-
-        this.taskUnitIds = this.previewData.resultData.map(item => item.task_unit_id);
-
-        this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.batch_id, this.taskUnitIds);
-        this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
-          const previewItem = this.previewData.resultData.find(item => item.task_unit_id === taskId);
-          if (previewItem) {
-            previewItem.result = result;
-          } else {
-            console.error(`Task ID ${taskId} not found in previewData.resultData`);
-          }
-        });
-
-        this.handleMessages("success", SUCCESS_MESSAGES.loadPreviewResult);
-      } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.loadResult} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.loadResult} No response received.`);
-        }
-      } finally {
-        this.loadingState.resultLoading = false;
-      }
-
-    },
-
     goToNextStep() {
       this.$router.push(`/batch-jobs/${this.batch_id}/run`);
     },
   },
   async mounted() {
-    this.taskUnits.taskUnitChecker = new TaskUnitChecker();
     await this.fetchBatchJob();
     await this.fetchPreviewData();
   },
-  beforeUnmount() {
-    this.taskUnits.taskUnitChecker.stopAllChecking();
-  },
 };
 </script>
-
-<style scoped>
-/* 열 구분선 추가 */
-.custom-table td,
-.custom-table th {
-  border-right: 1px solid #dee2e6; /* Bootstrap 기본 테이블 경계선 색상 */
-}
-
-.custom-table th:last-child,
-.custom-table td:last-child {
-  border-right: none; /* 마지막 열은 구분선 제거 */
-}
-</style>
