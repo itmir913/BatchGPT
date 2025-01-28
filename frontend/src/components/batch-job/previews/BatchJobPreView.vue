@@ -32,8 +32,8 @@
             <WorkUnitSettings
                 :batchJob="batchJob"
                 :disabled="batchJobStatus.isEditDisabled"
-                :isReady="formStatus.isReady"
                 :fileType="batchJob.file_type"
+                :isReady="formStatus.isReady"
                 :work_unit="previewData.work_unit"
                 @update:work_unit="(newWorkUnit) => (previewData.work_unit = newWorkUnit)"
             />

@@ -46,9 +46,9 @@
                       ref="fileInput"
                       :disabled="state.isEditable"
                       class="d-none"
+                      multiple
                       type="file"
                       @change="handleFileChange"
-                      multiple
                   />
                   <span v-if="!selectedFiles">Drag and drop files or click to select</span>
                   <span v-else style="white-space: pre-line;">
