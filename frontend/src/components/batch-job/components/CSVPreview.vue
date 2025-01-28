@@ -51,6 +51,8 @@
 </template>
 
 <script>
+import {CSVSupportedFileTypes} from '@/components/batch-job/utils/SupportedFileTypes';
+
 export default {
   props: {
     previewData: Array,
@@ -61,16 +63,14 @@ export default {
     fileType: String,
     isReady: Boolean,
   },
-  data() {
-    return {
-      supportedFileTypes: ['csv']
-    };
-  },
   computed: {
     filteredData() {
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
-    }
+    },
+    supportedFileTypes() {
+      return CSVSupportedFileTypes;
+    },
   },
   methods: {
     toggleColumnSelection(column) {

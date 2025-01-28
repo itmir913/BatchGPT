@@ -53,6 +53,8 @@
 </template>
 
 <script>
+import {WorkUnitSupportedFileTypes} from '@/components/batch-job/utils/SupportedFileTypes';
+
 export default {
   props: {
     batchJob: Object,
@@ -70,12 +72,14 @@ export default {
     isSupportedType() {
       return !this.supportedFileTypes.includes(this.fileType);
     },
+    supportedFileTypes() {
+      return WorkUnitSupportedFileTypes;
+    },
   },
   data() {
     return {
       localWorkUnit: this.work_unit,
       localTotalSize: this.batchJob.total_size,
-      supportedFileTypes: ['pdf']
     };
   },
   watch: {
