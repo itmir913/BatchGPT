@@ -187,7 +187,6 @@ export default {
         this.batchJob = batchJob;
         this.previewData.work_unit = configs.work_unit ?? 1;
         this.previewData.prompt = configs.prompt ?? '';
-        this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
 
       } catch (error) {
@@ -253,7 +252,6 @@ export default {
       const payload = {
         'work_unit': this.previewData.work_unit,
         'prompt': this.previewData.prompt,
-        'gpt_model': this.batchJob.gpt_model,
         'selected_headers': this.previewData.CSV.selectedColumns,
       };
 
