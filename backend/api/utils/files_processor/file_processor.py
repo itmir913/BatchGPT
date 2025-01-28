@@ -15,16 +15,21 @@ class ResultType(AutoIntFlag):
 
 class FileProcessor(ABC):
     @abstractmethod
-    def process(self, batch_job_id, file):
+    def process(self, file, *args, **kwargs):
         """파일 처리 로직"""
         pass
 
     @abstractmethod
-    def get_size(self, file):
+    def process_text(self, prompt, *args, **kwargs):
+        """파일 텍스트 Prompt 처리 로직"""
+        pass
+
+    @abstractmethod
+    def get_size(self, file, *args, **kwargs):
         """파일 크기 반환"""
         pass
 
     @abstractmethod
-    def get_preview(self, file):
+    def get_preview(self, file, *args, **kwargs):
         """파일 미리보기 반환"""
         pass

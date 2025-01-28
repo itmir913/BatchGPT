@@ -19,11 +19,11 @@ from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
 from api.utils.file_settings import FileSettings
+from api.utils.files_processor.pdf_processor import ProcessMode
 from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts
 from backend import settings
 from tasks.queue_batch_job_process import process_batch_job
-from tasks.queue_task_units import process_task_unit
 
 logger = logging.getLogger(__name__)
 
@@ -290,11 +290,13 @@ class BatchJobPreView(APIView):
 
         try:
             work_unit = batch_job.configs.get('work_unit', 1)
+            pdf_mode = batch_job.configs.get('pdf_mode', ProcessMode.TEXT)
+
             file = batch_job.file
             file_path = os.path.join(settings.BASE_DIR, file.path)
 
             processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
-            preview = processor.get_preview(file_path, work_unit)
+            preview = processor.get_preview(file_path, work_unit=work_unit, pdf_mode=pdf_mode)
 
             logger.log(logging.DEBUG,
                        f"API: The file preview was successfully returned for the user {request.user.email}.")

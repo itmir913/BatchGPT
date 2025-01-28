@@ -16,39 +16,41 @@ logger = logging.getLogger(__name__)
 
 class CSVProcessor(FileProcessor):
 
-    def process(self, batch_job_id, file) -> Generator[dict, None, None]:
+    def process(self, file, *args, **kwargs) -> Generator[dict, None, None]:
         """
         CSV 파일을 한 행씩 처리하여 반환
         :param batch_job_id:
         :param file: CSV 파일 경로 또는 파일 객체
         :yield: 한 행씩 반환 (dict 형태)
         """
-        from api.models import BatchJob
-
         try:
-            batch_job = BatchJob.objects.get(id=batch_job_id)
-            prompt = batch_job.configs['prompt']
-            selected_headers = batch_job.configs['selected_headers']
-            selected_headers = [header.strip() for header in selected_headers]
-
-            if prompt is None or selected_headers is None:
-                logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
-                raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
-
             for chunk in pd.read_csv(file, chunksize=CHUNK_SIZE):
                 for row in chunk.itertuples(index=False):
-                    filtered = {key.strip(): str(value) for key, value in zip(chunk.columns, row) if
-                                key.strip() in selected_headers}
-                    yield ResultType.TEXT, get_prompt(prompt, filtered)
+                    yield ResultType.TEXT, (chunk.columns, row)
 
-        except BatchJob.DoesNotExist as e:
-            logger.log(logging.ERROR, f"API: BatchJob.DoesNotExist. {str(e)}")
-            raise e
+            # batch_job = BatchJob.objects.get(id=batch_job_id)
+            # prompt = batch_job.configs['prompt']
+            # selected_headers = batch_job.configs['selected_headers']
+            # selected_headers = [header.strip() for header in selected_headers]
+            #
+            # if prompt is None or selected_headers is None:
+            #     logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
+            #     raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
+
         except Exception as e:
             logger.log(logging.ERROR, f"API: Unknown error: {str(e)}")
             raise e
 
-    def get_size(self, file):
+    def process_text(self, prompt, *args, **kwargs):
+        columns = kwargs.get('columns')
+        row = kwargs.get('row')
+        selected_headers = kwargs.get('selected_headers')
+
+        filtered = {key.strip(): str(value) for key, value in zip(columns, row) if
+                    key.strip() in selected_headers}
+        return get_prompt(prompt, filtered)
+
+    def get_size(self, file, *args, **kwargs):
         """
         CSV 파일의 전체 열 개수 반환
         :param file:
@@ -70,7 +72,7 @@ class CSVProcessor(FileProcessor):
             logger.log(logging.ERROR, f"API: Cannot read CSV files: {str(e)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
-    def get_preview(self, file, work_unit=1):
+    def get_preview(self, file, *args, **kwargs):
         """
         CSV 파일의 미리보기 반환(초반 3개 열)
         :param file:

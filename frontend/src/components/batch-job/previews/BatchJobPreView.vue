@@ -298,7 +298,9 @@ export default {
     async previewRun() {
       this.clearMessages();
 
-      if (this.previewData.CSV.selectedColumns.length === 0) {
+      // TODO 모든 점검 메소드로 합치기
+      if (CSVSupportedFileTypes.includes(this.batchJob.file_type)
+          && this.previewData.CSV.selectedColumns.length === 0) {
         this.handleMessages("error", ERROR_MESSAGES.noColumn);
         return;
       }

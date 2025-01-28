@@ -20,18 +20,21 @@ class ProcessMode(Enum):
 
 class PDFProcessor(FileProcessor):
 
-    def process(self, batch_job_id, file, work_unit=1, mode=ProcessMode.TEXT):
+    def process(self, file, *args, **kwargs):
         try:
-            if mode not in ProcessMode:
-                raise NotImplementedError(f"Not Implemented PDF mode: {mode}")
+            work_unit = kwargs.get('work_unit', 1)
+            pdf_mode = kwargs.get('pdf_mode', ProcessMode.TEXT)
+
+            if pdf_mode not in ProcessMode:
+                raise NotImplementedError(f"Not Implemented PDF mode: {pdf_mode}")
 
             mode_actions = {
                 ProcessMode.TEXT: self._extract_text_from_pdf,
             }
 
-            action = mode_actions.get(mode)
+            action = mode_actions.get(pdf_mode)
             if not action:
-                raise ValueError(f"Unexpected mode: {mode}")
+                raise ValueError(f"Unexpected mode: {pdf_mode}")
 
             total_pages = self.get_size(file)
             for start_index in range(0, total_pages, work_unit):
@@ -41,6 +44,11 @@ class PDFProcessor(FileProcessor):
         except Exception as e:
             logger.log(logging.ERROR, f"API: Unknown error: {str(e)}")
             raise e
+
+    def process_text(self, prompt, *args, **kwargs):
+        """파일 텍스트 Prompt 처리 로직"""
+        data = kwargs.get('data')
+        return f'{prompt}\n\n{data}'
 
     def _extract_text_from_pdf(self, file, start_page, end_page):
         doc = fitz.open(file)
@@ -70,13 +78,16 @@ class PDFProcessor(FileProcessor):
             logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
             raise ValueError(f"Cannot read PDF file: {str(e)}")
 
-    def get_preview(self, file, work_unit=1, mode=ProcessMode.TEXT):
+    def get_preview(self, file, *args, **kwargs):
         try:
+            work_unit = kwargs.get('work_unit', 1)
+            pdf_mode = kwargs.get('pdf_mode', ProcessMode.TEXT)
+
             json_data = []
-            for index, (_, result) in enumerate(self.process(0, file, work_unit, mode)):
+            for index, (_, result) in enumerate(self.process(file, work_unit=work_unit, pdf_mode=pdf_mode)):
                 data = {
                     "index": index,
-                    "preview": result,
+                    "preview": result,  # TODO Result Type에 맞도록 수정해야 함.
                 }
                 json_data.append(data)
                 if index >= 1:
