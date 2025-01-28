@@ -35,6 +35,7 @@
                 :isReady="formStatus.isReady"
                 :fileType="batchJob.file_type"
                 :work_unit="previewData.work_unit"
+                @update:work_unit="(newWorkUnit) => (previewData.work_unit = newWorkUnit)"
             />
           </div>
 
@@ -107,9 +108,8 @@ import {
   shouldEditDisabled,
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
-import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import ToastView from "@/components/batch-job/components/ToastView.vue";
-
+import {CSVSupportedFileTypes, WorkUnitSupportedFileTypes} from '@/components/batch-job/utils/SupportedFileTypes';
 
 export default {
   props: ['batch_id'],
@@ -229,10 +229,17 @@ export default {
       this.clearMessages();
       this.loadingState.configSave = true;
 
-      if (this.batchJob.file_type === 'csv'
+      if (CSVSupportedFileTypes.includes(this.batchJob.file_type)
           && Array.isArray(this.previewData.CSV.selectedColumns)
           && this.previewData.CSV.selectedColumns.length === 0) {
         this.handleMessages("error", ERROR_MESSAGES.noColumn);
+        this.loadingState.configSave = false;
+        return;
+      }
+
+      if (WorkUnitSupportedFileTypes.includes(this.batchJob.file_type)
+          && this.previewData.work_unit < 1) {
+        this.handleMessages("error", ERROR_MESSAGES.noWorkUnit);
         this.loadingState.configSave = false;
         return;
       }
@@ -244,7 +251,7 @@ export default {
       }
 
       const payload = {
-        'work_unit': this.batchJob.work_unit,
+        'work_unit': this.previewData.work_unit,
         'prompt': this.previewData.prompt,
         'gpt_model': this.batchJob.gpt_model,
         'selected_headers': this.previewData.CSV.selectedColumns,

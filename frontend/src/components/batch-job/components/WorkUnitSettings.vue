@@ -78,18 +78,18 @@ export default {
   },
   data() {
     return {
-      localWorkUnit: this.work_unit,
+      localWorkUnit: this.work_unit,  // Initialize with the prop value
       localTotalSize: this.batchJob.total_size,
     };
   },
   watch: {
+    // Watch the work_unit prop and sync it to localWorkUnit
+    work_unit(newVal) {
+      this.localWorkUnit = newVal;
+    },
     localWorkUnit(newVal) {
-      this.$emit('update:work_unit', newVal);
+      this.$emit('update:work_unit', newVal); // localWorkUnit이 변경되면 부모로 전달
     }
   },
 };
 </script>
-
-<style scoped>
-/* 선택적인 스타일을 여기에 추가 */
-</style>

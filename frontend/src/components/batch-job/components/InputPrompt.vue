@@ -6,7 +6,6 @@
         class="form-control"
         placeholder="Enter your prompt..."
         rows="5"
-        @input="updatePrompt"
     ></textarea>
   </div>
 </template>
@@ -29,16 +28,13 @@ export default {
     };
   },
   watch: {
-    // 부모로부터 변경 사항 감지
     prompt(newVal) {
       this.localPrompt = newVal;
     },
+    localPrompt(newVal) {
+      this.$emit('update:prompt', newVal);
+    },
   },
-  methods: {
-    updatePrompt() {
-      this.$emit('update:prompt', this.localPrompt); // 상위 컴포넌트로 값 전달
-    }
-  }
 };
 </script>
 

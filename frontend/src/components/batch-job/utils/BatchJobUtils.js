@@ -33,6 +33,7 @@ export const ERROR_MESSAGES = {
     loadPreview: "Failed to load Preview data. Please try again later.",
     noColumn: "Please select at least one column.",
     emptyPrompt: "Prompt cannot be empty.",
+    noWorkUnit: "Work unit must be greater than or equal to 1.",
     noDataReceived: "No data received from Server.",
     loadResult: "Failed to load Preview data. Please try again later.",
     fetchTasks: "Error fetching tasks. Please try again later.",
