@@ -1,4 +1,16 @@
 from abc import ABC, abstractmethod
+from enum import IntFlag, auto
+
+
+class AutoIntFlag(IntFlag):
+    def _generate_next_value_(name, start, count, last_values):
+        return 1 << count  # 2의 제곱 값 자동 생성
+
+
+class ResultType(AutoIntFlag):
+    TEXT = auto()
+    IMAGE = auto()
+    FILE = auto()
 
 
 class FileProcessor(ABC):

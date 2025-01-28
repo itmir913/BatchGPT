@@ -33,7 +33,7 @@ def process_batch_job(self, batch_job_id):
 
             processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
 
-            for index, prompt in enumerate(processor.process(batch_job_id, file_path), start=1):
+            for index, (_, prompt) in enumerate(processor.process(batch_job_id, file_path), start=1):
                 if str(prompt).strip():
                     task_unit, created = TaskUnit.objects.update_or_create(
                         batch_job=batch_job,

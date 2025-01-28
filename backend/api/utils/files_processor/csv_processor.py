@@ -6,7 +6,7 @@ import chardet
 import pandas as pd
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from api.utils.files_processor.file_processor import FileProcessor
+from api.utils.files_processor.file_processor import FileProcessor, ResultType
 from api.utils.generate_prompt import get_prompt
 from backend import settings
 
@@ -36,10 +36,9 @@ class CSVProcessor(FileProcessor):
                                       f"Using default encoding: {DEFAULT_ENCODING}. Error: {e}")
             return DEFAULT_ENCODING
 
-    def process(self, batch_job_id, file, work_unit=1) -> Generator[dict, None, None]:
+    def process(self, batch_job_id, file) -> Generator[dict, None, None]:
         """
         CSV 파일을 한 행씩 처리하여 반환
-        :param work_unit:
         :param batch_job_id:
         :param file: CSV 파일 경로 또는 파일 객체
         :yield: 한 행씩 반환 (dict 형태)
@@ -60,7 +59,7 @@ class CSVProcessor(FileProcessor):
                 for row in chunk.itertuples(index=False):
                     filtered = {key.strip(): str(value) for key, value in zip(chunk.columns, row) if
                                 key.strip() in selected_headers}
-                    yield get_prompt(prompt, filtered)
+                    yield ResultType.TEXT, get_prompt(prompt, filtered)
 
         except BatchJob.DoesNotExist as e:
             logger.log(logging.ERROR, f"API: BatchJob.DoesNotExist. {str(e)}")
