@@ -11,11 +11,9 @@ from tasks.celery import app
 logger = logging.getLogger(__name__)
 
 
-def handle_request_data(processor, prompt, index, data, batch_job, **kwargs):
+def handle_request_data(index, batch_job, request_data):
     from api.models import TaskUnit, TaskUnitStatus
     from tasks.queue_task_units import process_task_unit
-
-    request_data = processor.process_text(prompt, data=data, **kwargs)
 
     if str(request_data).strip():
         task_unit, created = TaskUnit.objects.update_or_create(
@@ -38,7 +36,8 @@ def process_csv(processor, prompt, batch_job, file_path):
     for index, (result_type, data) in enumerate(processor.process(file_path), start=1):
         if result_type == ResultType.TEXT:
             columns, row = data
-            handle_request_data(processor, prompt, index, (columns, row), batch_job, selected_headers=selected_headers)
+            request_data = processor.process_text(prompt, columns=columns, row=row, selected_headers=selected_headers)
+            handle_request_data(index, batch_job, request_data)
         else:
             raise NotImplementedError
 
@@ -47,23 +46,14 @@ def process_pdf(processor, prompt, batch_job, file_path):
     work_unit = batch_job.configs.get('work_unit', 1)
     pdf_mode = batch_job.configs.get('pdf_mode', ProcessMode.TEXT)
 
-    for index, (result_type, data) in enumerate(processor.process(file_path,
-                                                                  work_unit=work_unit,
-                                                                  pdf_mode=pdf_mode),
-                                                start=1):
+    for index, (result_type, data) in \
+            enumerate(processor.process(file_path, work_unit=work_unit, pdf_mode=pdf_mode),
+                      start=1):
         if result_type == ResultType.TEXT:
-            handle_request_data(processor, prompt, index, data, batch_job, work_unit=work_unit, pdf_mode=pdf_mode)
+            request_data = processor.process_text(prompt, data=data)
+            handle_request_data(index, batch_job, request_data)
         else:
             raise NotImplementedError
-
-
-def main_process(processor, prompt, batch_job, file_path):
-    if isinstance(processor, CSVProcessor):
-        process_csv(processor, prompt, batch_job, file_path)
-    elif isinstance(processor, PDFProcessor):
-        process_pdf(processor, prompt, batch_job, file_path)
-    else:
-        raise NotImplementedError("Unsupported processor type")
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
@@ -101,7 +91,15 @@ def process_batch_job(self, batch_job_id):
             file = batch_job.file
             file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
             processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
-            main_process(processor, prompt, batch_job, file_path)
+            if processor is None:
+                raise ValueError(f"Unsupported file extension for {file_path}")
+
+            if isinstance(processor, CSVProcessor):
+                process_csv(processor, prompt, batch_job, file_path)
+            elif isinstance(processor, PDFProcessor):
+                process_pdf(processor, prompt, batch_job, file_path)
+            else:
+                raise NotImplementedError("Unsupported processor type")
 
             logger.log(logging.INFO, f"Celery: All tasks for job with ID {batch_job_id} have been completed.")
 

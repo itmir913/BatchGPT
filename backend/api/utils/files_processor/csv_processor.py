@@ -19,7 +19,6 @@ class CSVProcessor(FileProcessor):
     def process(self, file, *args, **kwargs) -> Generator[dict, None, None]:
         """
         CSV 파일을 한 행씩 처리하여 반환
-        :param batch_job_id:
         :param file: CSV 파일 경로 또는 파일 객체
         :yield: 한 행씩 반환 (dict 형태)
         """
