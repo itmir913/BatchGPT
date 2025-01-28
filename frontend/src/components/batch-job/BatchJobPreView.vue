@@ -50,6 +50,11 @@
             />
           </div>
 
+          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3">
+            <TableView :data="filteredData"/>
+          </div>
+
+
           <!-- 결과 미리보기 -->
           <div v-if="!formStatus.isResultLoading && resultFilteredData.length !== 0" class="mb-3">
             <!-- File Type이 CSV일 때 -->
@@ -109,11 +114,16 @@ import {
   SUCCESS_MESSAGES
 } from '@/components/batch-job/utils/BatchJobUtils';
 import ToastView from "@/components/batch-job/components/ToastView.vue";
-import {CSVSupportedFileTypes, WorkUnitSupportedFileTypes} from '@/components/batch-job/utils/SupportedFileTypes';
+import {
+  CSVSupportedFileTypes,
+  DynamicTableSupportedFileTypes,
+  WorkUnitSupportedFileTypes
+} from '@/components/batch-job/utils/SupportedFileTypes';
+import TableView from "@/components/batch-job/components/TableView.vue";
 
 export default {
   props: ['batch_id'],
-  components: {ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
+  components: {TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
       batchJob: null,
@@ -161,6 +171,9 @@ export default {
       return {
         isEditDisabled: shouldEditDisabled(this.batchJob?.batch_job_status)
       };
+    },
+    dynamicTableSupportedFileTypes() {
+      return DynamicTableSupportedFileTypes;
     },
   },
   methods: {

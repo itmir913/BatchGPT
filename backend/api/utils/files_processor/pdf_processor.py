@@ -1,11 +1,12 @@
 import io
+import json
 import logging
 from enum import Enum
 
 import fitz
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
-from api.utils.files_processor.file_processor import FileProcessor
+from api.utils.files_processor.file_processor import FileProcessor, ResultType
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ class PDFProcessor(FileProcessor):
             all_text.append(page.get_text())
 
         doc.close()
-        return '\n'.join(all_text)
+        return ResultType.TEXT, '\n'.join(all_text)
 
     def get_size(self, file):
         try:
@@ -67,16 +68,16 @@ class PDFProcessor(FileProcessor):
     def get_preview(self, file, work_unit=1, mode=ProcessMode.TEXT):
         try:
             json_data = []
-            for index, result in enumerate(self.process(0, file, work_unit, mode)):
+            for index, (_, result) in enumerate(self.process(0, file, work_unit, mode)):
                 data = {
                     "index": index,
-                    "result": result
+                    "preview": result,
                 }
                 json_data.append(data)
                 if index >= 1:
                     break
 
-            return json_data
+            return json.dumps(json_data)
 
         except Exception as e:
             logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
