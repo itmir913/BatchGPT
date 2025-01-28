@@ -229,8 +229,9 @@ export default {
       this.clearMessages();
       this.loadingState.configSave = true;
 
-      // TODO CSV에서만 작동해야 한다.
-      if (Array.isArray(this.previewData.CSV.selectedColumns) && this.previewData.CSV.selectedColumns.length === 0) {
+      if (this.batchJob.file_type === 'csv'
+          && Array.isArray(this.previewData.CSV.selectedColumns)
+          && this.previewData.CSV.selectedColumns.length === 0) {
         this.handleMessages("error", ERROR_MESSAGES.noColumn);
         this.loadingState.configSave = false;
         return;
