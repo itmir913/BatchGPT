@@ -32,7 +32,8 @@
                   @update:batchJob="batchJob = $event"
               />
               <!-- Submit 버튼 -->
-              <button :disabled="formStatus.isFormDisabled" class="btn btn-primary" type="submit">
+              <button :disabled="formStatus.isFormDisabled || loadingState.submitted" class="btn btn-primary"
+                      type="submit">
                 Create Batch Job
               </button>
             </form>
@@ -93,11 +94,13 @@ export default {
     },
 
     async createBatchJob() {
+      if (this.loadingState.submitted) return;
+      this.loadingState.submitted = true;
+
       if (this.formStatus.isFormDisabled) return;
 
       try {
         this.clearMessages();
-        this.loadingState.submitted = true;
 
         const payload = {
           'title': this.batchJob.title,
@@ -118,7 +121,6 @@ export default {
         } else {
           this.handleMessages("error", `${ERROR_MESSAGES.createBatchJob} No response received.`);
         }
-      } finally {
         this.loadingState.submitted = false;
       }
     },
