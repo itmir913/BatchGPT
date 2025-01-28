@@ -82,12 +82,12 @@
                     <td>
                       <!-- 배열인 경우 -->
                       <span v-if="Array.isArray(value)" class="badge bg-light text-dark">
-                {{ value.join(', ') }}
-              </span>
+                        {{ value.join(', ') }}
+                      </span>
                       <!-- 배열이 아닌 경우 -->
                       <span v-else>
-                {{ value }}
-              </span>
+                        {{ value }}
+                      </span>
                     </td>
                   </tr>
                   </tbody>
