@@ -73,7 +73,7 @@ class PDFProcessor(FileProcessor):
                     "result": result
                 }
                 json_data.append(data)
-                if index >= 3:
+                if index >= 1:
                     break
 
             return json_data
