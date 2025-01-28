@@ -31,12 +31,14 @@ class PDFProcessor(FileProcessor):
         if not action:
             raise ValueError(f"Unexpected mode: {mode}")
 
-        yield action(file, start_page=0, end_page=1)  # 처리 함수 호출
+        total_pages = self.get_size(file)
+        for start_index in range(0, total_pages, work_unit):
+            end_index = min(start_index + work_unit - 1, total_pages - 1)
+            yield action(file, start_page=start_index, end_page=end_index)
 
     def _extract_text_from_pdf(self, file, start_page, end_page):
-        # text = extract_text_from_pdf("example.pdf", 0, 2)  # Extract text from pages 0 to 2
         doc = fitz.open(file)
-        all_text = ""
+        all_text = []
 
         # Ensure the page range is within valid bounds
         start_page = max(0, start_page)
@@ -44,10 +46,10 @@ class PDFProcessor(FileProcessor):
 
         for page_num in range(start_page, end_page + 1):
             page = doc[page_num]
-            all_text += page.get_text()  # Extract text from the page
+            all_text.append(page.get_text())
 
         doc.close()
-        return all_text
+        return '\n'.join(all_text)
 
     def get_size(self, file):
         try:
@@ -62,6 +64,20 @@ class PDFProcessor(FileProcessor):
             logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
             raise ValueError(f"Cannot read PDF file: {str(e)}")
 
-    def get_preview(self, file, work_unit=1):
-        # PDF 파일 미리보기 로직 구현
-        raise NotImplementedError(f"Not Implemented PDF")
+    def get_preview(self, file, work_unit=1, mode=ProcessMode.TEXT):
+        try:
+            json_data = []
+            for index, result in enumerate(self.process(0, file, work_unit, mode)):
+                data = {
+                    "index": index,
+                    "result": result
+                }
+                json_data.append(data)
+                if index >= 3:
+                    break
+
+            return json_data
+
+        except Exception as e:
+            logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
+            raise ValueError(f"Cannot read PDF file: {str(e)}")

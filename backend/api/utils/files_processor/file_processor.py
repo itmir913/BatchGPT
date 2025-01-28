@@ -25,6 +25,6 @@ class FileProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_preview(self, file, work_unit=1):
+    def get_preview(self, file):
         """파일 미리보기 반환"""
         pass
