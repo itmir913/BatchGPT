@@ -18,81 +18,10 @@
             <!-- 반응형 테이블 레이아웃 -->
             <div class="row">
               <!-- General Information 테이블 -->
-              <div class="col-lg-6 mb-4 mb-lg-0">
-                <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
-                  <colgroup>
-                    <col style="width: 30%;"/>
-                    <col style="width: 70%;"/>
-                  </colgroup>
-                  <thead class="table-light">
-                  <tr>
-                    <th class="text-center text-primary" colspan="2">General Information</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr>
-                    <th>Title</th>
-                    <td>{{ batchJob.title }}</td>
-                  </tr>
-                  <tr>
-                    <th>Desc</th>
-                    <td>{{ batchJob.description }}</td>
-                  </tr>
-                  <tr>
-                    <th>File</th>
-                    <td>{{ batchJob.file_name }}</td>
-                  </tr>
-                  <tr>
-                    <th>Total Size</th>
-                    <td>{{ batchJob.total_size }}</td>
-                  </tr>
-                  <tr>
-                    <th>Status</th>
-                    <td>
-              <span :class="{
-                'badge bg-success': batchJob.batch_job_status === 'Completed',
-                'badge bg-warning text-dark': batchJob.batch_job_status === 'In Progress',
-                'badge bg-danger': batchJob.batch_job_status === 'Failed',
-                'badge bg-secondary': !['Completed', 'In Progress', 'Failed'].includes(batchJob.batch_job_status)
-              }">
-                {{ batchJob.batch_job_status }}
-              </span>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
+              <BatchJobInformationTableView :batchJob="batchJob"/>
 
               <!-- Configuration 테이블 -->
-              <div v-if="batchJob && batchJob.configs" class="col-lg-6">
-                <table class="table table-bordered table-hover align-middle" style="table-layout: fixed;">
-                  <colgroup>
-                    <col style="width: 30%;"/>
-                    <col style="width: 70%;"/>
-                  </colgroup>
-                  <thead class="table-light">
-                  <tr>
-                    <th class="text-center text-primary" colspan="2">Configuration</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <!-- 동적 데이터 렌더링 -->
-                  <tr v-for="(value, key) in batchJob.configs" :key="key">
-                    <th>{{ formatKey(key) }}</th>
-                    <td>
-                      <!-- 배열인 경우 -->
-                      <span v-if="Array.isArray(value)" class="badge bg-light text-dark">
-                        {{ value.join(', ') }}
-                      </span>
-                      <!-- 배열이 아닌 경우 -->
-                      <span v-else>
-                        {{ value }}
-                      </span>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
+              <DynamicTableView :configs="batchJob.configs"/>
             </div>
           </div>
         </div>
@@ -172,10 +101,12 @@ import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
 import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/components/ToastView.vue";
+import BatchJobInformationTableView from "@/components/batch-job/components/BatchJobInformationTableView.vue";
+import DynamicTableView from "@/components/batch-job/components/DynamicTableView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {ToastView, ProgressIndicator},
+  components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],
@@ -325,11 +256,6 @@ export default {
       } else if (status === 'Failed') {
         console.log('Batch job failed.');
       }
-    },
-    formatKey(key) {
-      return key
-          .replace(/_/g, ' ')  // 언더스코어(_)를 공백으로 변경
-          .replace(/\b\w/g, char => char.toUpperCase());  // 첫 글자 대문자로 변환
     },
     async onScroll() {
       const bottom = this.$el.getBoundingClientRect().bottom;
