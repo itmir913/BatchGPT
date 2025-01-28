@@ -154,10 +154,14 @@ class BatchJobFileUploadView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
-            logger.log(logging.ERROR, f"API: The file cannot be modified because it is currently in use.")
+        if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS,
+                                          BatchJobStatus.COMPLETED, BatchJobStatus.FAILED]:
+            logger.log(logging.ERROR,
+                       f"API: For safety reasons, file modifications are not allowed once a batch job has been executed. "
+                       f"To work with a new file, please create a new batch job.")
             return Response(
-                {"error": "Warning: The file cannot be modified because it is currently in use."},
+                {"error": "For safety reasons, file modifications are not allowed once a batch job has been executed. "
+                          "To work with a new file, please create a new batch job."},
                 status=HTTP_423_LOCKED,
             )
 
