@@ -90,7 +90,7 @@ class PDFProcessor(FileProcessor):
                     "preview": result,  # TODO Result Type에 맞도록 수정해야 함.
                 }
                 json_data.append(data)
-                if index >= 1:
+                if index >= 2:  # 3개 제시함
                     break
 
             return json.dumps(json_data)
