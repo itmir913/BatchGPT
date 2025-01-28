@@ -60,7 +60,7 @@ class FileSettings:
         return processor_class()
 
     @staticmethod
-    def handle_file_processor_method(file, method):
+    def handle_file_processor_method(file, method, *args, **kwargs):
         """파일 처리 메서드 공통 처리"""
         file_type = FileSettings.get_file_extension(file.name)
         processor_class = FileSettings.FILE_PROCESSORS.get(file_type.lower())
@@ -71,7 +71,7 @@ class FileSettings:
 
         try:
             processor = processor_class()
-            return getattr(processor, method)(file)
+            return getattr(processor, method)(file, *args, **kwargs)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.log(logging.ERROR, f"API: Error processing file: {str(e)}")
@@ -82,5 +82,5 @@ class FileSettings:
         return FileSettings.handle_file_processor_method(file, 'get_size')
 
     @staticmethod
-    def get_preview(file):
-        return FileSettings.handle_file_processor_method(file, 'get_preview')
+    def get_preview(file, work_unit=1):
+        return FileSettings.handle_file_processor_method(file, 'get_preview', work_unit)

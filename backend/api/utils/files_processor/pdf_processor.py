@@ -35,6 +35,6 @@ class PDFProcessor(FileProcessor):
         # PDF 파일 크기 계산 로직 구현
         raise NotImplementedError(f"Not Implemented PDF")
 
-    def get_preview(self, file):
+    def get_preview(self, file, work_unit=1):
         # PDF 파일 미리보기 로직 구현
         raise NotImplementedError(f"Not Implemented PDF")

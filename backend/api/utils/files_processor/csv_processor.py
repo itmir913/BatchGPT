@@ -89,7 +89,7 @@ class CSVProcessor(FileProcessor):
             logger.log(logging.ERROR, f"API: Cannot read CSV files: {str(e)}")
             raise ValueError(f"Cannot read CSV files: {str(e)}")
 
-    def get_preview(self, file):
+    def get_preview(self, file, work_unit=1):
         """
         CSV 파일의 미리보기 반환(초반 3개 열)
         :param file:
