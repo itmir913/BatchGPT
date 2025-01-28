@@ -1,5 +1,5 @@
 # Step 1: Frontend Build
-FROM node:22-alpine AS frontend-build
+FROM node:22 AS frontend-build
 
 WORKDIR /frontend
 COPY frontend/package*.json ./
@@ -8,15 +8,22 @@ COPY frontend/ ./
 RUN npm run build
 
 # Step 2: Backend Build
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
 WORKDIR /app
 COPY backend/ /app/
 
-RUN apk update && apk add --no-cache gcc libffi-dev musl-dev supervisor && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    libffi-dev \
+    libc-dev \
+    supervisor && \
     pip install --upgrade pip && \
     pip install -r /app/requirements.txt && \
-    rm -rf /var/cache/apk/* && \
+    apt-get purge -y gcc libffi-dev libc-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/log/supervisor
 
 COPY --from=frontend-build /backend/dist /app/dist
