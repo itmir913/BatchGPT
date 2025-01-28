@@ -21,21 +21,26 @@ class ProcessMode(Enum):
 class PDFProcessor(FileProcessor):
 
     def process(self, batch_job_id, file, work_unit=1, mode=ProcessMode.TEXT):
-        if mode not in ProcessMode:
-            raise NotImplementedError(f"Not Implemented PDF mode: {mode}")
+        try:
+            if mode not in ProcessMode:
+                raise NotImplementedError(f"Not Implemented PDF mode: {mode}")
 
-        mode_actions = {
-            ProcessMode.TEXT: self._extract_text_from_pdf,
-        }
+            mode_actions = {
+                ProcessMode.TEXT: self._extract_text_from_pdf,
+            }
 
-        action = mode_actions.get(mode)
-        if not action:
-            raise ValueError(f"Unexpected mode: {mode}")
+            action = mode_actions.get(mode)
+            if not action:
+                raise ValueError(f"Unexpected mode: {mode}")
 
-        total_pages = self.get_size(file)
-        for start_index in range(0, total_pages, work_unit):
-            end_index = min(start_index + work_unit - 1, total_pages - 1)
-            yield action(file, start_page=start_index, end_page=end_index)
+            total_pages = self.get_size(file)
+            for start_index in range(0, total_pages, work_unit):
+                end_index = min(start_index + work_unit - 1, total_pages - 1)
+                yield action(file, start_page=start_index, end_page=end_index)
+
+        except Exception as e:
+            logger.log(logging.ERROR, f"API: Unknown error: {str(e)}")
+            raise e
 
     def _extract_text_from_pdf(self, file, start_page, end_page):
         doc = fitz.open(file)
