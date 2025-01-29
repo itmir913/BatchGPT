@@ -132,7 +132,7 @@ export default {
         },
         PDF: {
           supportedMode: {},
-          selectedMode: 'text',
+          selectedMode: '',
         }
       },
     };
@@ -189,10 +189,13 @@ export default {
         this.batchJob = batchJob;
         this.previewData.work_unit = configs.work_unit ?? 1;
         this.previewData.prompt = configs.prompt ?? '';
-        this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
-        this.previewData.PDF.selectedMode = configs.pdf_mode ?? 'text';
+
+        if (CSVSupportedFileTypes.includes(this.batchJob.file_type)) {
+          this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
+        }
 
         if (PDFModeSupportedFileTypes.includes(this.batchJob.file_type)) {
+          this.previewData.PDF.selectedMode = configs.pdf_mode ?? 'text';
           this.previewData.PDF.supportedMode = await fetchPDFSupportedModeAPI();
         }
 

@@ -11,22 +11,56 @@ from tasks.celery import app
 logger = logging.getLogger(__name__)
 
 
-def handle_request_data(index, batch_job, request_data):
-    from api.models import TaskUnit, TaskUnitStatus
+def handle_request_data(index, batch_job, prompt, result_type, files=None):
+    from api.models import TaskUnit, TaskUnitStatus, TaskUnitFiles
     from tasks.queue_task_units import process_task_unit
 
-    if str(request_data).strip():
-        task_unit, created = TaskUnit.objects.update_or_create(
-            batch_job=batch_job,
-            unit_index=index,
-            defaults={
-                'text_data': request_data,
-                'has_files': False,
-                'task_unit_status': TaskUnitStatus.PENDING,
-                'latest_response': None,
-            }
-        )
-        process_task_unit.apply_async(args=[task_unit.id])
+    match result_type:
+        case ResultType.TEXT:
+            if not str(prompt).strip():
+                logger.log(logging.ERROR, f"Celery: The request_data cannot be empty or just whitespace.")
+                raise ValueError("The request_data cannot be empty or just whitespace.")
+
+            task_unit, created = TaskUnit.objects.update_or_create(
+                batch_job=batch_job,
+                unit_index=index,
+                defaults={
+                    'text_data': prompt,
+                    'has_files': False,
+                    'task_unit_status': TaskUnitStatus.PENDING,
+                    'latest_response': None,
+                }
+            )
+
+            process_task_unit.apply_async(args=[task_unit.id])
+
+        case ResultType.IMAGE:
+            if files is None:
+                logger.log(logging.ERROR, f"Celery: The provided file is None, which is not allowed.")
+                raise ValueError("The provided file is None, which is not allowed.")
+
+            task_unit, created = TaskUnit.objects.update_or_create(
+                batch_job=batch_job,
+                unit_index=index,
+                defaults={
+                    'text_data': prompt,
+                    'has_files': True,
+                    'task_unit_status': TaskUnitStatus.PENDING,
+                    'latest_response': None,
+                }
+            )
+
+            TaskUnitFiles.objects.filter(task_unit=task_unit).delete()
+            for file in files:
+                TaskUnitFiles.objects.create(
+                    task_unit=task_unit,
+                    base64_image_data=file
+                )
+
+            process_task_unit.apply_async(args=[task_unit.id])
+
+        case _:
+            raise NotImplementedError
 
 
 def process_csv(processor, prompt, batch_job, file_path):
@@ -34,12 +68,16 @@ def process_csv(processor, prompt, batch_job, file_path):
     selected_headers = [header.strip() for header in selected_headers]
 
     for index, (result_type, data) in enumerate(processor.process(file_path), start=1):
-        if result_type == ResultType.TEXT:
-            columns, row = data
-            request_data = processor.process_text(prompt, columns=columns, row=row, selected_headers=selected_headers)
-            handle_request_data(index, batch_job, request_data)
-        else:
-            raise NotImplementedError
+
+        match result_type:
+            case ResultType.TEXT:
+                columns, row = data
+                request_data = processor.process_text(prompt, columns=columns, row=row,
+                                                      selected_headers=selected_headers)
+                handle_request_data(index, batch_job, request_data, result_type)
+
+            case _:
+                raise NotImplementedError
 
 
 def process_pdf(processor, prompt, batch_job, file_path):
@@ -49,11 +87,17 @@ def process_pdf(processor, prompt, batch_job, file_path):
     for index, (result_type, data) in \
             enumerate(processor.process(file_path, work_unit=work_unit, pdf_mode=pdf_mode),
                       start=1):
-        if result_type == ResultType.TEXT:
-            request_data = processor.process_text(prompt, data=data)
-            handle_request_data(index, batch_job, request_data)
-        else:
-            raise NotImplementedError
+
+        match result_type:
+            case ResultType.TEXT:
+                request_data = processor.process_text(prompt, data=data)
+                handle_request_data(index, batch_job, request_data, result_type)
+
+            case ResultType.IMAGE:
+                handle_request_data(index, batch_job, prompt, result_type, files=data)
+
+            case _:
+                raise NotImplementedError
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
@@ -71,7 +115,7 @@ def process_batch_job(self, batch_job_id):
         if not status:
             status = BatchJob.objects.get(id=batch_job_id).get_batch_job_status_display()
             cache.set(batch_status_key(batch_job_id), status, timeout=30)
-        if status in [BatchJobStatus.COMPLETED_DISPLAY, BatchJobStatus.FAILED_DISPLAY]:
+        if status in [BatchJobStatus.COMPLETED_DISPLAY]:
             logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
             return
 
@@ -107,10 +151,13 @@ def process_batch_job(self, batch_job_id):
         except Exception as e:
             logger.log(logging.INFO,
                        f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
+
             cache.set(batch_status_key(batch_job_id), BatchJobStatus.FAILED_DISPLAY, timeout=30)
+
             batch_job.set_status(BatchJobStatus.FAILED)
             batch_job.save()
-            return
+
+            raise self.retry(exc=e, countdown=1)
 
     except BatchJob.DoesNotExist as e:
         return

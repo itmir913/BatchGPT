@@ -300,6 +300,12 @@ class TaskUnitFiles(TimestampedModel):
         verbose_name="File Data"
     )
 
+    base64_image_data = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Base64 Image Data"
+    )
+
     class Meta:
         db_table = 'task_unit_files'
         verbose_name = 'Task Unit File'

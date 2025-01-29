@@ -16,7 +16,7 @@ def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
     from django.core.cache import cache
     from django.shortcuts import get_object_or_404
-    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob
+    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
     from api.utils.cache_keys import task_unit_status_key
     from backend.settings import OPENAI_API_KEY
 
@@ -24,7 +24,7 @@ def process_task_unit(self, task_unit_id):
         start_time = time.time()
 
         task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
-        if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED, TaskUnitStatus.FAILED]:
+        if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
             cache.set(task_unit_status_key(task_unit_id), task_unit.task_unit_status, timeout=30)
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
@@ -38,13 +38,29 @@ def process_task_unit(self, task_unit_id):
         model = batch_job_config['gpt_model']
 
         try:
+            content_data = [{
+                "type": "text",
+                "text": task_unit.text_data,
+            }]
+
+            if task_unit.has_files:
+                task_unit_files = TaskUnitFiles.objects.filter(task_unit=task_unit)
+                base64_images = [{
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{task_unit_file.base64_image_data}"},
+                } for task_unit_file in task_unit_files]
+                content_data += base64_images
+                logging.info(logging.INFO,
+                             f"Base64 images added to content data. "
+                             f"Total content length: {len(content_data)}")
+
             client = OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
                 model=model,
                 messages=[
                     {
                         "role": "user",
-                        "content": task_unit.text_data,
+                        "content": content_data,
                     }
                 ],
                 max_tokens=500
@@ -70,7 +86,6 @@ def process_task_unit(self, task_unit_id):
             logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
 
         except Exception as e:
-            # 예외 처리: 요청 실패 및 오류 발생 시 처리
             task_unit_response = TaskUnitResponse.objects.create(
                 batch_job=batch_job,
                 task_unit=task_unit,
@@ -81,13 +96,14 @@ def process_task_unit(self, task_unit_id):
                 processing_time=calculate_processing_time(start_time),
             )
 
+            logger.log(logging.INFO,
+                       f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
+
+            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
+
             task_unit.set_status(TaskUnitStatus.FAILED)
             task_unit.latest_response = task_unit_response
             task_unit.save()
-
-            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
-            logger.log(logging.INFO,
-                       f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
 
             raise self.retry(exc=e, countdown=1)
 

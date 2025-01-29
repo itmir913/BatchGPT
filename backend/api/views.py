@@ -14,7 +14,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_423_LOCKED
 from rest_framework.views import APIView
 
-from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
+from api.models import BatchJob, TaskUnitStatus, BatchJobStatus, TaskUnitFiles
 from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
@@ -384,18 +384,26 @@ class TaskUnitResponseListAPIView(ListAPIView):
         page = self.paginate_queryset(queryset)
 
         # 결과를 직렬화
-        results = [
-            {
+        results = []
+        for item in page:
+            request_data = {
+                "prompt": item.text_data,
+                "has_files": item.has_files,
+            }
+
+            if item.has_files:
+                task_unit_files = TaskUnitFiles.objects.filter(task_unit=item).order_by('created_at')
+                request_data["files_data"] = [task_unit_file.base64_image_data for task_unit_file in task_unit_files]
+
+            results.append({
                 "task_unit_id": item.id,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "unit_index": item.unit_index,
-                "request_data": item.text_data,  # TODO file 데이터를 보내야 할수도 있음.
+                "request_data": request_data,
                 "response_data": get_openai_result(item.response_data),
                 "error_message": item.error_message,
                 "processing_time": item.processing_time,
-            }
-            for item in page
-        ]
+            })
 
         logger.log(logging.DEBUG, f"API: The user {request.user.email} requested the list of task results,"
                                   f"and it has been successfully returned.")
