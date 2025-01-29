@@ -12,12 +12,7 @@
 
       <div class="col-md-9">
         <!-- Loading State -->
-        <div v-if="state.isLoading" class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p>{{ state.loadingMessage }}</p>
-        </div>
+        <LoadingView :loading="state.isLoading"/>
 
         <!-- Batch Job Details -->
         <div v-if="!state.isLoading && batchJob" class="card mt-3">
@@ -166,10 +161,11 @@ import {
   uploadFilesAPI,
 } from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {ToastView, ProgressIndicator},
+  components: {LoadingView, ToastView, ProgressIndicator},
   data() {
     return {
       batchJob: null,

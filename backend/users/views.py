@@ -30,11 +30,17 @@ class RegisterView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            logger.log(logging.DEBUG, f"API: User registered successfully.")
-            return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
-        else:
-            logger.log(logging.ERROR, f"API: User registration failed: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.log(logging.DEBUG, f"API: User registered successfully: {request.data.get('email')}")
+            return Response({"message": "User registered successfully. Welcome to BatchGPT!"},
+                            status=status.HTTP_201_CREATED)
+
+        error_messages = ', '.join(
+            f"{field}: {error}"
+            for field, errors in serializer.errors.items()
+            for error in errors
+        )
+        # error_message = serializer.errors['email']
+        return Response({"error": error_messages}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def check_authentication(request):
@@ -79,7 +85,8 @@ def login_view(request):
         }, status=status.HTTP_200_OK)
     else:
         logger.log(logging.DEBUG, f"API: An attempt to log in with {email} was made, but authentication failed.")
-        return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'No account found with this email. Please check your email or sign up.'},
+                        status=status.HTTP_401_UNAUTHORIZED)
 
 
 def logout_view(request):

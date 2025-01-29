@@ -50,11 +50,7 @@
         </div>
 
         <!-- 로딩 상태 -->
-        <div v-if="loading" class="text-center my-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
+        <LoadingView :loading="loading"/>
 
         <!-- 에러 메시지 -->
         <div v-if="error" class="alert alert-danger text-center" role="alert">
@@ -147,8 +143,10 @@
 <script>
 import {fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
+  components: {LoadingView},
   data() {
     return {
       isAuthenticated: false, // 사용자 인증 상태

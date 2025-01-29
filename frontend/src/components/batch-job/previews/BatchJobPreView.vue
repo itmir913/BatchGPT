@@ -12,12 +12,7 @@
 
       <div class="col-md-9">
 
-        <div v-if="formStatus.isLoading" class="text-center mb-3">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p>{{ formStatus.loadingMessage }}</p>
-        </div>
+        <LoadingView :loading="formStatus.isLoading"/>
 
         <div v-if="formStatus.isReady" class="mb-3">
 
@@ -106,10 +101,14 @@ import {
 } from '@/components/batch-job/utils/SupportedFileTypes';
 import TableView from "@/components/batch-job/previews/FilePreviewTable.vue";
 import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ['batch_id'],
-  components: {PDFModeSelector, TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
+  components: {
+    LoadingView,
+    PDFModeSelector, TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt
+  },
   data() {
     return {
       batchJob: null,
