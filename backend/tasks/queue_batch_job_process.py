@@ -71,7 +71,7 @@ def process_batch_job(self, batch_job_id):
         if not status:
             status = BatchJob.objects.get(id=batch_job_id).get_batch_job_status_display()
             cache.set(batch_status_key(batch_job_id), status, timeout=30)
-        if status in [BatchJobStatus.COMPLETED_DISPLAY, BatchJobStatus.FAILED_DISPLAY]:
+        if status in [BatchJobStatus.COMPLETED_DISPLAY]:
             logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
             return
 
@@ -107,10 +107,13 @@ def process_batch_job(self, batch_job_id):
         except Exception as e:
             logger.log(logging.INFO,
                        f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
+
             cache.set(batch_status_key(batch_job_id), BatchJobStatus.FAILED_DISPLAY, timeout=30)
+
             batch_job.set_status(BatchJobStatus.FAILED)
             batch_job.save()
-            return
+
+            raise self.retry(exc=e, countdown=1)
 
     except BatchJob.DoesNotExist as e:
         return

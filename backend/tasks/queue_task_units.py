@@ -24,7 +24,7 @@ def process_task_unit(self, task_unit_id):
         start_time = time.time()
 
         task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
-        if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED, TaskUnitStatus.FAILED]:
+        if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
             cache.set(task_unit_status_key(task_unit_id), task_unit.task_unit_status, timeout=30)
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
@@ -70,7 +70,6 @@ def process_task_unit(self, task_unit_id):
             logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
 
         except Exception as e:
-            # 예외 처리: 요청 실패 및 오류 발생 시 처리
             task_unit_response = TaskUnitResponse.objects.create(
                 batch_job=batch_job,
                 task_unit=task_unit,
@@ -81,13 +80,14 @@ def process_task_unit(self, task_unit_id):
                 processing_time=calculate_processing_time(start_time),
             )
 
+            logger.log(logging.INFO,
+                       f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
+
+            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
+
             task_unit.set_status(TaskUnitStatus.FAILED)
             task_unit.latest_response = task_unit_response
             task_unit.save()
-
-            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
-            logger.log(logging.INFO,
-                       f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
 
             raise self.retry(exc=e, countdown=1)
 
