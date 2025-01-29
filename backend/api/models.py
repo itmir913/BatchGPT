@@ -286,9 +286,18 @@ class TaskUnit(TimestampedModel):
 
 class TaskUnitResponse(TimestampedModel):
     """TaskUnit에 대한 ChatGPT 응답 저장"""
+    batch_job = models.ForeignKey(
+        BatchJob,
+        on_delete=models.CASCADE,
+        related_name="responses",
+        verbose_name="Batch Job"
+    )
+
     task_unit = models.ForeignKey(
         TaskUnit,
-        on_delete=models.CASCADE,  # TODO SET_NULL을 고민할 것.
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="responses",
         verbose_name="Task Unit"
     )
@@ -333,6 +342,7 @@ class TaskUnitResponse(TimestampedModel):
         verbose_name_plural = 'Task Unit Responses'
         ordering = ['task_unit', 'created_at']
         indexes = [
+            models.Index(fields=['batch_job']),  # 배치 작업별 응답 조회 최적화
             models.Index(fields=['task_unit']),  # 작업 단위별 응답 조회 최적화
             models.Index(fields=['task_response_status']),  # 상태별 조회 최적화
         ]
