@@ -70,7 +70,7 @@
 
           <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)
                         && filteredData && filteredData.length > 0" class="mb-3 scroll-container">
-            <TableView
+            <FilePreviewTableView
                 :data="filteredData"
             />
           </div>
@@ -108,7 +108,7 @@ import {
   PDFModeSupportedFileTypes,
   WorkUnitSupportedFileTypes
 } from '@/components/batch-job/utils/SupportedFileTypes';
-import TableView from "@/components/batch-job/previews/FilePreviewTable.vue";
+import FilePreviewTableView from "@/components/batch-job/previews/FilePreviewTable.vue";
 import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
 import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
@@ -116,7 +116,7 @@ export default {
   props: ['batch_id'],
   components: {
     LoadingView,
-    PDFModeSelector, TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt
+    PDFModeSelector, FilePreviewTableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt
   },
   data() {
     return {
