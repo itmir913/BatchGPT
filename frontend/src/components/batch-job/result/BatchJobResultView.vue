@@ -40,7 +40,7 @@
         </div>
 
         <!-- CSV 표 형식 테이블 -->
-        <div v-if="tasks.length > 0" class="table-responsive">
+        <div v-if="tasks.length > 0" class="table-responsive scroll-container">
           <h2 class="mb-3">Results</h2>
           <table class="table table-striped table-hover align-middle custom-table">
             <thead class="table-dark">
@@ -285,6 +285,13 @@ export default {
   }
 };
 </script>
+
+<style>
+.scroll-container {
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+</style>
 
 <style scoped>
 .infinite-scroll-container {

@@ -39,7 +39,7 @@
             />
           </div>
 
-          <div class="mb-3">
+          <div class="mb-3 scroll-container">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
                 :fileType="batchJob.file_type"
@@ -50,7 +50,7 @@
             />
           </div>
 
-          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3">
+          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
             <TableView :data="filteredData"/>
           </div>
 
@@ -68,6 +68,13 @@
     </div>
   </div>
 </template>
+
+<style>
+.scroll-container {
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+</style>
 
 <script>
 import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
