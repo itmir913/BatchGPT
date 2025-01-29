@@ -307,7 +307,7 @@ class BatchJobPreView(APIView):
 
         try:
             work_unit = batch_job.configs.get('work_unit', 1)
-            pdf_mode = PDFProcessMode.from_string(batch_job.configs.get('pdf_mode'))
+            pdf_mode = batch_job.configs.get('pdf_mode')
 
             file = batch_job.file
             file_path = os.path.join(settings.BASE_DIR, file.path)

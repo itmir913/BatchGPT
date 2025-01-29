@@ -44,7 +44,7 @@ class PDFProcessor(FileProcessor):
     def process(self, file, *args, **kwargs):
         try:
             work_unit = kwargs.get('work_unit', 1)
-            pdf_mode = kwargs.get('pdf_mode')
+            pdf_mode = PDFProcessMode.from_string(kwargs.get('pdf_mode'))
 
             if pdf_mode not in PDFProcessMode:
                 raise NotImplementedError(f"Not Implemented PDF mode: {pdf_mode}")
@@ -102,7 +102,7 @@ class PDFProcessor(FileProcessor):
     def get_preview(self, file, *args, **kwargs):
         try:
             work_unit = kwargs.get('work_unit', 1)
-            pdf_mode = kwargs.get('pdf_mode')
+            pdf_mode = PDFProcessMode.from_string(kwargs.get('pdf_mode'))
             logger.error(pdf_mode)
 
             json_data = []

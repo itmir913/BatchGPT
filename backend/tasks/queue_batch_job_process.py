@@ -5,7 +5,7 @@ from celery import shared_task
 
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.file_processor import ResultType
-from api.utils.files_processor.pdf_processor import PDFProcessor, PDFProcessMode
+from api.utils.files_processor.pdf_processor import PDFProcessor
 from tasks.celery import app
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def process_csv(processor, prompt, batch_job, file_path):
 
 def process_pdf(processor, prompt, batch_job, file_path):
     work_unit = batch_job.configs.get('work_unit', 1)
-    pdf_mode = PDFProcessMode.from_string(batch_job.configs.get('pdf_mode'))
+    pdf_mode = batch_job.configs.get('pdf_mode')
 
     for index, (result_type, data) in \
             enumerate(processor.process(file_path, work_unit=work_unit, pdf_mode=pdf_mode),
