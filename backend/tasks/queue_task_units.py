@@ -16,7 +16,7 @@ def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
     from django.core.cache import cache
     from django.shortcuts import get_object_or_404
-    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob
+    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
     from api.utils.cache_keys import task_unit_status_key
     from backend.settings import OPENAI_API_KEY
 
@@ -38,13 +38,29 @@ def process_task_unit(self, task_unit_id):
         model = batch_job_config['gpt_model']
 
         try:
+            content_data = [{
+                "type": "text",
+                "text": task_unit.text_data,
+            }]
+
+            if task_unit.has_files:
+                task_unit_files = TaskUnitFiles.objects.filter(task_unit=task_unit)
+                base64_images = [{
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{task_unit_file.base64_image_data}"},
+                } for task_unit_file in task_unit_files]
+                content_data += base64_images
+                logging.info(logging.INFO,
+                             f"Base64 images added to content data. "
+                             f"Total content length: {len(content_data)}")
+
             client = OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
                 model=model,
                 messages=[
                     {
                         "role": "user",
-                        "content": task_unit.text_data,
+                        "content": content_data,
                     }
                 ],
                 max_tokens=500

@@ -11,22 +11,56 @@ from tasks.celery import app
 logger = logging.getLogger(__name__)
 
 
-def handle_request_data(index, batch_job, request_data, result_type):
-    from api.models import TaskUnit, TaskUnitStatus
+def handle_request_data(index, batch_job, prompt, result_type, files=None):
+    from api.models import TaskUnit, TaskUnitStatus, TaskUnitFiles
     from tasks.queue_task_units import process_task_unit
 
-    if str(request_data).strip():
-        task_unit, created = TaskUnit.objects.update_or_create(
-            batch_job=batch_job,
-            unit_index=index,
-            defaults={
-                'text_data': request_data,
-                'has_files': False,
-                'task_unit_status': TaskUnitStatus.PENDING,
-                'latest_response': None,
-            }
-        )
-        process_task_unit.apply_async(args=[task_unit.id])
+    match result_type:
+        case ResultType.TEXT:
+            if not str(prompt).strip():
+                logger.log(logging.ERROR, f"Celery: The request_data cannot be empty or just whitespace.")
+                raise ValueError("The request_data cannot be empty or just whitespace.")
+
+            task_unit, created = TaskUnit.objects.update_or_create(
+                batch_job=batch_job,
+                unit_index=index,
+                defaults={
+                    'text_data': prompt,
+                    'has_files': False,
+                    'task_unit_status': TaskUnitStatus.PENDING,
+                    'latest_response': None,
+                }
+            )
+
+            process_task_unit.apply_async(args=[task_unit.id])
+
+        case ResultType.IMAGE:
+            if files is None:
+                logger.log(logging.ERROR, f"Celery: The provided file is None, which is not allowed.")
+                raise ValueError("The provided file is None, which is not allowed.")
+
+            task_unit, created = TaskUnit.objects.update_or_create(
+                batch_job=batch_job,
+                unit_index=index,
+                defaults={
+                    'text_data': prompt,
+                    'has_files': True,
+                    'task_unit_status': TaskUnitStatus.PENDING,
+                    'latest_response': None,
+                }
+            )
+
+            TaskUnitFiles.objects.filter(task_unit=task_unit).delete()
+            for file in files:
+                TaskUnitFiles.objects.create(
+                    task_unit=task_unit,
+                    base64_image_data=file
+                )
+
+            process_task_unit.apply_async(args=[task_unit.id])
+
+        case _:
+            raise NotImplementedError
 
 
 def process_csv(processor, prompt, batch_job, file_path):
@@ -41,6 +75,7 @@ def process_csv(processor, prompt, batch_job, file_path):
                 request_data = processor.process_text(prompt, columns=columns, row=row,
                                                       selected_headers=selected_headers)
                 handle_request_data(index, batch_job, request_data, result_type)
+
             case _:
                 raise NotImplementedError
 
@@ -57,8 +92,10 @@ def process_pdf(processor, prompt, batch_job, file_path):
             case ResultType.TEXT:
                 request_data = processor.process_text(prompt, data=data)
                 handle_request_data(index, batch_job, request_data, result_type)
+
             case ResultType.IMAGE:
-                pass
+                handle_request_data(index, batch_job, prompt, result_type, files=data)
+
             case _:
                 raise NotImplementedError
 
