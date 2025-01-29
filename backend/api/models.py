@@ -119,6 +119,10 @@ class BatchJob(TimestampedModel):
         db_table = 'batch_job'  # 테이블 이름 지정
         verbose_name = 'Batch Job'
         verbose_name_plural = 'Batch Jobs'
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['batch_job_status'])
+        ]
 
     def __str__(self):
         return f"BatchJob {self.id} - {self.user.email}"
