@@ -5,5 +5,7 @@ export const MODELS = {
     'gpt-4o-mini': 'GPT-4o Mini',
 };
 
+// TODO 서버 측으로부터 모델 가져오도록 추후 수정
+
 
 export const DEFAULT_GPT_MODEL = 'gpt-4o-mini';
