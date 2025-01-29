@@ -186,10 +186,10 @@ export default {
 
       } catch (error) {
         this.isButtonDisabled = false;
-        if (error.response && error.response.data) {
-          this.handleMessages('error', ERROR_MESSAGES.ERROR_NOT_EXIST_ACCOUNT)
+        if (error.response) {
+          this.handleMessages("error", `${error.response.data.error}`);
         } else {
-          this.handleMessages('error', ERROR_MESSAGES.ERROR_NOT_RESPONSE)
+          this.handleMessages("error", `${ERROR_MESSAGES.ERROR_NOT_RESPONSE}`);
         }
       }
     },
