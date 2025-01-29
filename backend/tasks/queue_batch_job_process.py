@@ -21,7 +21,7 @@ def handle_request_data(index, batch_job, request_data):
             unit_index=index,
             defaults={
                 'text_data': request_data,
-                'file_data': None,
+                'has_files': False,
                 'task_unit_status': TaskUnitStatus.PENDING,
                 'latest_response': None,
             }
