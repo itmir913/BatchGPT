@@ -28,9 +28,11 @@ class PDFProcessMode(Enum):
 
     @classmethod
     def from_string(cls, value: str):
-        mode_map = {mode.value: mode for mode in cls}
+        if isinstance(value, cls):
+            return value
+
         try:
-            return mode_map[value]
+            return {mode.value: mode for mode in cls}[value]
         except KeyError:
             raise NotImplementedError(f"The given PDF mode '{value}' is not supported in the available modes.")
 
@@ -63,7 +65,7 @@ class PDFProcessor(FileProcessor):
                 yield action(file, start_page=start_index, end_page=end_index)
 
         except Exception as e:
-            logger.log(logging.ERROR, f"API: Unknown error: {str(e)}")
+            logger.log(logging.ERROR, f"API: Cannot process PDF: {str(e)}")
             raise e
 
     def process_text(self, prompt, *args, **kwargs):
@@ -96,14 +98,13 @@ class PDFProcessor(FileProcessor):
 
             return len(doc)
         except Exception as e:
-            logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
-            raise ValueError(f"Cannot read PDF file: {str(e)}")
+            logger.log(logging.ERROR, f"API: Cannot read PDF size: {str(e)}")
+            raise ValueError(f"Cannot read PDF size: {str(e)}")
 
     def get_preview(self, file, *args, **kwargs):
         try:
             work_unit = kwargs.get('work_unit', 1)
             pdf_mode = PDFProcessMode.from_string(kwargs.get('pdf_mode'))
-            logger.error(pdf_mode)
 
             json_data = []
             for index, (_, result) in enumerate(self.process(file, work_unit=work_unit, pdf_mode=pdf_mode)):
@@ -118,5 +119,5 @@ class PDFProcessor(FileProcessor):
             return json.dumps(json_data)
 
         except Exception as e:
-            logger.log(logging.ERROR, f"API: Cannot read PDF file: {str(e)}")
-            raise ValueError(f"Cannot read PDF file: {str(e)}")
+            logger.log(logging.ERROR, f"API: Cannot read PDF preview: {str(e)}")
+            raise ValueError(f"Cannot read PDF preview: {str(e)}")
