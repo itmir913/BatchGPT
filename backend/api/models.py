@@ -303,7 +303,7 @@ class TaskUnitResponse(TimestampedModel):
         null=True,
         blank=True,
         verbose_name="Response Data",
-        help_text="ChatGPT로부터 받은 응답 데이터"
+        help_text="response data from ChatGPT"
     )
 
     task_response_status = models.CharField(
@@ -311,14 +311,6 @@ class TaskUnitResponse(TimestampedModel):
         choices=TaskUnitStatus.CHOICES,
         default=TaskUnitStatus.PENDING,
         verbose_name="Status"
-    )
-
-    error_code = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name="Error Code",
-        help_text="요청 실패 시 발생한 오류 코드"
     )
 
     error_message = models.TextField(
