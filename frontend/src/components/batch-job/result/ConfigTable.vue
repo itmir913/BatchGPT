@@ -11,7 +11,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr v-for="(value, key) in configs" :key="key">
+      <tr v-for="(value, key) in filteredConfigs" :key="key">
         <th>{{ formatKey(key) }}</th>
         <td>
             <span v-if="Array.isArray(value)" class="badge bg-light text-dark">
@@ -45,6 +45,19 @@ export default {
           .replace(/_/g, ' ')  // 언더스코어(_)를 공백으로 변경
           .replace(/\b\w/g, char => char.toUpperCase());  // 첫 글자 대문자로 변환
     },
-  }
+  },
+  computed: {
+    filteredConfigs() {
+      return Object.entries(this.configs)
+          // eslint-disable-next-line no-unused-vars
+          .filter(([key, value]) => {
+            return !(Array.isArray(value) && value.length === 0) && !(typeof value === 'string' && value.trim() === '');
+          })
+          .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+          }, {});
+    }
+  },
 };
 </script>
