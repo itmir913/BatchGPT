@@ -42,7 +42,9 @@
             />
           </div>
 
-          <div class="mb-3 scroll-container">
+          <div v-if="CSVSupportedFileTypes.includes(batchJob.file_type)
+                        && filteredData && filteredData.length > 0"
+               class="mb-3 scroll-container">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
                 :fileType="batchJob.file_type"
@@ -62,7 +64,8 @@
             <button class="btn btn-success" @click="goToNextStep">Next</button>
           </div>
 
-          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
+          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)
+                        && filteredData && filteredData.length > 0" class="mb-3 scroll-container">
             <TableView :data="filteredData"/>
           </div>
         </div>
@@ -149,6 +152,9 @@ export default {
     },
     dynamicTableSupportedFileTypes() {
       return DynamicTableSupportedFileTypes;
+    },
+    CSVSupportedFileTypes() {
+      return CSVSupportedFileTypes;
     },
   },
   methods: {
