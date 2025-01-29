@@ -6,6 +6,9 @@ class UserAccountManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
             raise ValueError("The Email field must be set")
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+
         email = self.normalize_email(email)
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)

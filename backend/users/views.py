@@ -34,7 +34,7 @@ class RegisterView(APIView):
             return Response({"message": "User registered successfully. Welcome to BatchGPT!"},
                             status=status.HTTP_201_CREATED)
 
-        error_messages = ', '.join(
+        error_messages = '\n'.join(
             f"{field}: {error}"
             for field, errors in serializer.errors.items()
             for error in errors
