@@ -240,11 +240,9 @@ class TaskUnit(TimestampedModel):
         verbose_name="Text Data"
     )
 
-    file_data = models.FileField(
-        upload_to=FileSettings.get_task_unit_path,
-        null=True,
-        blank=True,
-        verbose_name="File Data"
+    has_files = models.BooleanField(
+        default=False,
+        verbose_name="Has Files"
     )
 
     task_unit_status = models.CharField(
@@ -286,6 +284,29 @@ class TaskUnit(TimestampedModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+
+class TaskUnitFiles(TimestampedModel):
+    """TaskUnit 관련 파일 저장"""
+    task_unit = models.ForeignKey(
+        TaskUnit,
+        on_delete=models.CASCADE,
+        related_name="files",
+        verbose_name="Task Unit"
+    )
+
+    file_data = models.FileField(
+        upload_to=FileSettings.get_task_unit_path,
+        verbose_name="File Data"
+    )
+
+    class Meta:
+        db_table = 'task_unit_files'
+        verbose_name = 'Task Unit File'
+        verbose_name_plural = 'Task Unit Files'
+        indexes = [
+            models.Index(fields=['task_unit']),  # 작업 단위별 응답 조회 최적화
+        ]
 
 
 class TaskUnitResponse(TimestampedModel):
