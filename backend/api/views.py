@@ -28,6 +28,23 @@ from tasks.queue_batch_job_process import process_batch_job
 logger = logging.getLogger(__name__)
 
 
+def updateBatchJobStatus(batch_job):
+    if batch_job.batch_job_status in [BatchJobStatus.IN_PROGRESS]:
+        if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
+            pending, in_progress, fail = get_task_status_counts(batch_job.id)
+
+            if pending > 0 or in_progress > 0:
+                pass
+            elif fail > 0:
+                logger.log(logging.DEBUG, f"API: The job with ID {batch_job.id} has been marked as Failed.")
+                batch_job.set_status(BatchJobStatus.FAILED)
+                batch_job.save()
+            else:
+                logger.log(logging.DEBUG, f"API: The job with ID {batch_job.id} has been marked as Completed.")
+                batch_job.set_status(BatchJobStatus.COMPLETED)
+                batch_job.save()
+
+
 class UserBatchJobsView(APIView):
     """
     View to handle user's batch jobs.
@@ -42,6 +59,14 @@ class UserBatchJobsView(APIView):
         현재 사용자의 모든 BatchJob 목록을 반환하는 기능
         """
         logger.log(logging.DEBUG, f"API: {request.user.email} has requested the BatchJob list.")
+
+        batch_jobs_in_progress = BatchJob.objects.filter(
+            user=request.user,
+            batch_job_status=BatchJobStatus.IN_PROGRESS
+        )
+
+        for batch_job in batch_jobs_in_progress:
+            updateBatchJobStatus(batch_job)
 
         batch_jobs = BatchJob.objects.filter(user=request.user).order_by('-updated_at')
         serializer = BatchJobSerializer(batch_jobs, many=True)
@@ -131,7 +156,7 @@ class BatchJobDetailView(APIView):
             )
 
         batch_job.delete()
-        logger.log(logging.DEBUG, f"API: {request.user.id} is Successfully deleted BatchJob.")
+        logger.log(logging.DEBUG, f"API: {request.user.email} has successfully deleted BatchJob with ID {batch_id}.")
         return Response(status=HTTP_204_NO_CONTENT)
 
 
@@ -228,19 +253,7 @@ class BatchJobConfigView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
-        if batch_job.batch_job_status in [BatchJobStatus.IN_PROGRESS]:
-            # 현재 BatchJob의 설정을 반환할 때마다 진행중인 BatchJob의 Status 갱신
-            if TaskUnit.objects.filter(batch_job=batch_job).count() > 0:
-                pending, in_progress, fail = get_task_status_counts(batch_id)
-
-                if pending > 0 or in_progress > 0:
-                    pass
-                elif fail > 0:
-                    batch_job.set_status(BatchJobStatus.FAILED)
-                    batch_job.save()
-                else:
-                    batch_job.set_status(BatchJobStatus.COMPLETED)
-                    batch_job.save()
+        updateBatchJobStatus(batch_job)
 
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
