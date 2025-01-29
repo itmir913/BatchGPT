@@ -61,7 +61,7 @@ def process_batch_job(self, batch_job_id):
     from django.core.cache import cache
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from django.shortcuts import get_object_or_404
-    from api.models import BatchJob, BatchJobStatus
+    from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.file_settings import FileSettings
     from api.utils.cache_keys import batch_status_key
     from backend import settings
@@ -76,6 +76,7 @@ def process_batch_job(self, batch_job_id):
             return
 
         batch_job = get_object_or_404(BatchJob, id=batch_job_id)
+        TaskUnit.objects.filter(batch_job=batch_job).delete()
 
         try:
             prompt = batch_job.configs.get('prompt', None)

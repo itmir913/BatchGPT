@@ -51,7 +51,9 @@ def process_task_unit(self, task_unit_id):
             )
 
             task_unit_response = TaskUnitResponse.objects.create(
+                batch_job=batch_job,
                 task_unit=task_unit,
+                task_unit_index=task_unit.unit_index,
                 task_response_status=TaskUnitStatus.COMPLETED,
                 request_data=task_unit.text_data,
                 response_data=response.model_dump_json() if isinstance(response.model_dump_json(),
@@ -70,7 +72,9 @@ def process_task_unit(self, task_unit_id):
         except Exception as e:
             # 예외 처리: 요청 실패 및 오류 발생 시 처리
             task_unit_response = TaskUnitResponse.objects.create(
+                batch_job=batch_job,
                 task_unit=task_unit,
+                task_unit_index=task_unit.unit_index,
                 task_response_status=TaskUnitStatus.FAILED,
                 request_data=task_unit.text_data,
                 error_message=str(e),
