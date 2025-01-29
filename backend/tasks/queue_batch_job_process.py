@@ -11,7 +11,7 @@ from tasks.celery import app
 logger = logging.getLogger(__name__)
 
 
-def handle_request_data(index, batch_job, request_data):
+def handle_request_data(index, batch_job, request_data, result_type):
     from api.models import TaskUnit, TaskUnitStatus
     from tasks.queue_task_units import process_task_unit
 
@@ -34,12 +34,15 @@ def process_csv(processor, prompt, batch_job, file_path):
     selected_headers = [header.strip() for header in selected_headers]
 
     for index, (result_type, data) in enumerate(processor.process(file_path), start=1):
-        if result_type == ResultType.TEXT:
-            columns, row = data
-            request_data = processor.process_text(prompt, columns=columns, row=row, selected_headers=selected_headers)
-            handle_request_data(index, batch_job, request_data)
-        else:
-            raise NotImplementedError
+
+        match result_type:
+            case ResultType.TEXT:
+                columns, row = data
+                request_data = processor.process_text(prompt, columns=columns, row=row,
+                                                      selected_headers=selected_headers)
+                handle_request_data(index, batch_job, request_data, result_type)
+            case _:
+                raise NotImplementedError
 
 
 def process_pdf(processor, prompt, batch_job, file_path):
@@ -49,11 +52,15 @@ def process_pdf(processor, prompt, batch_job, file_path):
     for index, (result_type, data) in \
             enumerate(processor.process(file_path, work_unit=work_unit, pdf_mode=pdf_mode),
                       start=1):
-        if result_type == ResultType.TEXT:
-            request_data = processor.process_text(prompt, data=data)
-            handle_request_data(index, batch_job, request_data)
-        else:
-            raise NotImplementedError
+
+        match result_type:
+            case ResultType.TEXT:
+                request_data = processor.process_text(prompt, data=data)
+                handle_request_data(index, batch_job, request_data, result_type)
+            case ResultType.IMAGE:
+                pass
+            case _:
+                raise NotImplementedError
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
