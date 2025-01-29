@@ -7,34 +7,40 @@
 
     <div class="row">
       <div class="col-md-3">
-        <ProgressIndicator :batch_id="batch_id" :currentStep="3"/>
+        <ProgressIndicator
+            :batch_id="batch_id"
+            :currentStep="3"
+        />
       </div>
 
       <div class="col-md-9">
-
-        <LoadingView :loading="formStatus.isLoading"/>
+        <LoadingView
+            :loading="formStatus.isLoading"
+        />
 
         <div v-if="formStatus.isReady" class="mb-3">
-
-          <InputPrompt
-              :disabled="batchJobStatus.isEditDisabled"
-              :prompt="previewData.prompt"
-              @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
-          />
-
           <div class="mb-3">
+            <InputPrompt
+                :disabled="batchJobStatus.isEditDisabled"
+                :prompt="previewData.prompt"
+                @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
+            />
+          </div>
+
+          <div v-if="WorkUnitSupportedFileTypes.includes(batchJob.file_type)"
+               class="mb-3">
             <WorkUnitSettings
                 :batchJob="batchJob"
                 :disabled="batchJobStatus.isEditDisabled"
-                :fileType="batchJob.file_type"
-                :isReady="formStatus.isReady"
                 :work_unit="previewData.work_unit"
                 @update:work_unit="(newWorkUnit) => (previewData.work_unit = newWorkUnit)"
             />
           </div>
 
-          <div class="mb-3">
+          <div v-if="PDFModeSupportedFileTypes.includes(batchJob.file_type)"
+               class="mb-3">
             <PDFModeSelector
+                :disabled="batchJobStatus.isEditDisabled"
                 :fileType="batchJob.file_type"
                 :selectedMode="previewData.PDF.selectedMode"
                 :supportedMode="previewData.PDF.supportedMode"
@@ -47,8 +53,6 @@
                class="mb-3 scroll-container">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
-                :fileType="batchJob.file_type"
-                :isReady="formStatus.isReady"
                 :previewData="filteredData"
                 :selectedColumns="previewData.CSV.selectedColumns"
                 @toggle-column="toggleColumnSelection"
@@ -66,7 +70,9 @@
 
           <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)
                         && filteredData && filteredData.length > 0" class="mb-3 scroll-container">
-            <TableView :data="filteredData"/>
+            <TableView
+                :data="filteredData"
+            />
           </div>
         </div>
       </div>
@@ -155,6 +161,12 @@ export default {
     },
     CSVSupportedFileTypes() {
       return CSVSupportedFileTypes;
+    },
+    PDFModeSupportedFileTypes() {
+      return PDFModeSupportedFileTypes;
+    },
+    WorkUnitSupportedFileTypes() {
+      return WorkUnitSupportedFileTypes;
     },
   },
   methods: {

@@ -1,7 +1,7 @@
 <template>
-  <div v-if="isReady && supportedFileTypes.includes(fileType)">
+  <div>
     <h2 class="mb-3">CSV Preview</h2>
-    <div>
+    <div class="mb-3">
       <div v-if="selectedColumns.length > 0">
         <div>The columns you have selected can be included in the GPT request prompt.</div>
         <div>To do so, you need to add them in the following format: {{
@@ -51,7 +51,6 @@
 </template>
 
 <script>
-import {CSVSupportedFileTypes} from '@/components/batch-job/utils/SupportedFileTypes';
 
 export default {
   props: {
@@ -60,21 +59,21 @@ export default {
       type: Array,
       default: () => []
     },
-    fileType: String,
-    isReady: Boolean,
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     filteredData() {
       // eslint-disable-next-line no-unused-vars
       return this.previewData.map(({index, ...rest}) => rest);
     },
-    supportedFileTypes() {
-      return CSVSupportedFileTypes;
-    },
   },
   methods: {
     toggleColumnSelection(column) {
-      this.$emit('toggle-column', column);
+      if (!this.disabled)
+        this.$emit('toggle-column', column);
     }
   }
 };

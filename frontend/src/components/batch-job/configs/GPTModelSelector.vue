@@ -2,11 +2,14 @@
   <div class="p-2 mb-3">
     <h2 class="mb-3">Select GPT Model</h2>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-      <div v-for="(model, key) in models" :key="'model-' + key" class="col-md-4">
-        <div :class="{'border-primary': localGptModel === key}" class="card shadow-sm clickable-card"
+      <div v-for="(model, key) in available_models" :key="'model-' + key" class="col-md-4">
+        <div :class="{'border-primary': localGptModel === key}"
+             class="card shadow-sm clickable-card"
              @click="selectModel(key)">
           <div class="card-body d-flex flex-column justify-content-center text-center">
-            <input id="model" v-model="localGptModel" :disabled="disabled" :value="key"
+            <input id="model" v-model="localGptModel"
+                   :disabled="disabled"
+                   :value="key"
                    class="form-check-input"
                    style="display: none;"
                    type="radio"/>
@@ -21,7 +24,7 @@
 <script>
 export default {
   props: {
-    models: {
+    available_models: {
       type: Object,
       required: true,
     },

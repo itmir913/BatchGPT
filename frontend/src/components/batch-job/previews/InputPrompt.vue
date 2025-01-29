@@ -3,10 +3,11 @@
     <h2 class="mb-3">Input Prompt</h2>
     <textarea
         v-model="localPrompt"
+        :disabled="disabled"
         class="form-control"
         placeholder="Enter your prompt..."
         rows="5"
-    ></textarea>
+    />
   </div>
 </template>
 

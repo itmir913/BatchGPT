@@ -39,21 +39,11 @@
             </tbody>
           </table>
 
-          <!-- Work Unit Selection Section -->
-          <div class="p-2 mb-3">
-            <WorkUnitSettings
-                :batchJob="batchJob"
-                :disabled="batchJobStatus.isEditable"
-                :isReady="formStatus.isReady"
-                :work_unit="work_unit"
-            />
-          </div>
-
           <!-- GPT Model Selection -->
           <GPTModelSelector
+              :available_models="available_models"
               :disabled="batchJobStatus.isEditable"
               :gpt_model="gpt_model"
-              :models="models"
               @update:gpt_model="gpt_model = $event"
           />
 
@@ -78,7 +68,6 @@
 
 <script>
 import ProgressIndicator from '@/components/batch-job/common/ProgressIndicator.vue';
-import WorkUnitSettings from "@/components/batch-job/previews/WorkUnitSelector.vue";
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
@@ -97,7 +86,6 @@ export default {
     LoadingView,
     ToastView,
     GPTModelSelector,
-    WorkUnitSettings,
     ProgressIndicator,
   },
   data() {
@@ -109,7 +97,7 @@ export default {
 
       work_unit: 1,
       gpt_model: DEFAULT_GPT_MODEL,
-      models: MODELS,
+      available_models: MODELS,
     };
   },
   computed: {
