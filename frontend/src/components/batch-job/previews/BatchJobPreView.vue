@@ -11,7 +11,7 @@
       </div>
 
       <div class="col-md-9">
-        <!-- 로딩 상태 -->
+
         <div v-if="formStatus.isLoading" class="text-center mb-3">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -20,14 +20,13 @@
         </div>
 
         <div v-if="formStatus.isReady" class="mb-3">
-          <!-- Input Prompt 컴포넌트 -->
+
           <InputPrompt
               :disabled="batchJobStatus.isEditDisabled"
               :prompt="previewData.prompt"
               @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
           />
 
-          <!-- 작업 단위 설정 컴포넌트 -->
           <div class="mb-3">
             <WorkUnitSettings
                 :batchJob="batchJob"
@@ -48,7 +47,6 @@
             />
           </div>
 
-
           <div class="mb-3 scroll-container">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
@@ -60,11 +58,6 @@
             />
           </div>
 
-          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
-            <TableView :data="filteredData"/>
-          </div>
-
-          <!-- 버튼들 -->
           <div class="text-end my-3">
             <button
                 class="btn btn-secondary me-3"
@@ -72,6 +65,10 @@
               Save
             </button>
             <button class="btn btn-success" @click="goToNextStep">Next</button>
+          </div>
+
+          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
+            <TableView :data="filteredData"/>
           </div>
         </div>
       </div>
