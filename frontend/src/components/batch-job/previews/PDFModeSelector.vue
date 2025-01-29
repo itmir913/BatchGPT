@@ -5,8 +5,8 @@
       <div v-for="mode in modes" :key="mode.key" class="form-check me-3">
         <input
             :id="mode.key"
-            :disabled="disabled"
             v-model="localSelectedMode"
+            :disabled="disabled"
             :value="mode.key"
             class="form-check-input"
             type="radio"

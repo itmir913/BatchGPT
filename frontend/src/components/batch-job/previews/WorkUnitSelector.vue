@@ -6,8 +6,8 @@
       <div v-for="unit in [1, 2, 4, 8]" :key="unit" class="form-check me-3">
         <input
             :id="'work_unit' + unit"
-            :disabled="disabled"
             v-model.number="localWorkUnit"
+            :disabled="disabled"
             :value="unit"
             class="form-check-input"
             type="radio"
@@ -19,8 +19,8 @@
       <div class="input-group w-25">
         <span class="input-group-text">Custom:</span>
         <input
-            :disabled="disabled"
             v-model.number="localWorkUnit"
+            :disabled="disabled"
             class="form-control"
             min="1"
             placeholder="Unit"
