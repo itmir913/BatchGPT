@@ -3,8 +3,8 @@
     <h2 class="mb-3">CSV Preview</h2>
     <div>
       <div v-if="selectedColumns.length > 0">
-        <div>The following columns will be included in the GPT request:</div>
-        <div>You can refer to them in the prompt as: {{
+        <div>The columns you have selected can be included in the GPT request prompt.</div>
+        <div>To do so, you need to add them in the following format: {{
             selectedColumns.map(col => '{' + `${col}` + '}').join(', ')
           }}
         </div>
