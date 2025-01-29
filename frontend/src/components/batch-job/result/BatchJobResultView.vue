@@ -104,11 +104,10 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
-import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {LoadingView, DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
+  components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],
