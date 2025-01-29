@@ -142,12 +142,7 @@ export async function modifyBatchJobConfigsAPI(batch_id, payload) {
 
 export async function fetchPreviewAPI(batch_id) {
     const response = await axios.get(`${API_BASE_URL}${batch_id}${API_PREVIEW_POSTFIX}`, {withCredentials: true});
-    return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
-}
-
-export async function fetchPreviewResultsAPI(batch_id, payload) {
-    const response = await axios.post(`${API_BASE_URL}${batch_id}${API_PREVIEW_POSTFIX}`, payload, {withCredentials: true});
-    return typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+    return response.data;
 }
 
 export async function checkTaskUnitStatus(batchJobId, taskUnitId) {

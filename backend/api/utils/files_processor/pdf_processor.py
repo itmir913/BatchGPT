@@ -1,6 +1,5 @@
 import base64
 import io
-import json
 import logging
 from enum import Enum
 
@@ -146,7 +145,12 @@ class PDFProcessor(FileProcessor):
                 if index >= 2:  # 3개 제시함
                     break
 
-            return json.dumps(json_data)
+            final_data = {
+                "preview_type": "pdf",
+                "data": json_data
+            }
+
+            return final_data
 
         except Exception as e:
             logger.log(logging.ERROR, f"API: Cannot read PDF preview: {str(e)}")

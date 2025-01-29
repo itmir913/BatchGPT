@@ -124,11 +124,6 @@
   font-size: 0.875rem;
 }
 
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
-}
-
 @media (max-width: 767px) {
   .card-body {
     padding: 1rem;

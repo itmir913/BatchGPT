@@ -146,10 +146,11 @@ export default {
       };
     },
     filteredData() {
-      if (!Array.isArray(this.previewData.fetchData ?? []))
+      let data = this.previewData.fetchData?.data;
+      data = typeof data === 'string' ? JSON.parse(data) : data;
+      if (!Array.isArray(data ?? []))
         return [];
-      // eslint-disable-next-line no-unused-vars
-      return this.previewData.fetchData?.map(({index, ...rest}) => rest);
+      return data;
     },
     batchJobStatus() {
       return {
@@ -210,6 +211,7 @@ export default {
       try {
         this.previewData.fetchData = [];
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
+
       } catch (error) {
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} ${error.response.data.error}`);

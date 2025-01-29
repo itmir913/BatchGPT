@@ -79,10 +79,17 @@ class CSVProcessor(FileProcessor):
         """
         try:
             # 파일을 읽어 3행만 가져오기
+            # TODO 수정
             df = pd.read_csv(file, nrows=3)
             df.columns = df.columns.str.strip()
             df = df.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
-            return df.to_json(orient='records')
+
+            final_data = {
+                "preview_type": "csv",
+                "data": df.to_json(orient='records')
+            }
+
+            return final_data
 
         except Exception as e:
             logger.log(logging.ERROR, f"API: Cannot read CSV files: {str(e)}")
