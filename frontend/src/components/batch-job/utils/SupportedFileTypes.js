@@ -3,3 +3,4 @@
 export const CSVSupportedFileTypes = ['csv'];
 export const WorkUnitSupportedFileTypes = ['pdf'];
 export const DynamicTableSupportedFileTypes = ['pdf'];
+export const PDFModeSupportedFileTypes = ['pdf'];

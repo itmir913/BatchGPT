@@ -11,7 +11,7 @@
       </div>
 
       <div class="col-md-9">
-        <!-- 로딩 상태 -->
+
         <div v-if="formStatus.isLoading" class="text-center mb-3">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -20,14 +20,13 @@
         </div>
 
         <div v-if="formStatus.isReady" class="mb-3">
-          <!-- Input Prompt 컴포넌트 -->
+
           <InputPrompt
               :disabled="batchJobStatus.isEditDisabled"
               :prompt="previewData.prompt"
               @update:prompt="(newPrompt) => (previewData.prompt = newPrompt)"
           />
 
-          <!-- 작업 단위 설정 컴포넌트 -->
           <div class="mb-3">
             <WorkUnitSettings
                 :batchJob="batchJob"
@@ -36,6 +35,15 @@
                 :isReady="formStatus.isReady"
                 :work_unit="previewData.work_unit"
                 @update:work_unit="(newWorkUnit) => (previewData.work_unit = newWorkUnit)"
+            />
+          </div>
+
+          <div class="mb-3">
+            <PDFModeSelector
+                :fileType="batchJob.file_type"
+                :selectedMode="previewData.PDF.selectedMode"
+                :supportedMode="previewData.PDF.supportedMode"
+                @update:selectedMode="(newWorkUnit) => (previewData.PDF.selectedMode = newWorkUnit)"
             />
           </div>
 
@@ -50,11 +58,6 @@
             />
           </div>
 
-          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
-            <TableView :data="filteredData"/>
-          </div>
-
-          <!-- 버튼들 -->
           <div class="text-end my-3">
             <button
                 class="btn btn-secondary me-3"
@@ -62,6 +65,10 @@
               Save
             </button>
             <button class="btn btn-success" @click="goToNextStep">Next</button>
+          </div>
+
+          <div v-if="dynamicTableSupportedFileTypes.includes(batchJob.file_type)" class="mb-3 scroll-container">
+            <TableView :data="filteredData"/>
           </div>
         </div>
       </div>
@@ -84,6 +91,7 @@ import WorkUnitSettings from "@/components/batch-job/previews/WorkUnitSelector.v
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  fetchPDFSupportedModeAPI,
   fetchPreviewAPI,
   modifyBatchJobConfigsAPI,
   shouldEditDisabled,
@@ -93,13 +101,15 @@ import ToastView from "@/components/batch-job/common/ToastView.vue";
 import {
   CSVSupportedFileTypes,
   DynamicTableSupportedFileTypes,
+  PDFModeSupportedFileTypes,
   WorkUnitSupportedFileTypes
 } from '@/components/batch-job/utils/SupportedFileTypes';
 import TableView from "@/components/batch-job/previews/FilePreviewTable.vue";
+import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
 
 export default {
   props: ['batch_id'],
-  components: {TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
+  components: {PDFModeSelector, TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
       batchJob: null,
@@ -112,6 +122,10 @@ export default {
         CSV: {
           selectedColumns: [],
         },
+        PDF: {
+          supportedMode: {},
+          selectedMode: '',
+        }
       },
     };
   },
@@ -127,7 +141,7 @@ export default {
       if (!Array.isArray(this.previewData.fetchData ?? []))
         return [];
       // eslint-disable-next-line no-unused-vars
-      return this.previewData.fetchData.map(({index, ...rest}) => rest);
+      return this.previewData.fetchData?.map(({index, ...rest}) => rest);
     },
     batchJobStatus() {
       return {
@@ -158,6 +172,11 @@ export default {
         this.previewData.work_unit = configs.work_unit ?? 1;
         this.previewData.prompt = configs.prompt ?? '';
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
+        this.previewData.PDF.selectedMode = configs.pdf_mode ?? [];
+
+        if (PDFModeSupportedFileTypes.includes(this.batchJob.file_type)) {
+          this.previewData.PDF.supportedMode = await fetchPDFSupportedModeAPI();
+        }
 
       } catch (error) {
         if (error.response) {
@@ -172,6 +191,7 @@ export default {
 
     async fetchPreviewData() {
       try {
+        this.previewData.fetchData = [];
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
       } catch (error) {
         if (error.response) {
@@ -221,6 +241,7 @@ export default {
         'work_unit': this.previewData.work_unit,
         'prompt': this.previewData.prompt,
         'selected_headers': this.previewData.CSV.selectedColumns,
+        'pdf_mode': this.previewData.PDF.selectedMode,
       };
 
       try {

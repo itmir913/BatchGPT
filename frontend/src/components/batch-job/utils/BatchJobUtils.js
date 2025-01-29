@@ -4,6 +4,7 @@ import axios from "@/configs/axios";
 export const API_BASE_URL = "/api/batch-jobs/";
 const API_CREATE_URL = `${API_BASE_URL}create/`;
 const API_FILE_TYPES_URL = `${API_BASE_URL}supported-file-types/`;
+const API_PDF_MODE_URL = `${API_BASE_URL}supported-pdf-modes/`;
 const API_UPLOAD = `/upload/`;
 const API_CONFIG_URL = "/configs/";
 const API_PREVIEW_POSTFIX = "/preview/";
@@ -97,6 +98,11 @@ export async function deleteBatchJobTitleAPI(batch_id) {
 export async function fetchFileTypesAPI() {
     const response = await axios.get(`${API_FILE_TYPES_URL}`, {withCredentials: true});
     return Object.values(response.data)
+}
+
+export async function fetchPDFSupportedModeAPI() {
+    const response = await axios.get(`${API_PDF_MODE_URL}`, {withCredentials: true});
+    return Object.values(response.data.modes)
 }
 
 export async function uploadFilesAPI(batch_id, selectedFile) {
