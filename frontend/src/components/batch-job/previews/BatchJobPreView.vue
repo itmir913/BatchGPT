@@ -39,6 +39,16 @@
             />
           </div>
 
+          <div class="mb-3">
+            <PDFModeSelector
+                :fileType="batchJob.file_type"
+                :selectedMode="previewData.PDF.selectedMode"
+                :supportedMode="previewData.PDF.supportedMode"
+                @update:selectedMode="(newWorkUnit) => (previewData.PDF.selectedMode = newWorkUnit)"
+            />
+          </div>
+
+
           <div class="mb-3 scroll-container">
             <CsvPreview
                 :disabled="batchJobStatus.isEditDisabled"
@@ -84,6 +94,7 @@ import WorkUnitSettings from "@/components/batch-job/previews/WorkUnitSelector.v
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  fetchPDFSupportedModeAPI,
   fetchPreviewAPI,
   modifyBatchJobConfigsAPI,
   shouldEditDisabled,
@@ -93,13 +104,15 @@ import ToastView from "@/components/batch-job/common/ToastView.vue";
 import {
   CSVSupportedFileTypes,
   DynamicTableSupportedFileTypes,
+  PDFModeSupportedFileTypes,
   WorkUnitSupportedFileTypes
 } from '@/components/batch-job/utils/SupportedFileTypes';
 import TableView from "@/components/batch-job/previews/FilePreviewTable.vue";
+import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
 
 export default {
   props: ['batch_id'],
-  components: {TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
+  components: {PDFModeSelector, TableView, ToastView, WorkUnitSettings, CsvPreview, ProgressIndicator, InputPrompt},
   data() {
     return {
       batchJob: null,
@@ -112,6 +125,10 @@ export default {
         CSV: {
           selectedColumns: [],
         },
+        PDF: {
+          supportedMode: {},
+          selectedMode: '',
+        }
       },
     };
   },
@@ -127,7 +144,7 @@ export default {
       if (!Array.isArray(this.previewData.fetchData ?? []))
         return [];
       // eslint-disable-next-line no-unused-vars
-      return this.previewData.fetchData.map(({index, ...rest}) => rest);
+      return this.previewData.fetchData?.map(({index, ...rest}) => rest);
     },
     batchJobStatus() {
       return {
@@ -158,6 +175,11 @@ export default {
         this.previewData.work_unit = configs.work_unit ?? 1;
         this.previewData.prompt = configs.prompt ?? '';
         this.previewData.CSV.selectedColumns = configs.selected_headers ?? [];
+        this.previewData.PDF.selectedMode = configs.pdf_mode ?? [];
+
+        if (PDFModeSupportedFileTypes.includes(this.batchJob.file_type)) {
+          this.previewData.PDF.supportedMode = await fetchPDFSupportedModeAPI();
+        }
 
       } catch (error) {
         if (error.response) {
@@ -172,6 +194,7 @@ export default {
 
     async fetchPreviewData() {
       try {
+        this.previewData.fetchData = [];
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
       } catch (error) {
         if (error.response) {
@@ -221,6 +244,7 @@ export default {
         'work_unit': this.previewData.work_unit,
         'prompt': this.previewData.prompt,
         'selected_headers': this.previewData.CSV.selectedColumns,
+        'pdf_mode': this.previewData.PDF.selectedMode,
       };
 
       try {

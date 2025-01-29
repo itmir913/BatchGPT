@@ -11,11 +11,31 @@ from api.utils.files_processor.file_processor import FileProcessor, ResultType
 logger = logging.getLogger(__name__)
 
 
-class ProcessMode(Enum):
-    TEXT = "text"
+class PDFProcessMode(Enum):
     # FILE = "file"
-    # IMAGE = "image"
     # IMAGE_OCR = "image_ocr"
+    TEXT = "text"
+    IMAGE = "image"
+
+    # 각 모드의 설명을 매핑
+    @classmethod
+    def get_descriptions(cls):
+        return {
+            cls.TEXT.value: "Extract text from the PDF.",
+            cls.IMAGE.value: "Extract images from the PDF."
+        }
+
+    @classmethod
+    def from_string(cls, value: str):
+        mode_map = {mode.value: mode for mode in cls}
+        try:
+            return mode_map[value]
+        except KeyError:
+            raise NotImplementedError(f"The given PDF mode '{value}' is not supported in the available modes.")
+
+    @classmethod
+    def __contains__(cls, item):
+        return item in cls._value2member_map_
 
 
 class PDFProcessor(FileProcessor):
@@ -23,18 +43,18 @@ class PDFProcessor(FileProcessor):
     def process(self, file, *args, **kwargs):
         try:
             work_unit = kwargs.get('work_unit', 1)
-            pdf_mode = kwargs.get('pdf_mode', ProcessMode.TEXT)
+            pdf_mode = kwargs.get('pdf_mode')
 
-            if pdf_mode not in ProcessMode:
+            if pdf_mode not in PDFProcessMode:
                 raise NotImplementedError(f"Not Implemented PDF mode: {pdf_mode}")
 
             mode_actions = {
-                ProcessMode.TEXT: self._extract_text_from_pdf,
+                PDFProcessMode.TEXT: self._extract_text_from_pdf,
             }
 
             action = mode_actions.get(pdf_mode)
             if not action:
-                raise ValueError(f"Unexpected mode: {pdf_mode}")
+                raise NotImplementedError(f"The given PDF mode '{pdf_mode}' is not supported yet.")
 
             total_pages = self.get_size(file)
             for start_index in range(0, total_pages, work_unit):
@@ -81,7 +101,8 @@ class PDFProcessor(FileProcessor):
     def get_preview(self, file, *args, **kwargs):
         try:
             work_unit = kwargs.get('work_unit', 1)
-            pdf_mode = kwargs.get('pdf_mode', ProcessMode.TEXT)
+            pdf_mode = kwargs.get('pdf_mode')
+            logger.error(pdf_mode)
 
             json_data = []
             for index, (_, result) in enumerate(self.process(file, work_unit=work_unit, pdf_mode=pdf_mode)):

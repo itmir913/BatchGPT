@@ -19,7 +19,7 @@ from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
 from api.utils.file_settings import FileSettings
-from api.utils.files_processor.pdf_processor import ProcessMode
+from api.utils.files_processor.pdf_processor import PDFProcessMode
 from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts
 from backend import settings
@@ -307,7 +307,7 @@ class BatchJobPreView(APIView):
 
         try:
             work_unit = batch_job.configs.get('work_unit', 1)
-            pdf_mode = batch_job.configs.get('pdf_mode', ProcessMode.TEXT)
+            pdf_mode = PDFProcessMode.from_string(batch_job.configs.get('pdf_mode'))
 
             file = batch_job.file
             file_path = os.path.join(settings.BASE_DIR, file.path)
@@ -319,11 +319,9 @@ class BatchJobPreView(APIView):
                        f"API: The file preview was successfully returned for the user {request.user.email}.")
             return JsonResponse(preview, safe=False, status=HTTP_200_OK)
         except Exception as e:
-            logger.log(logging.ERROR, f"API: The preview cannot be fetched."
-                                      f"An error occurred while processing the file on the server: {str(e)}")
+            logger.log(logging.ERROR, f"API: The preview cannot be fetched: {str(e)}")
             return Response(
-                {"error": f"The preview cannot be fetched."
-                          f"An error occurred while processing the file on the server: {str(e)}"},
+                {"error": f"The preview cannot be fetched: {str(e)}"},
                 status=HTTP_400_BAD_REQUEST,
             )
 
@@ -338,6 +336,20 @@ class BatchJobSupportFileType(APIView):
         :return:
         """
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
+
+
+class BatchJobSupportPDFMode(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        클라이언트 측에서 PDF Mode를 요청하면 반환하는 기능
+        :param request:
+        :return:
+        """
+        descriptions = PDFProcessMode.get_descriptions()
+        modes = [{"key": mode.value, "description": descriptions[mode.value]} for mode in PDFProcessMode]
+        return JsonResponse({"modes": modes})
 
 
 class TaskUnitPagination(PageNumberPagination):
