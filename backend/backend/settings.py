@@ -94,11 +94,21 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-# 현재 SQLite 사용, 운영 환경에서는 PostgreSQL이나 MySQL로 변경 가능
+POSTGRES_DB = os.getenv("POSTGRES_DB", "batchgpt_db")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "batchgpt_user")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "batchgpt_password")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "db")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": POSTGRES_DB,
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
+        "HOST": POSTGRES_HOST,
+        "PORT": POSTGRES_PORT,
+        "CONN_MAX_AGE": 900,  # 15 minutes
     }
 }
 
