@@ -53,6 +53,7 @@ export default {
 <style scoped>
 .table td {
   padding: 0.5rem;
+  vertical-align: top;
 }
 
 .text-content {

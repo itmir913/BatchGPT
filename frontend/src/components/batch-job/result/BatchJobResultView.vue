@@ -62,8 +62,22 @@
                 {{ task.task_unit_status }}
               </span>
               </td>
-              <td>{{ parseResponseData(task.request_data) }}</td>
-              <td>{{ parseResponseData(task.response_data) }}</td>
+              <td>
+                <div class="text-content badge bg-white text-dark rounded-pill">
+                  {{ truncateText(task.request_data.prompt) }}
+                </div>
+                <div v-if="task.request_data.has_files">
+                  <div class="row g-4 px-3 py-3">
+                    <div v-for="(item, idx) in task.request_data.files_data" :key="idx"
+                         class="col-md-4 col-sm-6 col-12">
+                      <img :src="'data:image/jpeg;base64,' + item" alt="Image Preview" class="img-fluid">
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-content">{{ task.response_data }}</div>
+              </td>
             </tr>
             </tbody>
           </table>
@@ -221,9 +235,6 @@ export default {
         this.loadingState.loading = false;
       }
     },
-    parseResponseData(responseData) {
-      return responseData;
-    },
     async handleRun() {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
@@ -272,6 +283,10 @@ export default {
         await this.fetchTasks();
       }
     },
+    truncateText(text) {
+      const maxLength = 500;
+      return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+    }
   },
   async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
@@ -321,5 +336,26 @@ export default {
 
 .text-muted {
   font-size: 1.2rem;
+}
+</style>
+
+<style scoped>
+.table td {
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+.text-content {
+  text-align: justify;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 </style>
