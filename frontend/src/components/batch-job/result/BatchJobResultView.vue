@@ -63,7 +63,7 @@
               </span>
               </td>
               <td>
-                <div class="text-content badge bg-white text-dark rounded-pill">
+                <div class="text-content badge bg-white text-dark">
                   {{ truncateText(task.request_data.prompt) }}
                 </div>
                 <div v-if="task.request_data.has_files">
