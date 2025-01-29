@@ -230,12 +230,15 @@ class TaskUnit(TimestampedModel):
         verbose_name="Batch Job"
     )
 
-    unit_index = models.IntegerField(verbose_name="Unit Index")  # 작업 단위 순서 (CSV 행 번호 or PDF 페이지 묶음)
+    unit_index = models.PositiveIntegerField(
+        verbose_name="Unit Index"
+    )
 
     text_data = models.TextField(
         null=True,
         blank=True,
-        verbose_name="Text Data")
+        verbose_name="Text Data"
+    )
 
     file_data = models.FileField(
         upload_to=FileSettings.get_task_unit_path,
@@ -256,7 +259,8 @@ class TaskUnit(TimestampedModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='+')
+        related_name='+'
+    )
 
     class Meta:
         db_table = 'task_unit'
@@ -302,6 +306,10 @@ class TaskUnitResponse(TimestampedModel):
         verbose_name="Task Unit"
     )
 
+    task_unit_index = models.PositiveIntegerField(
+        verbose_name="Task Unit Index"
+    )
+
     request_data = models.TextField(
         null=True,
         blank=True,
@@ -344,6 +352,7 @@ class TaskUnitResponse(TimestampedModel):
         indexes = [
             models.Index(fields=['batch_job']),  # 배치 작업별 응답 조회 최적화
             models.Index(fields=['task_unit']),  # 작업 단위별 응답 조회 최적화
+            models.Index(fields=['task_unit_index']),  # 작업 순서별 정렬 최적화
             models.Index(fields=['task_response_status']),  # 상태별 조회 최적화
         ]
 
