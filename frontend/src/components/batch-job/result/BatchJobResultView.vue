@@ -68,16 +68,17 @@
             </tbody>
           </table>
 
-          <!-- 로딩 상태 표시 -->
-          <div v-if="formStatus.isLoading" class="text-center my-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
+          <div>
+            <!-- 로딩 상태 표시 -->
+            <div v-if="formStatus.isLoading" class="text-center my-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
             </div>
-          </div>
-
-          <!-- 더 이상 데이터가 없을 때 -->
-          <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
-            <p class="text-muted">No more data</p>
+            <!-- 더 이상 데이터가 없을 때 -->
+            <div v-if="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
+              <p class="text-muted">No more data</p>
+            </div>
           </div>
         </div>
       </div>
@@ -103,10 +104,11 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
+  components: {LoadingView, DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],
@@ -162,6 +164,7 @@ export default {
 
     async fetchBatchJob() {
       try {
+        this.loadingState.loading = true;
         this.clearMessages();
 
         const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);

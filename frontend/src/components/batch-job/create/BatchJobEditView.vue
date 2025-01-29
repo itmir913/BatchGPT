@@ -12,11 +12,7 @@
 
       <div class="col-md-9">
         <!-- 로딩 상태 -->
-        <div v-if="loading" class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
+        <LoadingView :loading="loading"/>
 
         <!-- 배치 작업 폼 -->
         <h2 class="mb-3">Modify Batch Job</h2>
@@ -52,9 +48,11 @@ import {
   SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   components: {
+    LoadingView,
     ToastView,
     BatchJobInputFields,
     ProgressIndicator,

@@ -12,12 +12,7 @@
 
       <div class="col-md-9">
         <!-- 로딩 상태 -->
-        <div v-if="formStatus.isLoading" class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p>{{ formStatus.loadingMessage }}</p>
-        </div>
+        <LoadingView :loading="formStatus.isLoading"/>
 
         <div v-if="formStatus.isReady" class="p-2 mb-3">
           <h2 class="mb-3">Uploaded File</h2>
@@ -94,10 +89,12 @@ import {
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 import GPTModelSelector from "@/components/batch-job/configs/GPTModelSelector.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ['batch_id'],
   components: {
+    LoadingView,
     ToastView,
     GPTModelSelector,
     WorkUnitSettings,

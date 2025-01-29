@@ -12,12 +12,7 @@
 
       <div class="col-md-9">
         <!-- 로딩 상태 -->
-        <div v-if="formStatus.isLoading" class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p>{{ formStatus.loadingMessage }}</p>
-        </div>
+        <LoadingView :loading="formStatus.isLoading"/>
 
         <!-- 배치 작업 폼 -->
         <h2 class="mb-3">Create a New Batch Job</h2>
@@ -49,6 +44,7 @@ import ProgressIndicator from '@/components/batch-job/common/ProgressIndicator.v
 import BatchJobInputFields from '@/components/batch-job/create/InputBatchJobTitleFields.vue';
 import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",
@@ -59,7 +55,7 @@ const ERROR_MESSAGES = {
 };
 
 export default {
-  components: {ToastView, ProgressIndicator, BatchJobInputFields},
+  components: {LoadingView, ToastView, ProgressIndicator, BatchJobInputFields},
   data() {
     return {
       batch_id: 0,
