@@ -13,16 +13,17 @@ logger = logging.getLogger(__name__)
 
 class PDFProcessMode(Enum):
     # FILE = "file"
-    # IMAGE_OCR = "image_ocr"
     TEXT = "text"
     IMAGE = "image"
+    IMAGE_OCR = "image_ocr"
 
     # 각 모드의 설명을 매핑
     @classmethod
     def get_descriptions(cls):
         return {
             cls.TEXT.value: "Extract text from the PDF.",
-            cls.IMAGE.value: "Extract images from the PDF."
+            cls.IMAGE.value: "Extract images from the PDF.",
+            cls.IMAGE_OCR.value: "Extract text from the PDF using OCR.",
         }
 
     @classmethod
