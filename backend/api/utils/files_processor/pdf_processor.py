@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import logging
@@ -53,6 +54,7 @@ class PDFProcessor(FileProcessor):
 
             mode_actions = {
                 PDFProcessMode.TEXT: self._extract_text_from_pdf,
+                PDFProcessMode.IMAGE: self._extract_images_from_pdf,
             }
 
             action = mode_actions.get(pdf_mode)
@@ -73,11 +75,14 @@ class PDFProcessor(FileProcessor):
         data = kwargs.get('data')
         return f'{prompt}\n\n{data}'
 
-    def _extract_text_from_pdf(self, file, start_page, end_page):
+    def _extract_text_from_pdf(self, file, start_page=None, end_page=None):
+        if start_page is None or end_page is None:
+            logger.log(logging.ERROR, f"API: start_page and end_page must be provided")
+            raise ValueError("start_page and end_page must be provided")
+
         doc = fitz.open(file)
         all_text = []
 
-        # Ensure the page range is within valid bounds
         start_page = max(0, start_page)
         end_page = min(len(doc) - 1, end_page)
 
@@ -87,6 +92,29 @@ class PDFProcessor(FileProcessor):
 
         doc.close()
         return ResultType.TEXT, '\n'.join(all_text)
+
+    def _extract_images_from_pdf(self, file, start_page=None, end_page=None, dpi=72):
+        if start_page is None or end_page is None:
+            logger.log(logging.ERROR, f"API: start_page and end_page must be provided")
+            raise ValueError("start_page and end_page must be provided")
+
+        doc = fitz.open(file)
+        images_base64 = []
+
+        start_page = max(0, start_page)
+        end_page = min(len(doc) - 1, end_page)
+
+        for page_num in range(start_page, end_page + 1):
+            page = doc.load_page(page_num)
+
+            zoom_matrix = fitz.Matrix(dpi / 72, dpi / 72)
+            pix = page.get_pixmap(matrix=zoom_matrix)
+
+            img_base64 = base64.b64encode(pix.tobytes(output="jpeg")).decode('utf-8')
+            images_base64.append(img_base64)
+
+        doc.close()
+        return ResultType.IMAGE, images_base64
 
     def get_size(self, file):
         try:
@@ -107,11 +135,13 @@ class PDFProcessor(FileProcessor):
             pdf_mode = PDFProcessMode.from_string(kwargs.get('pdf_mode'))
 
             json_data = []
-            for index, (_, result) in enumerate(self.process(file, work_unit=work_unit, pdf_mode=pdf_mode)):
+            for index, (result_type, result) in enumerate(self.process(file, work_unit=work_unit, pdf_mode=pdf_mode)):
                 data = {
                     "index": index,
-                    "preview": result,  # TODO Result Type에 맞도록 수정해야 함.
+                    "preview": result,
+                    "type": result_type,
                 }
+
                 json_data.append(data)
                 if index >= 2:  # 3개 제시함
                     break
