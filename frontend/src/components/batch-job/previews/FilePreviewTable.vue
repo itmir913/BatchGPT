@@ -1,28 +1,26 @@
 <template>
   <div>
     <h2 class="mb-3">Files Preview</h2>
-    <table v-if="filteredData.length > 0" class="table table-bordered table-hover align-middle"
-           style="table-layout: fixed;">
+    <table v-if="filteredData.length > 0" class="table table-bordered table-hover align-middle">
       <thead class="table-light">
       <tr>
-        <th v-if="filteredData.length > 0" class="text-center text-primary" style="cursor: pointer;">
+        <th class="text-center text-primary" style="cursor: pointer;">
           Preview
         </th>
       </tr>
       </thead>
       <tbody>
       <tr v-for="(row, rowIndex) in filteredData" :key="'row-' + rowIndex">
-        <td style="cursor: pointer; white-space: pre-wrap; word-wrap: break-word;">
+        <td style="cursor: pointer;">
           <template v-if="row.type === 'image'">
-            <div class="row g-4 p-3">
-              <!-- 이미지들을 4개씩 한 행에 배치 -->
-              <div v-for="(item, idx) in row.preview" :key="'img-' + idx" class="col-md-4 col-sm-6 col-12">
+            <div class="row g-4 px-3 py-3">
+              <div v-for="(item, idx) in row.preview" :key="'img-' + idx" class="col-md-3 col-sm-6 col-12">
                 <img :src="'data:image/jpeg;base64,' + item" alt="Image Preview" class="img-fluid">
               </div>
             </div>
           </template>
           <template v-else-if="row.type === 'text'">
-            {{ row.preview }}
+            <div class="text-content">{{ truncateText(row.preview) }}</div>
           </template>
         </td>
       </tr>
@@ -42,14 +40,25 @@ export default {
         return {preview: row.preview, type: row.type};
       });
     }
-  }
+  },
+  methods: {
+    truncateText(text) {
+      const maxLength = 500;
+      return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+    }
+  },
 };
 </script>
 
-<style>
+<style scoped>
 .table td {
-  white-space: pre-wrap;
+  padding: 0.5rem;
+}
+
+.text-content {
+  text-align: justify;
   word-wrap: break-word;
+  white-space: normal;
 }
 
 img {
