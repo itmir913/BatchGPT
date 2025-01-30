@@ -110,7 +110,7 @@ import {
 } from '@/components/batch-job/utils/SupportedFileTypes';
 import FilePreviewTableView from "@/components/batch-job/previews/FilePreviewTable.vue";
 import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
-import LoadingView from "@/components/batch-job/common/LoadingView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 
 export default {
   props: ['batch_id'],

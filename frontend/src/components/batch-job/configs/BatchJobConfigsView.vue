@@ -78,7 +78,7 @@ import {
 import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 import GPTModelSelector from "@/components/batch-job/configs/GPTModelSelector.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
-import LoadingView from "@/components/batch-job/common/LoadingView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 
 export default {
   props: ['batch_id'],

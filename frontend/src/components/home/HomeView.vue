@@ -130,7 +130,7 @@
 <script>
 import {ERROR_MESSAGES, fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
-import LoadingView from "@/components/batch-job/common/LoadingView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 
 export default {

@@ -48,7 +48,7 @@ import {
   SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
-import LoadingView from "@/components/batch-job/common/LoadingView.vue";
+import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 
 export default {
   components: {
