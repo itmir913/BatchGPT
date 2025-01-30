@@ -118,6 +118,7 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
+import debounce from "@popperjs/core/lib/utils/debounce";
 
 export default {
   props: ["batch_id"],
@@ -198,7 +199,7 @@ export default {
 
     async fetchTasks() {
       if (!this.hasMore) return;
-
+      if (this.loadingState.loading) return;
       this.loadingState.loading = true;
 
       try {
@@ -272,16 +273,19 @@ export default {
         console.log('Batch job failed.');
       }
     },
-    async onScroll() {
-      const bottom = this.$el.getBoundingClientRect().bottom;
-      const windowHeight = window.innerHeight;
+    methods: {
+      onScroll: debounce(async function () {
+        if (!this.tasks || this.tasks?.length === 0 || this.loadingState.loading || !this.hasMore) {
+          return;
+        }
 
-      // 스크롤이 끝에 가까워지면 데이터를 가져옵니다.
-      if (bottom <= windowHeight
-          && this.tasks?.length > 0 && this.hasMore
-          && !this.loadingState.loading) {
-        await this.fetchTasks();
-      }
+        const bottom = this.$el.getBoundingClientRect().bottom;
+        const windowHeight = window.innerHeight;
+
+        if (bottom <= windowHeight + 50) {
+          await this.fetchTasks();
+        }
+      }, 1000),
     },
     truncateText(text) {
       const maxLength = 500;
