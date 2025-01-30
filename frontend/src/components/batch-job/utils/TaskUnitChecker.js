@@ -37,52 +37,54 @@ class TaskUnitChecker {
                 const taskUnit = this.taskQueue.shift();
                 this.inProgress.add(taskUnit.taskUnitId);
                 await this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts);
-            } else {
-                await this.delay(100);
             }
         }
     }
 
     async checkTaskUnitStatus(batchJobId, taskUnitId, attempts) {
-        try {
-            const randomDelay = Math.floor(Math.random() * (RANDOM_DELAY_RANGE.max - RANDOM_DELAY_RANGE.min + 1)) + RANDOM_DELAY_RANGE.min;
-            await this.delay(randomDelay);
+        const tryChecking = async () => {
+            try {
+                const randomDelay = Math.floor(Math.random() * (RANDOM_DELAY_RANGE.max - RANDOM_DELAY_RANGE.min + 1)) + RANDOM_DELAY_RANGE.min;
+                await this.delay(randomDelay);
 
-            const controller = new AbortController();
-            this.controllers.set(taskUnitId, controller);
+                const controller = new AbortController();
+                this.controllers.set(taskUnitId, controller);
 
-            const response = await checkTaskUnitStatus(batchJobId, taskUnitId, {signal: controller.signal});
-            const status = response.data.status;
-            const result = response.data.response_data ?? "";
+                const response = await checkTaskUnitStatus(batchJobId, taskUnitId, {signal: controller.signal});
+                const status = response.data.status;
+                const result = response.data.response_data ?? "";
 
-            if (this.onCompleteCallback) {
-                this.onCompleteCallback(taskUnitId, status, result);
-            }
-
-            if (status === 'Completed') {
-                console.log(`TaskUnit ${taskUnitId} has been completed.`);
-                this.stopCheckingTaskUnit(taskUnitId);
-            }
-
-        } catch (error) {
-            if (error.response && error.response.status === 404) {
-                attempts++;
-                await this.delay(DELAY_AFTER_FAILURE);
-
-                if (attempts < MAX_RETRIES) {
-                    this.taskQueue.unshift({batchJobId, taskUnitId, attempts}); // 큐의 맨 앞에 추가
-                    console.log(`TaskUnit ${taskUnitId} not found. Retrying... Attempt ${attempts}/${MAX_RETRIES}`);
-                } else {
-                    this.taskQueue.push({batchJobId, taskUnitId, attempts}); // 큐의 맨 뒤에 추가
-                    console.log(`TaskUnit ${taskUnitId} failed after ${MAX_RETRIES} retries.`);
+                if (this.onCompleteCallback) {
+                    this.onCompleteCallback(taskUnitId, status, result);
                 }
-            } else {
-                console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
+
+                if (status === 'Completed') {
+                    console.log(`TaskUnit ${taskUnitId} has been completed.`);
+                    this.stopCheckingTaskUnit(taskUnitId);
+                }
+
+            } catch (error) {
+                if (error.response && error.response.status === 404) {
+                    attempts++;
+                    await this.delay(DELAY_AFTER_FAILURE);
+
+                    if (attempts < MAX_RETRIES) {
+                        this.taskQueue.unshift({batchJobId, taskUnitId, attempts}); // 큐의 맨 앞에 추가
+                        console.log(`TaskUnit ${taskUnitId} not found. Retrying... Attempt ${attempts}/${MAX_RETRIES}`);
+                    } else {
+                        this.taskQueue.push({batchJobId, taskUnitId, attempts}); // 큐의 맨 뒤에 추가
+                        console.log(`TaskUnit ${taskUnitId} failed after ${MAX_RETRIES} retries.`);
+                    }
+                } else {
+                    console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
+                }
+            } finally {
+                this.controllers.delete(taskUnitId);
+                this.inProgress.delete(taskUnitId);
             }
-        } finally {
-            this.controllers.delete(taskUnitId);
-            this.inProgress.delete(taskUnitId);
         }
+
+        await tryChecking();
     }
 
     delay(ms) {
