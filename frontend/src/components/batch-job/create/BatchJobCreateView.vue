@@ -45,6 +45,7 @@ import BatchJobInputFields from '@/components/batch-job/create/InputBatchJobTitl
 import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 const SUCCESS_MESSAGES = {
   createBatchJob: "Batch Job created successfully!",
@@ -112,11 +113,8 @@ export default {
           this.$router.push(`/batch-jobs/${this.batch_id}/`);
         }, 1000);
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.createBatchJob} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.createBatchJob} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.createBatchJob}`);
+        this.handleMessages("error", errorMessage);
         this.loadingState.submitted = false;
       }
     },

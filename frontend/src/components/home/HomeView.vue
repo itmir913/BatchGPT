@@ -132,6 +132,7 @@ import {ERROR_MESSAGES, fetchBatchJobListAPI} from "@/components/batch-job/utils
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   components: {ToastView, LoadingView},
@@ -204,11 +205,8 @@ export default {
         this.loadingState.fetchBatchJobLoading = true;
         this.batchJobs = await fetchBatchJobListAPI();
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobList} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobList} ${error}`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobList}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.fetchBatchJobLoading = false;
       }

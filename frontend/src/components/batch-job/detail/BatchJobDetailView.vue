@@ -162,6 +162,7 @@ import {
 } from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   props: ["batch_id"],
@@ -203,11 +204,8 @@ export default {
         this.state.isLoading = true;
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobDetail}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.state.isLoading = false;
       }
@@ -217,11 +215,8 @@ export default {
       try {
         this.allowedFileTypes = await fetchFileTypesAPI();
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fileTypes} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fileTypes} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fileTypes}`);
+        this.handleMessages("error", errorMessage);
       }
     },
 
@@ -294,11 +289,8 @@ export default {
         this.batchJob = await uploadFilesAPI(this.batch_id, filesToUpload);
         this.handleMessages("success", SUCCESS_MESSAGES.uploadFile);
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.uploadFile} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.uploadFile}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.state.isUploading = false;
         this.resetFileInputHelper();
@@ -322,11 +314,8 @@ export default {
         alert(SUCCESS_MESSAGES.deleteBatchJob);
         this.$router.push(`/home`);
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.deleteBatchJob} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.deleteBatchJob} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.deleteBatchJob}`);
+        this.handleMessages("error", errorMessage);
       }
     },
 
