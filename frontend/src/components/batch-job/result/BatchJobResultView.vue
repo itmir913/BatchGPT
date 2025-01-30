@@ -118,6 +118,7 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
+import {debounce} from 'lodash';
 
 export default {
   props: ["batch_id"],
@@ -273,8 +274,9 @@ export default {
         console.log('Batch job failed.');
       }
     },
-    async onScroll() {
-      if (!this.tasks || this.tasks?.length === 0 || this.loadingState.loading || !this.hasMore) {
+
+    onScroll: debounce(async function () {
+      if (!this.tasks || this.tasks.length === 0 || this.loadingState.loading || !this.hasMore) {
         return;
       }
 
@@ -284,7 +286,8 @@ export default {
       if (bottom <= windowHeight + 50) {
         await this.fetchTasks();
       }
-    },
+    }, 1000), // 1000ms 후 실행되도록 설정
+
     truncateText(text) {
       const maxLength = 500;
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
