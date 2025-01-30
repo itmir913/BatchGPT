@@ -4,7 +4,7 @@ from api import views as batch_jobs
 
 urlpatterns = [
     path('', batch_jobs.UserBatchJobsView.as_view(), name='list-batch-jobs'),
-    path('create/', batch_jobs.UserBatchJobsView.as_view(), name='batch-job-create'),
+    path('create/', batch_jobs.CreateBatchJobsView.as_view(), name='batch-job-create'),
     path('supported-file-types/', batch_jobs.BatchJobSupportFileType.as_view(), name='batch-job-support-file-type'),
     path('supported-pdf-modes/', batch_jobs.BatchJobSupportPDFMode.as_view(), name='batch-job-support-pdf-mode'),
 
