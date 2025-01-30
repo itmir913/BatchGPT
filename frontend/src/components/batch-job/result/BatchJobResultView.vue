@@ -189,7 +189,7 @@ export default {
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
         } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error}`);
         }
       } finally {
         this.loadingState.loading = false;
@@ -202,7 +202,8 @@ export default {
 
       try {
         this.loadingState.loading = true;
-        const {tasks, nextPage, hasMore} = await fetchTasksAPI(fetchTaskAPIUrl(this.batch_id, this.nextPage));
+        const url = fetchTaskAPIUrl(this.batch_id, this.nextPage);
+        const {tasks, nextPage, hasMore} = await fetchTasksAPI(url);
 
         this.tasks.push(...tasks);
         this.nextPage = nextPage;
@@ -229,7 +230,7 @@ export default {
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error.response.data.error}`);
         } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} No response received.`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error}`);
         }
       } finally {
         this.loadingState.loading = false;
@@ -256,7 +257,7 @@ export default {
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error.response.data.error}`);
         } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} No response received.`);
+          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error}`);
         }
       }
     },
@@ -299,6 +300,7 @@ export default {
     }
   },
   beforeUnmount() {
+    this.taskUnits.taskUnitChecker.stopAllChecking();
     window.removeEventListener('scroll', this.onScroll);
   }
 };

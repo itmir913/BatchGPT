@@ -1,11 +1,18 @@
 import {checkTaskUnitStatus} from "@/components/batch-job/utils/BatchJobUtils";
 
-class TaskUnitChecker {
+const MAX_CONCURRENT_TASKS = 5;  // 동시에 서버로 요청할 Task 상태 조회 개수
+const MAX_RETRIES = 10;  // 10번의 시도 후 큐의 맨 뒤로 들어감
+const MAX_CHECK_TIME = 5 * 60 * 1000; // 5분 뒤 모든 상태 조회 요청 중지
+const RANDOM_DELAY_RANGE = {min: 150, max: 1000}; // 동시 요청 작업 간의 랜덤 딜레이
+const DELAY_AFTER_FAILURE = 1000;  // 상태 조회 실패(404) 후 다음 시도까지 딜레이
 
+class TaskUnitChecker {
     constructor() {
-        this.intervals = new Map(); // task_unit_id별 interval ID 저장
-        this.controllers = new Map(); // task_unit_id별 AbortController 저장
+        this.controllers = new Map();
         this.onCompleteCallback = null;
+        this.taskQueue = [];
+        this.inProgress = new Set();
+        this.timeoutId = null;
     }
 
     setOnCompleteCallback(callback) {
@@ -14,68 +21,103 @@ class TaskUnitChecker {
 
     startCheckingTaskUnits(batchJobId, taskUnitIds) {
         taskUnitIds.forEach(taskUnitId => {
+            this.taskQueue.push({batchJobId, taskUnitId, attempts: 1});
+        });
+
+        this.processTasks();
+
+        this.timeoutId = setTimeout(() => {
+            this.stopAllChecking();
+        }, MAX_CHECK_TIME);
+    }
+
+    async processTasks() {
+        while (this.taskQueue.length > 0) {
+            if (this.inProgress.size < MAX_CONCURRENT_TASKS) {
+                const taskUnit = this.taskQueue.shift();
+                this.inProgress.add(taskUnit.taskUnitId);
+                await this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts);
+            } else {
+                await this.delay(100);
+            }
+        }
+    }
+
+    async checkTaskUnitStatus(batchJobId, taskUnitId, attempts) {
+        try {
+            const randomDelay = Math.floor(Math.random() * (RANDOM_DELAY_RANGE.max - RANDOM_DELAY_RANGE.min + 1)) + RANDOM_DELAY_RANGE.min;
+            await this.delay(randomDelay);
+
             const controller = new AbortController();
             this.controllers.set(taskUnitId, controller);
 
-            const randomInterval = Math.floor(Math.random() * 4000) + 1000; // 1초에서 5초 사이
-            const intervalId = setInterval(async () => {
-                try {
-                    const response = await checkTaskUnitStatus(batchJobId, taskUnitId);
-                    const status = response.data.status;
-                    const result = response.data.response_data ?? "";
+            const response = await checkTaskUnitStatus(batchJobId, taskUnitId, {signal: controller.signal});
+            const status = response.data.status;
+            const result = response.data.response_data ?? "";
 
-                    if (this.onCompleteCallback) {
-                        this.onCompleteCallback(taskUnitId, status, result);
-                    }
+            if (this.onCompleteCallback) {
+                this.onCompleteCallback(taskUnitId, status, result);
+            }
 
-                    // COMPLETED 상태일 경우 interval 중지
-                    if (status === 'Completed') {
-                        console.log(`TaskUnit ${taskUnitId} completed.`);
-                        this.stopCheckingTaskUnit(taskUnitId);
-                    }
+            if (status === 'Completed') {
+                console.log(`TaskUnit ${taskUnitId} has been completed.`);
+                this.stopCheckingTaskUnit(taskUnitId);
+            }
 
-                } catch (error) {
-                    if (error.response && error.response.status === 404) {
-                        // 404 오류일 경우 아무 동작도 하지 않거나, 특정 동작 수행
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                attempts++;
+                await this.delay(DELAY_AFTER_FAILURE);
 
-                    }
+                if (attempts < MAX_RETRIES) {
+                    this.taskQueue.unshift({batchJobId, taskUnitId, attempts}); // 큐의 맨 앞에 추가
+                    console.log(`TaskUnit ${taskUnitId} not found. Retrying... Attempt ${attempts}/${MAX_RETRIES}`);
+                } else {
+                    this.taskQueue.push({batchJobId, taskUnitId, attempts}); // 큐의 맨 뒤에 추가
+                    console.log(`TaskUnit ${taskUnitId} failed after ${MAX_RETRIES} retries.`);
                 }
-            }, randomInterval);
+            } else {
+                console.error(`Error checking TaskUnit ${taskUnitId}:`, error);
+            }
+        } finally {
+            this.controllers.delete(taskUnitId);
+            this.inProgress.delete(taskUnitId);
+        }
+    }
 
-            this.intervals.set(taskUnitId, intervalId);
-        });
-
-        // 5분 후 모든 요청 자동 중지
-        setTimeout(() => {
-            this.stopAllChecking();
-        }, 5 * 60 * 1000);
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     stopCheckingTaskUnit(taskUnitId) {
-        if (this.intervals.has(taskUnitId)) {
-            clearInterval(this.intervals.get(taskUnitId));
-            this.intervals.delete(taskUnitId);
-        }
         if (this.controllers.has(taskUnitId)) {
-            this.controllers.get(taskUnitId).abort();
+            const controller = this.controllers.get(taskUnitId);
+            controller.abort();
             this.controllers.delete(taskUnitId);
+            console.log(`TaskUnit ${taskUnitId} stopped.`);
         }
     }
 
     stopAllChecking() {
-        // this.intervals는 Map 객체이므로, forEach의 콜백 함수는 (value, key) 순으로 값을 전달
-        // eslint-disable-next-line no-unused-vars
-        this.intervals.forEach((intervalId, _) => {
-            clearInterval(intervalId);
-        });
-        this.intervals.clear();
+        // 큐에 있는 대기 중인 작업들 모두 취소
+        this.taskQueue = [];
 
-        this.controllers.forEach(controller => {
+        // 진행 중인 작업들 취소
+        this.controllers.forEach((controller, taskUnitId) => {
             controller.abort();
+            console.log(`TaskUnit ${taskUnitId} aborted.`);
         });
-        this.controllers.clear();
 
-        console.log('All task unit checks stopped.');
+        // 진행 중인 작업 목록과 대기 목록 초기화
+        this.controllers.clear();
+        this.inProgress.clear();
+
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            console.log('Timeout cleared.');
+        }
+
+        console.log('All task unit checks stopped, including queued tasks.');
     }
 }
 

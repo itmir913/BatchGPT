@@ -169,7 +169,7 @@ export async function fetchTasksAPI(nextPage) {
 
     return {
         tasks: data.results,
-        nextPage: getPageFromUrl(data.next),
+        nextPage: data.next !== null ? getPageFromUrl(data.next) : null,
         hasMore: !!data.next,
     };
 }
