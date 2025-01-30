@@ -22,7 +22,7 @@ export const SUCCESS_MESSAGES = {
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
-    noResponse: "Unable to connect to the server.",
+    unableConnectServer: "Failed to connect to the server.",
     fetchBatchJobList: "Failed to fetch batch jobs:",
     fetchBatchJobDetail: "Failed to load Batch Job details.",
     modifyBatchJob: "Error modifying Batch Job:",
