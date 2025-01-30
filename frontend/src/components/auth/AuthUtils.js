@@ -6,14 +6,14 @@ const API_LOGOUT_URL = "/api/auth/logout/";
 const API_REGISTER_URL = "/api/auth/register/";
 
 export const SUCCESS_MESSAGES = {
-    SUCCESS_LOGIN: "Login successful!",
+    SUCCESS_LOGIN: "Logged in successfully!",
 }
 
 export const ERROR_MESSAGES = {
-    ERROR_INVALID_EMAIL: "Please enter a valid email.",
+    ERROR_INVALID_EMAIL: "Please enter a valid email address.",
     ERROR_NOT_RESPONSE: "Unable to connect to the server. Please try again later.",
-    ERROR_CANNOT_REGISTER: "Registration was not completed.",
-    ERROR_CANNOT_LOGIN: "Login unsuccessful.",
+    ERROR_CANNOT_REGISTER: "Registration could not be completed.",
+    ERROR_CANNOT_LOGIN: "Failed to log in.",
 }
 
 export async function fetchAuthAPI() {

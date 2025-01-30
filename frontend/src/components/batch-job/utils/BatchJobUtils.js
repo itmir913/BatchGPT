@@ -14,34 +14,35 @@ const API_BATCH_JOB_RUN_URL = "/run/";
 
 export const SUCCESS_MESSAGES = {
     updatedConfigs: "Configuration updated successfully.",
-    modifyBatchJob: "Batch Job modified successfully!",
-    deleteBatchJob: "Batch Job deleted successfully!",
-    pendingTasks: "The Batch Job will start soon.",
-    runTasks: "Batch Job started successfully!",
+    modifyBatchJob: "Batch job modified successfully!",
+    deleteBatchJob: "Batch job deleted successfully!",
+    pendingTasks: "The batch job will start soon.",
+    runTasks: "Batch job started successfully!",
     uploadFile: "File uploaded successfully!",
-    loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
-};
+    loadPreviewResult: "Preview requested successfully. The result will be available shortly.",
+}
+
 export const ERROR_MESSAGES = {
     unableConnectServer: "Failed to connect to the server.",
-    fetchBatchJobList: "Failed to fetch batch jobs:",
-    fetchBatchJobDetail: "Failed to load Batch Job details.",
-    modifyBatchJob: "Error modifying Batch Job:",
-    deleteBatchJob: "Error deleting batch job:",
-    fileTypes: "Failed to retrieve the types of files supported by the server.",
-    uploadFile: "Error uploading file:",
-    unsupportedFileType: "Unsupported file type. Allowed:",
-    missingFile: "The uploaded file is missing. Please select a file to upload.",
-    compressFiles: "Unable to compress the file.",
+    fetchBatchJobList: "Failed to fetch batch jobs.",
+    fetchBatchJobDetail: "Failed to load batch job details.",
+    modifyBatchJob: "Error modifying batch job.",
+    deleteBatchJob: "Error deleting batch job.",
+    fileTypes: "Failed to retrieve supported file types from the server.",
+    uploadFile: "Error uploading the file.",
+    unsupportedFileType: "Unsupported file type. Allowed types:",
+    missingFile: "No file selected. Please choose a file to upload.",
+    compressFiles: "Failed to compress the file.",
     updatedConfigs: "Error updating configuration.",
-    loadPreview: "Failed to load Preview data.",
+    loadPreview: "Failed to load preview data.",
     noColumn: "Please select at least one column.",
     emptyPrompt: "Prompt cannot be empty.",
-    noWorkUnit: "Work unit must be greater than or equal to 1.",
-    noDataReceived: "No data received from Server.",
-    loadResult: "Failed to load Preview data.",
+    noWorkUnit: "Work unit must be at least 1.",
+    noDataReceived: "No data received from the server.",
+    loadResult: "Failed to load preview data.",
     fetchTasks: "Error fetching tasks.",
-    pendingTasks: "Error Start tasks.",
-};
+    pendingTasks: "Error starting tasks.",
+}
 
 export const CONFIRM_MESSAGE = {
     loadingMessage: "Loading data, please wait...",

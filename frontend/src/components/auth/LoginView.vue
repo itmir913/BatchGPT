@@ -186,7 +186,7 @@ export default {
 
       } catch (error) {
         this.isButtonDisabled = false;
-        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.ERROR_CANNOT_REGISTER}`);
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.ERROR_CANNOT_LOGIN}`);
         this.handleMessages("error", errorMessage);
       }
     },
