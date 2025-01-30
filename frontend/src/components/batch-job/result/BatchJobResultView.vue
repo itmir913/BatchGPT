@@ -118,7 +118,6 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
-import debounce from "@popperjs/core/lib/utils/debounce";
 
 export default {
   props: ["batch_id"],
@@ -273,19 +272,17 @@ export default {
         console.log('Batch job failed.');
       }
     },
-    methods: {
-      onScroll: debounce(async function () {
-        if (!this.tasks || this.tasks?.length === 0 || this.loadingState.loading || !this.hasMore) {
-          return;
-        }
+    async onScroll() {
+      if (!this.tasks || this.tasks?.length === 0 || this.loadingState.loading || !this.hasMore) {
+        return;
+      }
 
-        const bottom = this.$el.getBoundingClientRect().bottom;
-        const windowHeight = window.innerHeight;
+      const bottom = this.$el.getBoundingClientRect().bottom;
+      const windowHeight = window.innerHeight;
 
-        if (bottom <= windowHeight + 50) {
-          await this.fetchTasks();
-        }
-      }, 1000),
+      if (bottom <= windowHeight + 50) {
+        await this.fetchTasks();
+      }
     },
     truncateText(text) {
       const maxLength = 500;
