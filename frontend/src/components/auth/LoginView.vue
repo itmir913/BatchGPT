@@ -1,10 +1,9 @@
 <template>
+  <ToastView
+      ref="toast"
+      :message="messages"
+  />
   <div id="login" class="wrapper d-flex align-items-center justify-content-center vh-100">
-    <ToastView
-        ref="toast"
-        :message="messages"
-    />
-
     <div class="card shadow-lg" style="max-width: 400px; width: 100%;">
       <div class="card-body p-4">
         <h2 class="text-center mb-4">Login</h2>
