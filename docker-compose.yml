@@ -6,6 +6,8 @@ services:
       - .env
     ports:
       - "8000:8000"
+    volumes:
+      - ./logs:/var/log/supervisor
     depends_on:
       - redis
       - db
