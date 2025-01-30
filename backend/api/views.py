@@ -1,11 +1,13 @@
 import logging
 import os
 
+from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -45,6 +47,7 @@ def updateBatchJobStatus(batch_job):
                 batch_job.save()
 
 
+@method_decorator(login_required, name='dispatch')
 class UserBatchJobsView(APIView):
     """
     View to handle user's batch jobs.
@@ -72,6 +75,16 @@ class UserBatchJobsView(APIView):
         serializer = BatchJobSerializer(batch_jobs, many=True)
         return Response(serializer.data, status=HTTP_200_OK)
 
+
+@method_decorator(login_required, name='dispatch')
+class CreateBatchJobsView(APIView):
+    """
+    View to handle user's batch jobs.
+    - GET: Retrieve all batch jobs for the authenticated user.
+    - POST: Create a new batch job for the authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         """
         사용자가 BathJob을 생성하는 기능
@@ -92,6 +105,7 @@ class UserBatchJobsView(APIView):
         return Response({"message": serializer.errors}, status=HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -160,6 +174,7 @@ class BatchJobDetailView(APIView):
         return Response(status=HTTP_204_NO_CONTENT)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobFileUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -234,6 +249,7 @@ class BatchJobFileUploadView(APIView):
         return Response(serializer.data, status=HTTP_200_OK)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobConfigView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -286,6 +302,7 @@ class BatchJobConfigView(APIView):
         return Response(serializer.data, status=HTTP_200_OK)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobPreView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -326,6 +343,7 @@ class BatchJobPreView(APIView):
             )
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobSupportFileType(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -338,6 +356,7 @@ class BatchJobSupportFileType(APIView):
         return Response(FileSettings.FILE_TYPES, status=HTTP_200_OK)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobSupportPDFMode(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -362,8 +381,10 @@ class TaskUnitResponsePagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 
 
+@method_decorator(login_required, name='dispatch')
 class TaskUnitResponseListAPIView(ListAPIView):
     pagination_class = TaskUnitResponsePagination
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
@@ -410,6 +431,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
         return self.get_paginated_response(results)
 
 
+@method_decorator(login_required, name='dispatch')
 class TaskUnitStatusView(APIView):
     # TODO 이름 바꾸기
     permission_classes = [IsAuthenticated]
@@ -466,6 +488,7 @@ class TaskUnitStatusView(APIView):
             return JsonResponse({"error": "Task response not found"}, status=HTTP_404_NOT_FOUND)
 
 
+@method_decorator(login_required, name='dispatch')
 class BatchJobRunView(APIView):
     permission_classes = [IsAuthenticated]
 
