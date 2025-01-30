@@ -97,6 +97,9 @@
         </div>
       </div>
     </div>
+
+    <!-- 감지용 요소 -->
+    <div ref="loadMoreTrigger"></div>
   </div>
 </template>
 
@@ -125,6 +128,7 @@ export default {
   components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
+      observer: null,
       tasks: [],
       nextPage: null,
       hasMore: true,
@@ -275,27 +279,36 @@ export default {
       }
     },
 
-    onScroll: debounce(async function () {
-      if (!this.tasks || this.tasks.length === 0 || this.loadingState.loading || !this.hasMore) {
-        return;
-      }
-
-      const bottom = this.$el.getBoundingClientRect().bottom;
-      const windowHeight = window.innerHeight;
-
-      if (bottom <= windowHeight + 50) {
-        await this.fetchTasks();
-      }
-    }, 1000), // 1000ms 후 실행되도록 설정
-
     truncateText(text) {
       const maxLength = 500;
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+    },
+
+    setupObserver() {
+      this.observer = new IntersectionObserver(
+          debounce(async ([entry]) => {
+            if (entry.isIntersecting) {
+              if (!this.tasks || this.tasks.length === 0 || this.loadingState.loading || !this.hasMore) {
+                return;
+              }
+              await this.fetchTasks();
+            }
+          }, 1000)
+      );
+
+      const target = this.$refs.loadMoreTrigger;
+      if (target instanceof Element) {
+        this.observer.observe(target);
+      } else {
+        console.warn("loadMoreTrigger is not a valid Element:", target);
+      }
     }
+
+
   },
   async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
-    window.addEventListener('scroll', this.onScroll);
+    this.setupObserver();
 
     await this.fetchBatchJob();
     if (shouldDisplayResults(this.batchJob.batch_job_status)) {
@@ -304,7 +317,9 @@ export default {
   },
   beforeUnmount() {
     this.taskUnits.taskUnitChecker.stopAllChecking();
-    window.removeEventListener('scroll', this.onScroll);
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   }
 };
 </script>
