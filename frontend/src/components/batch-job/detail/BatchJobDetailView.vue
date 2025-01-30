@@ -12,10 +12,10 @@
 
       <div class="col-md-9">
         <!-- Loading State -->
-        <LoadingView :loading="state.isLoading"/>
+        <LoadingView v-if="state.isLoading"/>
 
         <!-- Batch Job Details -->
-        <div v-if="!state.isLoading && batchJob" class="card mt-3">
+        <div v-else class="card mt-3">
           <div class="card-body">
             <h2 class="card-title">{{ batchJob.title }}</h2>
             <p class="card-text">{{ batchJob.description || "No description provided." }}</p>

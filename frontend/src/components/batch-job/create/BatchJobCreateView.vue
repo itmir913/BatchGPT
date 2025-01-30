@@ -12,7 +12,7 @@
 
       <div class="col-md-9">
         <!-- 로딩 상태 -->
-        <LoadingView :loading="formStatus.isLoading"/>
+        <LoadingView v-if="formStatus.isLoading"/>
 
         <!-- 배치 작업 폼 -->
         <h2 class="mb-3">Create a New Batch Job</h2>

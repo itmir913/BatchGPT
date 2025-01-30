@@ -12,7 +12,7 @@
 
       <div class="col-md-9">
         <!-- 로딩 상태 -->
-        <LoadingView :loading="formStatus.isLoading"/>
+        <LoadingView v-if="formStatus.isLoading"/>
 
         <div v-if="formStatus.isReady" class="p-2 mb-3">
           <h2 class="mb-3">Uploaded File</h2>

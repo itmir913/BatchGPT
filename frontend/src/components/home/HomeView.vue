@@ -50,7 +50,7 @@
         </div>
 
         <!-- 로딩 상태 -->
-        <LoadingView :loading="loading"/>
+        <LoadingView v-if="loading"/>
 
         <!-- 에러 메시지 -->
         <div v-if="error" class="alert alert-danger text-center" role="alert">

@@ -1,5 +1,5 @@
 <template>
-  <div class="container my-4 infinite-scroll-container">
+  <div class="container my-4">
     <ToastView
         ref="toast"
         :message="messages"
@@ -9,45 +9,41 @@
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
       </div>
-
       <div class="col-md-9">
         <!-- 정보 카드 -->
         <h2 class="mb-3">Summary</h2>
-        <div class="card mb-4 rounded-4">
-          <div class="card-body p-4">
-            <!-- 반응형 테이블 레이아웃 -->
-            <div class="row">
-              <!-- General Information 테이블 -->
-              <BatchJobInformationTableView :batchJob="batchJob"/>
+        <LoadingView v-if="formStatus.isBatchJobLoading"/>
+        <div v-else>
+          <div class="card mb-4 rounded-4">
+            <div class="card-body p-4">
+              <!-- 반응형 테이블 레이아웃 -->
+              <div class="row">
+                <!-- General Information 테이블 -->
+                <BatchJobInformationTableView :batchJob="batchJob"/>
 
-              <!-- Configuration 테이블 -->
-              <DynamicTableView :configs="batchJob.configs"/>
+                <!-- Configuration 테이블 -->
+                <DynamicTableView :configs="batchJob.configs"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-4 rounded-4">
+            <div class="card-body p-4">
+              <!-- RUNNING 버튼 -->
+              <div class="text-center">
+                <button :disabled="formStatus.isRunnable"
+                        class="btn btn-primary"
+                        @click="handleRun">
+                  {{ formStatus.isBatchJobLoading ? "Loading..." : "Start Tasks" }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="card mb-4 rounded-4">
-          <div class="card-body p-4">
-            <!-- RUNNING 버튼 -->
-            <div class="text-center">
-              <button :disabled="formStatus.isLoading || formStatus.isStartTask ||!formStatus.isRunnable"
-                      class="btn btn-primary"
-                      @click="handleRun">
-                {{ formStatus.isLoading ? "Loading..." : "Start Tasks" }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 로딩 상태 표시 -->
-        <div v-if="formStatus.isLoading" class="text-center my-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
-
-        <!-- CSV 표 형식 테이블 -->
-        <div v-else-if="tasks.length > 0" class="table-responsive scroll-container">
+        <!-- 작업 결과 표시 -->
+        <LoadingView v-if="formStatus.isTaskLoading"/>
+        <div v-else-if="tasks.length > 0" class="table-responsive">
           <h2 class="mb-3">Results</h2>
           <table class="table table-striped table-hover align-middle custom-table">
             <thead class="table-dark">
@@ -70,7 +66,7 @@
               </span>
               </td>
               <td>
-                <div class="text-content badge bg-white text-dark">
+                <div class="text-content badge bg-white text-dark border border-secondary">
                   {{ truncateText(task.request_data.prompt) }}
                 </div>
                 <div v-if="task.request_data.has_files">
@@ -89,48 +85,34 @@
             </tbody>
           </table>
 
-          <div v-if="tasks.length > 0" class="d-flex justify-content-center align-items-center mt-4">
-            <!-- 페이지 버튼 -->
+          <!-- 페이지 버튼 -->
+          <div class="d-flex justify-content-center align-items-center mt-4">
             <nav aria-label="Page navigation">
               <ul class="pagination flex-wrap" style="gap: 5px;">
-                <!-- First Page -->
                 <li :class="{disabled: currentPage === 1}" class="page-item">
                   <button class="page-link" @click="changePage(1)">&lt;&lt;</button>
                 </li>
-
-                <!-- Previous Button -->
                 <li :class="{disabled: currentPage === 1}" class="page-item">
                   <button class="page-link" @click="changePage(currentPage - 1)">&lt;</button>
                 </li>
-
-                <!-- Show the "Previous" ellipses if there are skipped pages before the current page -->
                 <li v-if="currentPage > 3" class="page-item">
                   <span class="page-link">...</span>
                 </li>
-
-                <!-- Show a range of pages -->
                 <li v-for="page in pageRange" :key="page" :class="{active: currentPage === page}" class="page-item">
                   <button class="page-link" @click="changePage(page)">{{ page }}</button>
                 </li>
-
-                <!-- Show the "Next" ellipses if there are skipped pages after the current page -->
                 <li v-if="currentPage < totalPages - 2" class="page-item">
                   <span class="page-link">...</span>
                 </li>
-
-                <!-- Next Button -->
                 <li :class="{disabled: currentPage === totalPages}" class="page-item">
                   <button class="page-link" @click="changePage(currentPage + 1)">&gt;</button>
                 </li>
-
-                <!-- Last Page -->
                 <li :class="{disabled: currentPage === totalPages}" class="page-item">
                   <button class="page-link" @click="changePage(totalPages)">&gt;&gt;</button>
                 </li>
               </ul>
             </nav>
           </div>
-
 
         </div>
       </div>
@@ -156,10 +138,11 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
+import LoadingView from "@/components/batch-job/common/LoadingView.vue";
 
 export default {
   props: ["batch_id"],
-  components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
+  components: {LoadingView, DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
       tasks: [],
@@ -173,7 +156,7 @@ export default {
         inProgressTasks: [],
       },
 
-      loadingState: {loading: false, loadingSave: false, isStartTask: false},
+      loadingState: {fetchBatchJobLoading: false, fetchTaskLoading: false, isStartTask: false},
       messages: {success: null, error: null},
 
       batchJob: {
@@ -193,10 +176,9 @@ export default {
   computed: {
     formStatus() {
       return {
-        isLoading: this.loadingState.loading,
-        hasMore: this.hasMore,
-        isReady: !this.loadingState.loading && this.hasMore,
-        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status),
+        isBatchJobLoading: this.loadingState.fetchBatchJobLoading,
+        isTaskLoading: this.loadingState.fetchTaskLoading,
+        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status) || !this.isStartTask,
       };
     },
     pageRange() {
@@ -228,13 +210,11 @@ export default {
 
     async fetchBatchJob() {
       try {
-        this.loadingState.loading = true;
+        this.loadingState.fetchBatchJobLoading = true;
         this.clearMessages();
 
-        const {batchJob, configs} = await fetchBatchJobConfigsAPI(this.batch_id);
+        const {batchJob} = await fetchBatchJobConfigsAPI(this.batch_id);
         this.batchJob = batchJob;
-        this.work_unit = configs.work_unit ?? 1;
-        this.prompt = configs.prompt ?? '';
         this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
         if (error.response) {
@@ -243,15 +223,15 @@ export default {
           this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error}`);
         }
       } finally {
-        this.loadingState.loading = false;
+        this.loadingState.fetchBatchJobLoading = false;
       }
     },
 
     async fetchTasks() {
-      if (this.loadingState.loading) return;
+      if (this.loadingState.fetchTaskLoading) return;
 
       try {
-        this.loadingState.loading = true;
+        this.loadingState.fetchTaskLoading = true;
         const url = fetchTaskAPIUrl(this.batch_id, this.currentPage);
         const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
 
@@ -284,14 +264,14 @@ export default {
           this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error}`);
         }
       } finally {
-        this.loadingState.loading = false;
+        this.loadingState.fetchTaskLoading = false;
       }
     },
 
-    changePage(page) {
+    async changePage(page) {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
-      this.fetchTasks(); // 페이지 변경 시 데이터를 로드
+      await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
     },
 
     async handleRun() {
@@ -353,18 +333,7 @@ export default {
 };
 </script>
 
-<style>
-.scroll-container {
-  overflow-x: auto;
-  white-space: pre-wrap;
-}
-</style>
-
 <style scoped>
-.infinite-scroll-container {
-  overflow-y: auto;
-}
-
 .table-responsive {
   margin-top: 20px;
 }
@@ -382,10 +351,6 @@ export default {
 .spinner-border {
   width: 3rem;
   height: 3rem;
-}
-
-.text-muted {
-  font-size: 1.2rem;
 }
 </style>
 

@@ -15,7 +15,7 @@
 
       <div class="col-md-9">
         <LoadingView
-            :loading="formStatus.isLoading"
+            v-if="formStatus.isLoading"
         />
 
         <div v-if="formStatus.isReady" class="mb-3">
