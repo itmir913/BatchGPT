@@ -34,7 +34,7 @@
                 <button :disabled="formStatus.isRunnable"
                         class="btn btn-primary"
                         @click="handleRun">
-                  {{ formStatus.isBatchJobLoading ? "Loading..." : "Start Tasks" }}
+                  {{ formStatus.isTaskLoading ? "Loading..." : "Start Tasks" }}
                 </button>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default {
       return {
         isBatchJobLoading: this.loadingState.fetchBatchJobLoading,
         isTaskLoading: this.loadingState.fetchTaskLoading,
-        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status) || !this.isStartTask,
+        isRunnable: !shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
       };
     },
     pageRange() {
@@ -292,6 +292,7 @@ export default {
         this.batchJobChecker.startCheckingBatchJob(this.batch_id);
 
       } catch (error) {
+        this.loadingState.isStartTask = false;
         if (error.response) {
           this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error.response.data.error}`);
         } else {
@@ -305,7 +306,6 @@ export default {
       if (status !== 'Pending') {
         console.log('Batch job started successfully.', result);
         this.handleMessages("success", SUCCESS_MESSAGES.runTasks)
-        this.loadingState.isStartTask = false;
         await this.fetchTasks();
       } else if (status === 'Failed') {
         console.log('Batch job failed.');
