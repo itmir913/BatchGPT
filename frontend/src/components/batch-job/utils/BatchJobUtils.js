@@ -150,8 +150,17 @@ export async function checkTaskUnitStatus(batchJobId, taskUnitId) {
 }
 
 
-export function fetchTaskAPIUrl(batch_id) {
-    return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`;
+export function getPageFromUrl(url) {
+    const urlParams = new URLSearchParams(new URL(url).search);
+    return urlParams.get('page') || null;
+}
+
+export function fetchTaskAPIUrl(batch_id, page) {
+    if (page === null || page === 1) {
+        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`;
+    } else {
+        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}?page=${page}`;
+    }
 }
 
 export async function fetchTasksAPI(nextPage) {
@@ -160,7 +169,7 @@ export async function fetchTasksAPI(nextPage) {
 
     return {
         tasks: data.results,
-        nextPage: data.next,
+        nextPage: getPageFromUrl(data.next),
         hasMore: !!data.next,
     };
 }

@@ -200,10 +200,10 @@ export default {
     async fetchTasks() {
       if (!this.hasMore) return;
       if (this.loadingState.loading) return;
-      this.loadingState.loading = true;
 
       try {
-        const {tasks, nextPage, hasMore} = await fetchTasksAPI(this.nextPage ?? fetchTaskAPIUrl(this.batch_id));
+        this.loadingState.loading = true;
+        const {tasks, nextPage, hasMore} = await fetchTasksAPI(fetchTaskAPIUrl(this.batch_id, this.nextPage));
 
         this.tasks.push(...tasks);
         this.nextPage = nextPage;
