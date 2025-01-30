@@ -4,7 +4,6 @@ import os
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -16,7 +15,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
     HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_423_LOCKED
 from rest_framework.views import APIView
 
-from api.models import BatchJob, TaskUnitStatus, BatchJobStatus, TaskUnitFiles
+from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
@@ -389,14 +388,14 @@ class TaskUnitResponseListAPIView(ListAPIView):
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
 
-        # TaskUnit 모델에서 최신 응답을 가져오는 방식으로 수정
-        queryset = TaskUnit.objects.filter(batch_job_id=batch_id).annotate(
-            task_response_status=F('latest_response__task_response_status'),
-            request_data=F('latest_response__request_data'),
-            response_data=F('latest_response__response_data'),
-            error_message=F('latest_response__error_message'),
-            processing_time=F('latest_response__processing_time'),
-        ).order_by('unit_index')
+        queryset = (
+            TaskUnit.objects
+            .filter(batch_job_id=batch_id)
+            .select_related("latest_response")  # latest_response 조인을 최적화
+            .prefetch_related("files")  # 수정된 부분: related_name 'files' 사용
+            .only("id", "unit_index", "text_data", "has_files", "task_unit_status", "latest_response")
+            .order_by("unit_index")
+        )
 
         return queryset
 
@@ -407,23 +406,26 @@ class TaskUnitResponseListAPIView(ListAPIView):
         # 결과를 직렬화
         results = []
         for item in page:
+            latest_response = item.latest_response  # select_related로 인해 별도 쿼리 없이 접근 가능
+
             request_data = {
                 "prompt": item.text_data,
                 "has_files": item.has_files,
             }
 
             if item.has_files:
-                task_unit_files = TaskUnitFiles.objects.filter(task_unit=item).order_by('created_at')
-                request_data["files_data"] = [task_unit_file.base64_image_data for task_unit_file in task_unit_files]
+                request_data["files_data"] = [
+                    task_unit_file.base64_image_data for task_unit_file in item.files.all()  # 수정된 부분
+                ]
 
             results.append({
                 "task_unit_id": item.id,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "unit_index": item.unit_index,
                 "request_data": request_data,
-                "response_data": get_openai_result(item.response_data),
-                "error_message": item.error_message,
-                "processing_time": item.processing_time,
+                "response_data": get_openai_result(latest_response.response_data if latest_response else None),
+                "error_message": latest_response.error_message if latest_response else None,
+                "processing_time": latest_response.processing_time if latest_response else None,
             })
 
         logger.log(logging.DEBUG, f"API: The user {request.user.email} requested the list of task results,"
