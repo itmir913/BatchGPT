@@ -49,6 +49,7 @@ import {
 } from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   components: {
@@ -84,13 +85,10 @@ export default {
     async fetchBatchJob() {
       try {
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
-        this.isButtonDisabled = false; // 버튼 활성화
+        this.isButtonDisabled = false;
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobDetail}`);
+        this.handleMessages("error", errorMessage);
       }
     },
 
@@ -114,11 +112,8 @@ export default {
         }, 1000);
 
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.modifyBatchJob} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.modifyBatchJob} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.modifyBatchJob}`);
+        this.handleMessages("error", errorMessage);
         this.isButtonDisabled = false;
       }
     },

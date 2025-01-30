@@ -22,24 +22,25 @@ export const SUCCESS_MESSAGES = {
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
+    noResponse: "Unable to connect to the server.",
     fetchBatchJobList: "Failed to fetch batch jobs:",
-    fetchBatchJobDetail: "Failed to load Batch Job details. Please try again later:",
+    fetchBatchJobDetail: "Failed to load Batch Job details.",
     modifyBatchJob: "Error modifying Batch Job:",
     deleteBatchJob: "Error deleting batch job:",
-    fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
+    fileTypes: "Failed to retrieve the types of files supported by the server.",
     uploadFile: "Error uploading file:",
     unsupportedFileType: "Unsupported file type. Allowed:",
     missingFile: "The uploaded file is missing. Please select a file to upload.",
-    compressFiles: "Unable to compress the file. Please try again.",
-    updatedConfigs: "Error updating configuration. Please try again later.",
-    loadPreview: "Failed to load Preview data. Please try again later.",
+    compressFiles: "Unable to compress the file.",
+    updatedConfigs: "Error updating configuration.",
+    loadPreview: "Failed to load Preview data.",
     noColumn: "Please select at least one column.",
     emptyPrompt: "Prompt cannot be empty.",
     noWorkUnit: "Work unit must be greater than or equal to 1.",
     noDataReceived: "No data received from Server.",
-    loadResult: "Failed to load Preview data. Please try again later.",
-    fetchTasks: "Error fetching tasks. Please try again later.",
-    pendingTasks: "Error Start tasks. Please try again later.",
+    loadResult: "Failed to load Preview data.",
+    fetchTasks: "Error fetching tasks.",
+    pendingTasks: "Error Start tasks.",
 };
 
 export const CONFIRM_MESSAGE = {

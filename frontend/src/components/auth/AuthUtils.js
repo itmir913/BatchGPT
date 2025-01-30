@@ -12,7 +12,8 @@ export const SUCCESS_MESSAGES = {
 export const ERROR_MESSAGES = {
     ERROR_INVALID_EMAIL: "Please enter a valid email.",
     ERROR_NOT_RESPONSE: "Unable to connect to the server. Please try again later.",
-
+    ERROR_CANNOT_REGISTER: "Registration was not completed.",
+    ERROR_CANNOT_LOGIN: "Login unsuccessful.",
 }
 
 export async function fetchAuthAPI() {

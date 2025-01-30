@@ -117,6 +117,7 @@ button:disabled {
 <script>
 import {ERROR_MESSAGES, registerAPI} from "@/components/auth/AuthUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   name: 'RegisterUser',
@@ -159,12 +160,8 @@ export default {
         }, 1000);
       } catch (error) {
         this.isButtonDisabled = false;
-
-        if (error.response) {
-          this.handleMessages("error", `${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.ERROR_NOT_RESPONSE}`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.ERROR_CANNOT_REGISTER}`);
+        this.handleMessages("error", errorMessage);
       }
     },
   },

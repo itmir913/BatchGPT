@@ -139,6 +139,7 @@ import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   props: ["batch_id"],
@@ -217,11 +218,8 @@ export default {
         this.batchJob = batchJob;
         this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error}`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobDetail}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.fetchBatchJobLoading = false;
       }
@@ -258,11 +256,8 @@ export default {
         }
 
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchTasks} ${error}`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchTasks}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.fetchTaskLoading = false;
       }
@@ -293,11 +288,8 @@ export default {
 
       } catch (error) {
         this.loadingState.isStartTask = false;
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.pendingTasks} ${error}`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.pendingTasks}`);
+        this.handleMessages("error", errorMessage);
       }
     },
     async handleBatchJobStatus(batchJobId, status, result) {

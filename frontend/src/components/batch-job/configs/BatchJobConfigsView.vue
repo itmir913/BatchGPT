@@ -79,6 +79,7 @@ import {DEFAULT_GPT_MODEL, MODELS} from "@/components/batch-job/utils/GPTUtils";
 import GPTModelSelector from "@/components/batch-job/configs/GPTModelSelector.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   props: ['batch_id'],
@@ -142,11 +143,8 @@ export default {
         this.gpt_model = configs.gpt_model ?? DEFAULT_GPT_MODEL;
 
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobDetail}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.loading = false;
       }
@@ -178,11 +176,8 @@ export default {
 
         this.handleMessages("success", SUCCESS_MESSAGES.updatedConfigs);
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.updatedConfigs}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.loadingSave = false;
       }

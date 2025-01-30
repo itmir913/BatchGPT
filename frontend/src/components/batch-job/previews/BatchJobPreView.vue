@@ -111,6 +111,7 @@ import {
 import FilePreviewTableView from "@/components/batch-job/previews/FilePreviewTable.vue";
 import PDFModeSelector from "@/components/batch-job/previews/PDFModeSelector.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
 
 export default {
   props: ['batch_id'],
@@ -200,11 +201,8 @@ export default {
         }
 
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchBatchJobDetail}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.loading = false;
       }
@@ -216,11 +214,8 @@ export default {
         this.previewData.fetchData = await fetchPreviewAPI(this.batch_id);
 
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.loadPreview} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.loadPreview}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingState.loading = false;
       }
@@ -284,11 +279,8 @@ export default {
 
         await this.fetchPreviewData();
       } catch (error) {
-        if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} ${error.response.data.error}`);
-        } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.updatedConfigs} No response received.`);
-        }
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.updatedConfigs}`);
+        this.handleMessages("error", errorMessage);
       } finally {
         this.loadingSave = false;
       }
