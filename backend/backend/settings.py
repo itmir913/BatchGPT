@@ -108,7 +108,7 @@ DATABASES = {
         "PASSWORD": POSTGRES_PASSWORD,
         "HOST": POSTGRES_HOST,
         "PORT": POSTGRES_PORT,
-        "CONN_MAX_AGE": 900,  # 15 minutes
+        "CONN_MAX_AGE": 120,  # 120초
     }
 }
 

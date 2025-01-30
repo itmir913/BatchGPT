@@ -102,6 +102,7 @@ def process_pdf(processor, prompt, batch_job, file_path):
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_batch_job(self, batch_job_id):
+    from django.db import connections
     from django.core.cache import cache
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from django.shortcuts import get_object_or_404
@@ -162,26 +163,38 @@ def process_batch_job(self, batch_job_id):
     except BatchJob.DoesNotExist as e:
         return
 
+    finally:
+        connections.close_all()
+
 
 @app.task
 def resume_pending_jobs():
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.job_status_utils import get_task_status_counts
+    from django.db import connections
 
-    pending_or_in_progress_jobs = BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
+    try:
+        pending_or_in_progress_jobs = BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
 
-    for job in pending_or_in_progress_jobs:
-        if TaskUnit.objects.filter(batch_job=job).count() == 0:
-            process_batch_job.apply_async(args=[job.id])
-        else:
-            pending, in_progress, fail = get_task_status_counts(job)
-
-            if pending > 0 or in_progress > 0:
+        for job in pending_or_in_progress_jobs:
+            if TaskUnit.objects.filter(batch_job=job).count() == 0:
                 process_batch_job.apply_async(args=[job.id])
-                return
-            elif fail > 0:
-                job.set_status(BatchJobStatus.FAILED)
-                job.save()
             else:
-                job.set_status(BatchJobStatus.COMPLETED)
-                job.save()
+                pending, in_progress, fail = get_task_status_counts(job)
+
+                if pending > 0 or in_progress > 0:
+                    process_batch_job.apply_async(args=[job.id])
+                    return
+                elif fail > 0:
+                    job.set_status(BatchJobStatus.FAILED)
+                    job.save()
+                else:
+                    job.set_status(BatchJobStatus.COMPLETED)
+                    job.save()
+
+    except Exception as e:
+        logger.log(logging.INFO,
+                   f"Celery: Unknowen Error: {str(e)}")
+
+    finally:
+        connections.close_all()

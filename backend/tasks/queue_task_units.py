@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
+    from django.db import connections
     from django.core.cache import cache
     from django.shortcuts import get_object_or_404
     from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
@@ -110,16 +111,28 @@ def process_task_unit(self, task_unit_id):
     except TaskUnit.DoesNotExist as e:
         return
 
+    finally:
+        connections.close_all()
+
 
 @app.task
 def resume_pending_tasks():
     from api.models import TaskUnit, TaskUnitStatus
+    from django.db import connections
 
-    pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
-    for task in pending_or_in_progress_tasks:
+    try:
+        pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
+        for task in pending_or_in_progress_tasks:
+            logger.log(logging.INFO,
+                       f"Celery: Pending task {task.id} has been recognized and is now starting.")
+            process_task_unit.apply_async(args=[task.id])
+
+    except Exception as e:
         logger.log(logging.INFO,
-                   f"Celery: Pending task {task.id} has been recognized and is now starting.")
-        process_task_unit.apply_async(args=[task.id])
+                   f"Celery: Unknowen Error: {str(e)}")
+
+    finally:
+        connections.close_all()
 
 
 def calculate_processing_time(start_time):
