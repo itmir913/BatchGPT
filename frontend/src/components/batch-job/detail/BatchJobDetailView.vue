@@ -204,9 +204,9 @@ export default {
         this.batchJob = await fetchBatchJobTitleAPI(this.batch_id);
       } catch (error) {
         if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
         } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} No response received.`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} No response received.`);
         }
       } finally {
         this.state.isLoading = false;

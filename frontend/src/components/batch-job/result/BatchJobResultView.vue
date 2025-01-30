@@ -218,9 +218,9 @@ export default {
         this.batchJob.batch_job_status = batchJob.batch_job_status ?? 'Created';
       } catch (error) {
         if (error.response) {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error.response.data.error}`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error.response.data.error}`);
         } else {
-          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJob} ${error}`);
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobDetail} ${error}`);
         }
       } finally {
         this.loadingState.fetchBatchJobLoading = false;

@@ -22,7 +22,8 @@ export const SUCCESS_MESSAGES = {
     loadPreviewResult: "The preview has been requested; the result will be available in a moment.",
 };
 export const ERROR_MESSAGES = {
-    fetchBatchJob: "Failed to load Batch Job details. Please try again later:",
+    fetchBatchJobList: "Failed to fetch batch jobs:",
+    fetchBatchJobDetail: "Failed to load Batch Job details. Please try again later:",
     modifyBatchJob: "Error modifying Batch Job:",
     deleteBatchJob: "Error deleting batch job:",
     fileTypes: "Failed to retrieve the types of files supported by the server. Please try again later.",
@@ -72,7 +73,7 @@ export async function createBatchJobAPI(payload) {
 export async function fetchBatchJobListAPI() {
     const response = await axios.get(`${API_BASE_URL}`, {withCredentials: true});
     if (!response.data) {
-        throw new Error(ERROR_MESSAGES.fetchBatchJob);
+        throw new Error(ERROR_MESSAGES.fetchBatchJobDetail);
     }
 
     return response.data;
@@ -81,7 +82,7 @@ export async function fetchBatchJobListAPI() {
 export async function fetchBatchJobTitleAPI(batch_id) {
     const response = await axios.get(`${API_BASE_URL}${batch_id}/`, {withCredentials: true});
     if (!response.data) {
-        throw new Error(ERROR_MESSAGES.fetchBatchJob);
+        throw new Error(ERROR_MESSAGES.fetchBatchJobDetail);
     }
 
     return response.data;
@@ -120,7 +121,7 @@ export async function uploadFilesAPI(batch_id, selectedFile) {
 export async function fetchBatchJobConfigsAPI(batch_id) {
     const response = await axios.get(`${API_BASE_URL}${batch_id}${API_CONFIG_URL}`, {withCredentials: true});
     if (!response.data) {
-        throw new Error(ERROR_MESSAGES.fetchBatchJob);
+        throw new Error(ERROR_MESSAGES.fetchBatchJobDetail);
     }
 
     const configs = response.data.configs ?? {};

@@ -1,4 +1,9 @@
 <template>
+  <ToastView
+      ref="toast"
+      :message="messages"
+  />
+
   <header class="py-5 bg-light border-bottom mb-4">
     <div class="container">
       <div class="text-center my-5">
@@ -8,21 +13,17 @@
     </div>
   </header>
 
-  <div class="container mt-5">
-    <!-- 인증되지 않은 상태 -->
-    <div v-if="!loading && !isAuthenticated" class="alert alert-warning text-center mb-4">
-      <p class="fw-bold">Please log in to access your dashboard.</p>
-    </div>
-
+  <div class="container my-4">
     <!-- 인증된 상태 -->
-    <div v-if="!loading && isAuthenticated" class="row">
+    <div class="row">
       <!-- 사용자 계정 정보 섹션 -->
       <div class="col-md-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2 class="text-dark"><i class="bi bi-person-circle"></i> My Account</h2>
         </div>
 
-        <div class="p-4 bg-light rounded-3 shadow-sm">
+        <LoadingView v-if="formStatus.isUserDataLoading"/>
+        <div v-else class="p-4 bg-light rounded-3 shadow-sm">
           <h4 class="text-primary mb-3">
             <i class="bi bi-person-circle"></i> Welcome, {{ user.username }}!
           </h4>
@@ -49,16 +50,9 @@
           </button>
         </div>
 
-        <!-- 로딩 상태 -->
-        <LoadingView v-if="loading"/>
-
-        <!-- 에러 메시지 -->
-        <div v-if="error" class="alert alert-danger text-center" role="alert">
-          {{ error }}
-        </div>
-
         <!-- 배치 작업 리스트 -->
-        <div v-if="batchJobs.length > 0" class="row">
+        <LoadingView v-if="formStatus.isBatchJobLoading"/>
+        <div v-else-if="batchJobs.length > 0" class="row">
           <div v-for="job in batchJobs" :key="job.id" class="col-md-6 mb-4">
             <a :href="getJobLink(job)" class="text-decoration-none">
               <div class="card h-100 shadow-sm rounded-3 border">
@@ -86,8 +80,6 @@
             </a>
           </div>
         </div>
-
-        <!-- 배치 작업 없음 -->
         <p v-else class="text-center text-muted">
           No batch jobs found. Start by adding one!
         </p>
@@ -136,12 +128,13 @@
 </style>
 
 <script>
-import {fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
+import {ERROR_MESSAGES, fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 import LoadingView from "@/components/batch-job/common/LoadingView.vue";
+import ToastView from "@/components/batch-job/common/ToastView.vue";
 
 export default {
-  components: {LoadingView},
+  components: {ToastView, LoadingView},
   data() {
     return {
       isAuthenticated: false, // 사용자 인증 상태
@@ -151,46 +144,76 @@ export default {
         balance: 0,
       },
       batchJobs: [], // 사용자 배치 작업 데이터
-      loading: false, // 로딩 상태
-      error: null, // 에러 메시지
+      loadingState: {userDataLoading: false, fetchBatchJobLoading: false},
+      messages: {success: null, error: null},
     };
   },
-  async created() {
-    try {
-      // 인증 상태 확인
-      this.loading = true;
 
-      const {isAuthenticated, username, email, balance} = await fetchAuthAPI();
-      this.isAuthenticated = isAuthenticated;
-      this.user.username = username;
-      this.user.email = email;
-      this.user.balance = balance;
-
-      // 배치 작업 데이터 가져오기
-      if (this.isAuthenticated) {
-        await this.fetchBatchJobs();
-      }
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-      this.isAuthenticated = false;
-    } finally {
-      this.loading = false;
-    }
+  computed: {
+    formStatus() {
+      return {
+        isUserDataLoading: this.loadingState.userDataLoading,
+        isBatchJobLoading: this.loadingState.fetchBatchJobLoading,
+      };
+    },
   },
+
   methods: {
-    async fetchBatchJobs() {
-      this.loading = true;
-      this.error = null;
+    clearMessages() {
+      this.messages.error = null;
+      this.messages.success = null;
+    },
+
+    handleMessages(type, message, details = "") {
+      this.clearMessages();
+
+      const fullMessage = details ? `${message} - ${details}` : message;
+      this.messages[type] = fullMessage;
+      this.messages.error = type === "error" ? fullMessage : null;
+      this.messages.success = type === "success" ? fullMessage : null;
+    },
+
+    async fetchUserAccount() {
+      if (this.loadingState.userDataLoading) return;
 
       try {
-        this.batchJobs = await fetchBatchJobListAPI();
+        this.loadingState.userDataLoading = true;
+
+        const {isAuthenticated, username, email, balance} = await fetchAuthAPI();
+        this.isAuthenticated = isAuthenticated;
+        this.user.username = username;
+        this.user.email = email;
+        this.user.balance = balance;
+
+        if (this.isAuthenticated)
+          await this.fetchBatchJobs();
+
       } catch (error) {
-        console.error("Error fetching batch jobs:", error);
-        this.error = "Failed to fetch batch jobs. Please try again later.";
+        console.error("Error checking authentication:", error);
+        this.isAuthenticated = false;
+        this.$router.push("/login");
       } finally {
-        this.loading = false;
+        this.loadingState.userDataLoading = false;
       }
     },
+
+    async fetchBatchJobs() {
+      if (this.loadingState.fetchBatchJobLoading) return;
+
+      try {
+        this.loadingState.fetchBatchJobLoading = true;
+        this.batchJobs = await fetchBatchJobListAPI();
+      } catch (error) {
+        if (error.response) {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobList} ${error.response.data.error}`);
+        } else {
+          this.handleMessages("error", `${ERROR_MESSAGES.fetchBatchJobList} ${error}`);
+        }
+      } finally {
+        this.loadingState.fetchBatchJobLoading = false;
+      }
+    },
+
     async logout() {
       try {
         await logoutAPI();
@@ -209,10 +232,11 @@ export default {
         alert("Logout failed. Please try again.");
       }
     },
+
     goToCreateBatchJob() {
-      // /batch-job/create 경로로 이동
       this.$router.push("/batch-jobs/create");
     },
+
     getJobLink(job) {
       switch (job.batch_job_status) {
         case 'Pending':
@@ -226,10 +250,15 @@ export default {
           return `/batch-jobs/${job.id}`;
       }
     },
+
     formatDate(dateString) {
       const options = {year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric"};
       return new Date(dateString).toLocaleDateString(undefined, options);
     },
+  },
+
+  async mounted() {
+    await this.fetchUserAccount();
   },
 };
 </script>
