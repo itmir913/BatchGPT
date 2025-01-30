@@ -31,7 +31,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - batchgpt_data:/var/lib/postgresql/data
-
-volumes:
-  batchgpt_data:
+      - ./db:/var/lib/postgresql/data
