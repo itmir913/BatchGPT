@@ -1,18 +1,22 @@
 <template>
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div v-if="show" :class="toastClass" aria-atomic="true" aria-live="assertive" class="toast show" role="alert">
-      <div class="toast-header">
-        <strong class="me-auto">{{ title }}</strong>
-        <button aria-label="Close" class="btn-close" type="button" @click="hideToast"></button>
-      </div>
-      <div class="toast-body text-white">
-        {{ currentMessage }}
+  <div aria-atomic="true" aria-live="polite" class="bg-dark position-relative bd-example-toasts">
+    <div id="toastPlacement" class="toast-container position-absolute top-0 end-0 p-3">
+      <div id="myToast" :class="toastClass" class="toast">
+        <div class="toast-header">
+          <strong class="me-auto">{{ title }}</strong>
+          <button aria-label="Close" class="btn-close" type="button" @click="hideToast"></button>
+        </div>
+        <div class="toast-body text-white">
+          {{ currentMessage }}
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import {Toast} from 'bootstrap';
+
 export default {
   props: {
     message: Object,
@@ -23,28 +27,18 @@ export default {
   },
   data() {
     return {
-      show: false,
       currentMessage: '',
       title: '',
       toastClass: 'bg-success',
-      toastTimeout: null,
+      myToast: null,
     };
   },
   methods: {
     showToast() {
-      this.clearTimeout();
-      this.show = true;
-      this.toastTimeout = setTimeout(this.hideToast, this.delay);
+      this.myToast.show();
     },
     hideToast() {
-      this.clearTimeout();
-      this.show = false;
-    },
-    clearTimeout() {
-      if (this.toastTimeout) {
-        clearTimeout(this.toastTimeout);
-        this.toastTimeout = null;
-      }
+      this.myToast.hide();
     },
     setMessage() {
       if (this.message.success) {
@@ -70,6 +64,7 @@ export default {
     }
   },
   mounted() {
+    this.myToast = new Toast(document.getElementById('myToast'))
     this.setMessage();
   }
 };
