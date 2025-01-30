@@ -170,6 +170,7 @@ export async function fetchTasksAPI(nextPage) {
     return {
         tasks: data.results,
         nextPage: data.next !== null ? getPageFromUrl(data.next) : null,
+        totalPages: Math.ceil(data.count / data.results.length),
         hasMore: !!data.next,
     };
 }

@@ -39,8 +39,15 @@
           </div>
         </div>
 
+        <!-- 로딩 상태 표시 -->
+        <div v-if="formStatus.isLoading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
         <!-- CSV 표 형식 테이블 -->
-        <div v-if="tasks.length > 0" class="table-responsive scroll-container">
+        <div v-else-if="tasks.length > 0" class="table-responsive scroll-container">
           <h2 class="mb-3">Results</h2>
           <table class="table table-striped table-hover align-middle custom-table">
             <thead class="table-dark">
@@ -82,24 +89,52 @@
             </tbody>
           </table>
 
-          <div>
-            <!-- 로딩 상태 표시 -->
-            <div v-show="formStatus.isLoading" class="text-center my-4">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-            <!-- 더 이상 데이터가 없을 때 -->
-            <div v-show="!formStatus.hasMore && !formStatus.isLoading" class="text-center my-4">
-              <p class="text-muted">No more data</p>
-            </div>
+          <div v-if="tasks.length > 0" class="d-flex justify-content-center align-items-center mt-4">
+            <!-- 페이지 버튼 -->
+            <nav aria-label="Page navigation">
+              <ul class="pagination flex-wrap" style="gap: 5px;">
+                <!-- First Page -->
+                <li :class="{disabled: currentPage === 1}" class="page-item">
+                  <button class="page-link" @click="changePage(1)">&lt;&lt;</button>
+                </li>
+
+                <!-- Previous Button -->
+                <li :class="{disabled: currentPage === 1}" class="page-item">
+                  <button class="page-link" @click="changePage(currentPage - 1)">&lt;</button>
+                </li>
+
+                <!-- Show the "Previous" ellipses if there are skipped pages before the current page -->
+                <li v-if="currentPage > 3" class="page-item">
+                  <span class="page-link">...</span>
+                </li>
+
+                <!-- Show a range of pages -->
+                <li v-for="page in pageRange" :key="page" :class="{active: currentPage === page}" class="page-item">
+                  <button class="page-link" @click="changePage(page)">{{ page }}</button>
+                </li>
+
+                <!-- Show the "Next" ellipses if there are skipped pages after the current page -->
+                <li v-if="currentPage < totalPages - 2" class="page-item">
+                  <span class="page-link">...</span>
+                </li>
+
+                <!-- Next Button -->
+                <li :class="{disabled: currentPage === totalPages}" class="page-item">
+                  <button class="page-link" @click="changePage(currentPage + 1)">&gt;</button>
+                </li>
+
+                <!-- Last Page -->
+                <li :class="{disabled: currentPage === totalPages}" class="page-item">
+                  <button class="page-link" @click="changePage(totalPages)">&gt;&gt;</button>
+                </li>
+              </ul>
+            </nav>
           </div>
+
+
         </div>
       </div>
     </div>
-
-    <!-- 감지용 요소 -->
-    <div ref="loadMoreTrigger"></div>
   </div>
 </template>
 
@@ -121,17 +156,17 @@ import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
-import {debounce} from 'lodash';
 
 export default {
   props: ["batch_id"],
   components: {DynamicTableView, BatchJobInformationTableView, ToastView, ProgressIndicator},
   data() {
     return {
-      observer: null,
       tasks: [],
       nextPage: null,
       hasMore: true,
+      currentPage: 1,
+      totalPages: 1,
 
       taskUnits: {
         taskUnitChecker: null,
@@ -163,6 +198,17 @@ export default {
         isReady: !this.loadingState.loading && this.hasMore,
         isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status),
       };
+    },
+    pageRange() {
+      const range = [];
+      const start = Math.max(this.currentPage - 3, 1);
+      const end = Math.min(this.currentPage + 3, this.totalPages);
+
+      for (let i = start; i <= end; i++) {
+        range.push(i);
+      }
+
+      return range;
     },
   },
   methods: {
@@ -202,17 +248,17 @@ export default {
     },
 
     async fetchTasks() {
-      if (!this.hasMore) return;
       if (this.loadingState.loading) return;
 
       try {
         this.loadingState.loading = true;
-        const url = fetchTaskAPIUrl(this.batch_id, this.nextPage);
-        const {tasks, nextPage, hasMore} = await fetchTasksAPI(url);
+        const url = fetchTaskAPIUrl(this.batch_id, this.currentPage);
+        const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
 
-        this.tasks.push(...tasks);
+        this.tasks = [...tasks];
         this.nextPage = nextPage;
         this.hasMore = hasMore;
+        this.totalPages = totalPages;
 
         this.taskUnits.inProgressTasks = tasks.filter(task =>
             ['Pending', 'In Progress'].includes(task.task_unit_status)
@@ -241,6 +287,13 @@ export default {
         this.loadingState.loading = false;
       }
     },
+
+    changePage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+      this.fetchTasks(); // 페이지 변경 시 데이터를 로드
+    },
+
     async handleRun() {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
@@ -284,42 +337,18 @@ export default {
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
     },
 
-    setupObserver() {
-      this.observer = new IntersectionObserver(
-          debounce(async ([entry]) => {
-            if (entry.isIntersecting) {
-              if (!this.tasks || this.tasks.length === 0 || this.loadingState.loading || !this.hasMore) {
-                return;
-              }
-              await this.fetchTasks();
-            }
-          }, 1000)
-      );
-
-      const target = this.$refs.loadMoreTrigger;
-      if (target instanceof Element) {
-        this.observer.observe(target);
-      } else {
-        console.warn("loadMoreTrigger is not a valid Element:", target);
-      }
-    }
-
-
   },
   async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
-    this.setupObserver();
 
     await this.fetchBatchJob();
     if (shouldDisplayResults(this.batchJob.batch_job_status)) {
       await this.fetchTasks();
     }
   },
+
   beforeUnmount() {
     this.taskUnits.taskUnitChecker.stopAllChecking();
-    if (this.observer) {
-      this.observer.disconnect();
-    }
   }
 };
 </script>
