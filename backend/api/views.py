@@ -6,7 +6,9 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -55,6 +57,10 @@ class UserBatchJobsView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @method_decorator(cache_page(60 * 10), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request):
         """
         Retrieve all batch jobs for the authenticated user.
@@ -95,6 +101,8 @@ class CreateBatchJobsView(APIView):
         serializer = BatchJobCreateSerializer(data=request.data)
         if serializer.is_valid():
             batch_job = serializer.save(user=request.user)
+            cache.delete(reverse('api:list-batch-jobs'))
+
             logger.log(logging.DEBUG, f"API: BatchJob created successfully.")
             return Response(
                 {"message": "BatchJob created successfully", "id": batch_job.id},
@@ -107,6 +115,10 @@ class CreateBatchJobsView(APIView):
 @method_decorator(login_required, name='dispatch')
 class BatchJobDetailView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 10), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request, batch_id):
         """
@@ -146,6 +158,8 @@ class BatchJobDetailView(APIView):
         serializer = BatchJobSerializer(batch_job, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            cache.delete(reverse('api:batch-job-detail', kwargs={'batch_id': batch_id}))
+            cache.delete(reverse('api:batch-job-configs', kwargs={'batch_id': batch_id}))
             logger.log(logging.DEBUG, f"API: {request.user.id} is Successfully updated BatchJob.")
             return Response(status=HTTP_200_OK)
 
@@ -169,6 +183,10 @@ class BatchJobDetailView(APIView):
             )
 
         batch_job.delete()
+        cache.delete(reverse('api:list-batch-jobs'))
+        cache.delete(reverse('api:batch-job-detail', kwargs={'batch_id': batch_id}))
+        cache.delete(reverse('api:batch-job-configs', kwargs={'batch_id': batch_id}))
+        cache.delete(reverse('api:batch-job-preview', kwargs={'batch_id': batch_id}))
         logger.log(logging.DEBUG, f"API: {request.user.email} has successfully deleted BatchJob with ID {batch_id}.")
         return Response(status=HTTP_204_NO_CONTENT)
 
@@ -225,8 +243,11 @@ class BatchJobFileUploadView(APIView):
             batch_job.file_name = file.name
             batch_job.configs = {}  # 파일이 새로 업로드 되었다면, 기존 설정 초기화
             batch_job.set_status(BatchJobStatus.UPLOADED)
-
             batch_job.save()
+
+            cache.delete(reverse('api:batch-job-detail', kwargs={'batch_id': batch_id}))
+            cache.delete(reverse('api:batch-job-configs', kwargs={'batch_id': batch_id}))
+            cache.delete(reverse('api:batch-job-preview', kwargs={'batch_id': batch_id}))
         except ValidationError as e:
             return Response(
                 {"error": ("The BatchJob cannot be modified at this time."
@@ -251,6 +272,10 @@ class BatchJobFileUploadView(APIView):
 @method_decorator(login_required, name='dispatch')
 class BatchJobConfigView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 10), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request, batch_id):
         """
@@ -295,8 +320,11 @@ class BatchJobConfigView(APIView):
 
         batch_job.configs = current_data
         batch_job.set_status(BatchJobStatus.CONFIGS)
-
         batch_job.save()
+
+        cache.delete(reverse('api:batch-job-detail', kwargs={'batch_id': batch_id}))
+        cache.delete(reverse('api:batch-job-configs', kwargs={'batch_id': batch_id}))
+        cache.delete(reverse('api:batch-job-preview', kwargs={'batch_id': batch_id}))
         serializer = BatchJobConfigSerializer(batch_job)
         return Response(serializer.data, status=HTTP_200_OK)
 
@@ -304,6 +332,10 @@ class BatchJobConfigView(APIView):
 @method_decorator(login_required, name='dispatch')
 class BatchJobPreView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 10), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request, batch_id):
         """
@@ -346,6 +378,10 @@ class BatchJobPreView(APIView):
 class BatchJobSupportFileType(APIView):
     permission_classes = [IsAuthenticated]
 
+    @method_decorator(cache_page(60 * 60), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request):
         """
         클라이언트 측에서 업로드 가능한 파일 타입을 요청하면 반환하는 기능
@@ -358,6 +394,10 @@ class BatchJobSupportFileType(APIView):
 @method_decorator(login_required, name='dispatch')
 class BatchJobSupportPDFMode(APIView):
     permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 60), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request):
         """
@@ -435,7 +475,6 @@ class TaskUnitResponseListAPIView(ListAPIView):
 
 @method_decorator(login_required, name='dispatch')
 class TaskUnitStatusView(APIView):
-    # TODO 이름 바꾸기
     permission_classes = [IsAuthenticated]
 
     status_code_map = {
