@@ -2,10 +2,8 @@ import logging
 import os
 
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -19,7 +17,8 @@ from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_job_cache_key, task_unit_cache_key, \
-    task_unit_response_cache_key, CACHE_TIMEOUT_BATCH_JOB, CACHE_TIMEOUT_TASK_UNIT, CACHE_TIMEOUT_TASK_UNIT_RESPONSE
+    task_unit_response_cache_key, CACHE_TIMEOUT_BATCH_JOB, CACHE_TIMEOUT_TASK_UNIT, CACHE_TIMEOUT_TASK_UNIT_RESPONSE, \
+    get_cache_or_database
 from api.utils.files_processor.file_settings import FileSettings
 from api.utils.files_processor.pdf_processor import PDFProcessMode
 from api.utils.gpt_processor.gpt_settings import get_gpt_processor
@@ -116,11 +115,12 @@ class BatchJobDetailView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -139,11 +139,12 @@ class BatchJobDetailView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -168,11 +169,12 @@ class BatchJobDetailView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -197,11 +199,12 @@ class BatchJobFileUploadView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -278,11 +281,12 @@ class BatchJobConfigView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -303,11 +307,12 @@ class BatchJobConfigView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         updated_data = request.data
 
@@ -340,11 +345,12 @@ class BatchJobPreView(APIView):
         :param batch_id:
         :return:
         """
-        batch_job = cache.get(batch_job_cache_key(batch_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_id)
-            cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_id,
+            cache_key=batch_job_cache_key(batch_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         if batch_job.user != request.user:
             logger.log(logging.ERROR, f"API: You({request.user.email}) do not have permission to access this resource.")
@@ -490,11 +496,12 @@ class TaskUnitStatusView(APIView):
         :return:
         """
         try:
-            task_unit = cache.get(task_unit_cache_key(task_unit_id))
-
-            if not task_unit:
-                task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
-                cache.set(task_unit_cache_key(task_unit_id), task_unit, timeout=CACHE_TIMEOUT_TASK_UNIT)
+            task_unit = get_cache_or_database(
+                model=TaskUnit,
+                primary_key=task_unit_id,
+                cache_key=task_unit_cache_key(task_unit_id),
+                timeout=CACHE_TIMEOUT_TASK_UNIT,
+            )
 
             status = task_unit.task_unit_status
 
@@ -506,12 +513,12 @@ class TaskUnitStatusView(APIView):
                 logger.log(logging.INFO, f"API: Task {task_unit_id}'s response is not found.")
                 return JsonResponse({"error": "Task response is not found."}, status=HTTP_404_NOT_FOUND)
 
-            task_unit_result = cache.get(task_unit_response_cache_key(task_unit.latest_response.id))
-
-            if not task_unit_result:
-                task_unit_result = get_object_or_404(TaskUnitResponse, id=task_unit.latest_response.id)
-                cache.set(task_unit_response_cache_key(task_unit.latest_response.id), task_unit_result,
-                          timeout=CACHE_TIMEOUT_TASK_UNIT_RESPONSE)
+            task_unit_result = get_cache_or_database(
+                model=TaskUnitResponse,
+                primary_key=task_unit.latest_response.id,
+                cache_key=task_unit_response_cache_key(task_unit.latest_response.id),
+                timeout=CACHE_TIMEOUT_TASK_UNIT_RESPONSE,
+            )
 
             status = task_unit_result.task_response_status
 
@@ -542,11 +549,12 @@ class BatchJobRunView(APIView):
     def post(self, request, batch_id):
         """작업을 시작"""
         try:
-            batch_job = cache.get(batch_job_cache_key(batch_id))
-
-            if not batch_job:
-                batch_job = get_object_or_404(BatchJob, id=batch_id)
-                cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+            batch_job = get_cache_or_database(
+                model=BatchJob,
+                primary_key=batch_id,
+                cache_key=batch_job_cache_key(batch_id),
+                timeout=CACHE_TIMEOUT_BATCH_JOB,
+            )
 
             serializer = BatchJobConfigSerializer(batch_job)
             if batch_job.batch_job_status in [BatchJobStatus.PENDING, BatchJobStatus.IN_PROGRESS]:
@@ -574,11 +582,12 @@ class BatchJobRunView(APIView):
     def get(self, request, batch_id):
         """작업 상태 점검"""
         try:
-            batch_job = cache.get(batch_job_cache_key(batch_id))
-
-            if not batch_job:
-                batch_job = get_object_or_404(BatchJob, id=batch_id)
-                cache.set(batch_job_cache_key(batch_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+            batch_job = get_cache_or_database(
+                model=BatchJob,
+                primary_key=batch_id,
+                cache_key=batch_job_cache_key(batch_id),
+                timeout=CACHE_TIMEOUT_BATCH_JOB,
+            )
 
             status = batch_job.get_batch_job_status_display()
 

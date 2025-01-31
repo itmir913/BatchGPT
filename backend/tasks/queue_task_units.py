@@ -7,7 +7,7 @@ from celery import shared_task
 from openai import OpenAI
 
 from api.utils.cache_keys import task_unit_cache_key, CACHE_TIMEOUT_TASK_UNIT, batch_job_cache_key, \
-    CACHE_TIMEOUT_BATCH_JOB
+    CACHE_TIMEOUT_BATCH_JOB, get_cache_or_database
 from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from tasks.celery import app
 
@@ -18,19 +18,18 @@ logger = logging.getLogger(__name__)
 def process_task_unit(self, task_unit_id):
     # ImportError: cannot import name 'TaskUnit' from partially initialized module 'api.models' (most likely due to a circular import)
     from django.db import connections
-    from django.core.cache import cache
-    from django.shortcuts import get_object_or_404
     from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
     from backend.settings import OPENAI_API_KEY
 
     try:
         start_time = time.time()
 
-        task_unit = cache.get(task_unit_cache_key(task_unit_id))
-
-        if not task_unit:
-            task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
-            cache.set(task_unit_cache_key(task_unit_id), task_unit, timeout=CACHE_TIMEOUT_TASK_UNIT)
+        task_unit = get_cache_or_database(
+            model=TaskUnit,
+            primary_key=task_unit_id,
+            cache_key=task_unit_cache_key(task_unit_id),
+            timeout=CACHE_TIMEOUT_TASK_UNIT,
+        )
 
         if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
@@ -39,11 +38,12 @@ def process_task_unit(self, task_unit_id):
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
         task_unit.save()
 
-        batch_job = cache.get(batch_job_cache_key(task_unit.batch_job_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=task_unit.batch_job_id)
-            cache.set(batch_job_cache_key(task_unit.batch_job_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=task_unit.batch_job_id,
+            cache_key=batch_job_cache_key(task_unit.batch_job_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         batch_job_config = batch_job.configs or {}
         model = batch_job_config['gpt_model']

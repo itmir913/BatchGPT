@@ -3,7 +3,7 @@ import os
 
 from celery import shared_task
 
-from api.utils.cache_keys import CACHE_TIMEOUT_BATCH_JOB, batch_job_cache_key
+from api.utils.cache_keys import CACHE_TIMEOUT_BATCH_JOB, batch_job_cache_key, get_cache_or_database
 from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
@@ -104,19 +104,18 @@ def process_pdf(processor, prompt, batch_job, file_path):
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_batch_job(self, batch_job_id):
     from django.db import connections
-    from django.core.cache import cache
     from django.core.files.uploadedfile import InMemoryUploadedFile
-    from django.shortcuts import get_object_or_404
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.files_processor.file_settings import FileSettings
     from backend import settings
 
     try:
-        batch_job = cache.get(batch_job_cache_key(batch_job_id))
-
-        if not batch_job:
-            batch_job = get_object_or_404(BatchJob, id=batch_job_id)
-            cache.set(batch_job_cache_key(batch_job_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+        batch_job = get_cache_or_database(
+            model=BatchJob,
+            primary_key=batch_job_id,
+            cache_key=batch_job_cache_key(batch_job_id),
+            timeout=CACHE_TIMEOUT_BATCH_JOB,
+        )
 
         status = batch_job.get_batch_job_status_display()
 
