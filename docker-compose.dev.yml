@@ -23,7 +23,7 @@ services:
       - "6379:6379"
 
   db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: postgresql
     restart: unless-stopped
     env_file:
