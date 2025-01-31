@@ -26,9 +26,3 @@ def get_prompt(prompt, data):
         logger = logging.getLogger(__name__)
         logger.log(logging.ERROR, f"API: An unexpected error occurred when generating prompt: {e}")
         raise ValueError(f"An unexpected error occurred when generating prompt: {e}")
-
-
-def get_openai_result(response_data):
-    return response_data.get('choices',
-                             [])[0].get('message', {}).get('content', None) \
-        if response_data is not None else None

@@ -6,6 +6,7 @@ import time
 from celery import shared_task
 from openai import OpenAI
 
+from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from tasks.celery import app
 
 logger = logging.getLogger(__name__)
@@ -67,15 +68,17 @@ def process_task_unit(self, task_unit_id):
                 max_tokens=500
             )
 
+            gpt_response = response.model_dump_json() if isinstance(response.model_dump_json(), dict) else json.loads(
+                response.model_dump_json())
+            gpt_processor = get_gpt_processor(company="openai")
+
             task_unit_response = TaskUnitResponse.objects.create(
                 batch_job=batch_job,
                 task_unit=task_unit,
                 task_unit_index=task_unit.unit_index,
                 task_response_status=TaskUnitStatus.COMPLETED,
                 request_data=task_unit.text_data,
-                response_data=response.model_dump_json() if isinstance(response.model_dump_json(),
-                                                                       dict) else json.loads(
-                    response.model_dump_json()),
+                response_data=gpt_processor.process_response(gpt_response),
                 processing_time=calculate_processing_time(start_time)
             )
 

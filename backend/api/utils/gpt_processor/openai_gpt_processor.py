@@ -15,7 +15,7 @@ def normalize_v1_0(data: Dict[str, Any]) -> Dict[str, Any]:
         'model': model,
         'total_tokens': total_tokens,
         'content': content,
-        'version': version,
+        'normalize_version': version,
     }
 
 
@@ -37,7 +37,7 @@ class OpenAIGPTProcessor(BaseGPTProcessor):
 
         normalize = processor_method(result)
 
-        return format_response(result=result, company=self.COMPANY, version=normalize.get('version'),
+        return format_response(result=result, company=self.COMPANY, version=normalize.get('normalize_version'),
                                model=normalize.get('model'), token=normalize.get('total_tokens'))
 
     def get_content(self, data):

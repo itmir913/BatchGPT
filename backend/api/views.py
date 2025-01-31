@@ -21,7 +21,7 @@ from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreat
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
 from api.utils.files_processor.file_settings import FileSettings
 from api.utils.files_processor.pdf_processor import PDFProcessMode
-from api.utils.generate_prompt import get_openai_result
+from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from api.utils.job_status_utils import get_task_status_counts
 from backend import settings
 from tasks.queue_batch_job_process import process_batch_job
@@ -418,12 +418,15 @@ class TaskUnitResponseListAPIView(ListAPIView):
                     task_unit_file.base64_image_data for task_unit_file in item.files.all()  # 수정된 부분
                 ]
 
+            response = latest_response.response_data if latest_response else None
+            gpt_processor = get_gpt_processor(company=response.get('Company') if response else None)
+
             results.append({
                 "task_unit_id": item.id,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "unit_index": item.unit_index,
                 "request_data": request_data,
-                "response_data": get_openai_result(latest_response.response_data if latest_response else None),
+                "response_data": gpt_processor.get_content(response) if gpt_processor else None,
                 "error_message": latest_response.error_message if latest_response else None,
                 "processing_time": latest_response.processing_time if latest_response else None,
             })
@@ -479,7 +482,8 @@ class TaskUnitStatusView(APIView):
 
             if status == TaskUnitStatus.COMPLETED:
                 json_data = task_unit_result.response_data
-                response_data["response_data"] = json_data['choices'][0]['message']['content']
+                gpt_processor = get_gpt_processor(company=json_data.get('Company'))
+                response_data["response_data"] = gpt_processor.get_content(json_data)
 
             return JsonResponse(response_data, status=self.status_code_map.get(status, HTTP_500_INTERNAL_SERVER_ERROR))
 

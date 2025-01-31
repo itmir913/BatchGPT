@@ -8,6 +8,9 @@ COMPANY_PROCESSORS = {
 
 
 def get_gpt_processor(*, company=None):
+    if not company:
+        return None
+
     processor_class = COMPANY_PROCESSORS.get(company.lower())
     if not processor_class:
         logger = logging.getLogger(__name__)
