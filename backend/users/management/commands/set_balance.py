@@ -4,6 +4,12 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 
+# Usage:
+# python manage.py set_balance <username> <amount>
+#
+# Example:
+# python manage.py set_balance itmir913 100.00
+# This will set the balance of 'itmir913' to 100.00.
 class Command(BaseCommand):
     help = 'Set balance for an existing user'
 

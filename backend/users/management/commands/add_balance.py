@@ -4,6 +4,12 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 
+# Usage:
+# python manage.py add_balance <username> <amount>
+#
+# Example:
+# python manage.py add_balance itmir913 50.75
+# This will add 50.75 to the balance of the user 'itmir913', if the user exists.
 class Command(BaseCommand):
     help = 'Add balance to an existing user'
 
