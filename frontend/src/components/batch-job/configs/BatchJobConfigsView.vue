@@ -11,10 +11,8 @@
       </div>
 
       <div class="col-md-9">
-        <!-- 로딩 상태 -->
         <LoadingView v-if="formStatus.isLoading"/>
-
-        <div v-if="formStatus.isReady" class="p-2 mb-3">
+        <div v-else class="p-2 mb-3">
           <h2 class="mb-3">Uploaded File</h2>
           <table class="table table-striped table-bordered table-responsive mb-3">
             <thead class="table-light">
@@ -107,7 +105,6 @@ export default {
       return {
         isLoading: this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
-        isReady: !this.loadingState.loading && this.batchJob,
         isNextButtonDisabled: !!(this.batchJob && this.batchJob.config &&
             Object.keys(this.batchJob.config).length === 0 && !this.loadingState.loadingSave),
         isSaveButtonDisabled: this.loadingState.loadingSave,

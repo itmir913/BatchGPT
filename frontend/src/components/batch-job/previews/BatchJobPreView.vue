@@ -19,7 +19,7 @@
             v-if="formStatus.isLoading"
         />
 
-        <div v-if="formStatus.isReady" class="mb-3">
+        <div v-else class="mb-3">
           <div class="mb-3">
             <InputPrompt
                 :disabled="batchJobStatus.isEditDisabled"
@@ -132,6 +132,7 @@ export default {
         work_unit: 1,
         CSV: {
           selectedColumns: [],
+
         },
         PDF: {
           supportedMode: {},
@@ -143,7 +144,6 @@ export default {
   computed: {
     formStatus() {
       return {
-        isReady: !this.loadingState.loading,
         isLoading: this.loadingState.loading,
         loadingMessage: this.loadingState.loading ? "Please wait while we load the data..." : "",
       };

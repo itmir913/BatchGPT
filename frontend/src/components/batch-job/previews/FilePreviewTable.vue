@@ -1,7 +1,8 @@
 <template>
   <div>
     <h2 class="mb-3">Files Preview</h2>
-    <table v-if="filteredData.length > 0" class="table table-bordered table-hover align-middle">
+    <LoadingView v-if="filteredData.length <= 0"/>
+    <table v-else class="table table-bordered table-hover align-middle">
       <thead class="table-light">
       <tr>
         <th class="text-center text-primary" style="cursor: pointer;">
@@ -30,7 +31,10 @@
 </template>
 
 <script>
+import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
+
 export default {
+  components: {LoadingView},
   props: {
     data: Array,
   },
