@@ -54,7 +54,7 @@
         <LoadingView v-if="formStatus.isBatchJobLoading"/>
         <div v-else-if="batchJobs.length > 0" class="row">
           <div v-for="job in batchJobs" :key="job.id" class="col-md-6 mb-4">
-            <a :href="getJobLink(job)" class="text-decoration-none">
+            <router-link :to="getJobLink(job)" class="text-decoration-none">
               <div class="card h-100 shadow-sm rounded-3 border">
                 <div class="card-body">
                   <h5 class="card-title text-primary">
@@ -77,7 +77,7 @@
                 </span>
                 </div>
               </div>
-            </a>
+            </router-link>
           </div>
         </div>
         <p v-else class="text-center text-muted">
