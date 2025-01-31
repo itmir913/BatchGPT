@@ -1,11 +1,7 @@
 # cache_keys.py
-
-def batch_status_key(batch_id):
-    return f"batch_status:{batch_id}"
-
-
-def task_unit_status_key(task_unit_id):
-    return f"task_unit_status:{task_unit_id}"
+CACHE_TIMEOUT_BATCH_JOB = 60
+CACHE_TIMEOUT_TASK_UNIT = 60
+CACHE_TIMEOUT_TASK_UNIT_RESPONSE = 60
 
 
 def batch_job_cache_key(batch_job_id):

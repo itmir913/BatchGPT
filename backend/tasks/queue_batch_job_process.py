@@ -3,6 +3,7 @@ import os
 
 from celery import shared_task
 
+from api.utils.cache_keys import CACHE_TIMEOUT_BATCH_JOB, batch_job_cache_key
 from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
@@ -108,19 +109,21 @@ def process_batch_job(self, batch_job_id):
     from django.shortcuts import get_object_or_404
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.files_processor.file_settings import FileSettings
-    from api.utils.cache_keys import batch_status_key
     from backend import settings
 
     try:
-        status = cache.get(batch_status_key(batch_job_id))
-        if not status:
-            status = BatchJob.objects.get(id=batch_job_id).get_batch_job_status_display()
-            cache.set(batch_status_key(batch_job_id), status, timeout=30)
+        batch_job = cache.get(batch_job_cache_key(batch_job_id))
+
+        if not batch_job:
+            batch_job = get_object_or_404(BatchJob, id=batch_job_id)
+            cache.set(batch_job_cache_key(batch_job_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+
+        status = batch_job.get_batch_job_status_display()
+
         if status in [BatchJobStatus.COMPLETED_DISPLAY]:
             logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
             return
 
-        batch_job = get_object_or_404(BatchJob, id=batch_job_id)
         TaskUnit.objects.filter(batch_job=batch_job).delete()
 
         try:
@@ -130,7 +133,6 @@ def process_batch_job(self, batch_job_id):
                 logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
                 raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
 
-            cache.set(batch_status_key(batch_job_id), BatchJobStatus.IN_PROGRESS_DISPLAY, timeout=30)
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
@@ -152,8 +154,6 @@ def process_batch_job(self, batch_job_id):
         except Exception as e:
             logger.log(logging.INFO,
                        f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
-
-            cache.set(batch_status_key(batch_job_id), BatchJobStatus.FAILED_DISPLAY, timeout=30)
 
             batch_job.set_status(BatchJobStatus.FAILED)
             batch_job.save()
@@ -194,7 +194,7 @@ def resume_pending_jobs():
 
     except Exception as e:
         logger.log(logging.INFO,
-                   f"Celery: Unknowen Error: {str(e)}")
+                   f"Celery: Unknown Error: {str(e)}")
 
     finally:
         connections.close_all()

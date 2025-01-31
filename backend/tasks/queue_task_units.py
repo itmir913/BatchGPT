@@ -6,6 +6,8 @@ import time
 from celery import shared_task
 from openai import OpenAI
 
+from api.utils.cache_keys import task_unit_cache_key, CACHE_TIMEOUT_TASK_UNIT, batch_job_cache_key, \
+    CACHE_TIMEOUT_BATCH_JOB
 from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from tasks.celery import app
 
@@ -19,23 +21,30 @@ def process_task_unit(self, task_unit_id):
     from django.core.cache import cache
     from django.shortcuts import get_object_or_404
     from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
-    from api.utils.cache_keys import task_unit_status_key
     from backend.settings import OPENAI_API_KEY
 
     try:
         start_time = time.time()
 
-        task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
+        task_unit = cache.get(task_unit_cache_key(task_unit_id))
+
+        if not task_unit:
+            task_unit = get_object_or_404(TaskUnit, id=task_unit_id)
+            cache.set(task_unit_cache_key(task_unit_id), task_unit, timeout=CACHE_TIMEOUT_TASK_UNIT)
+
         if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
-            cache.set(task_unit_status_key(task_unit_id), task_unit.task_unit_status, timeout=30)
             logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
             return
 
-        cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.IN_PROGRESS, timeout=30)
         task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
         task_unit.save()
 
-        batch_job = get_object_or_404(BatchJob, id=task_unit.batch_job_id)
+        batch_job = cache.get(batch_job_cache_key(task_unit.batch_job_id))
+
+        if not batch_job:
+            batch_job = get_object_or_404(BatchJob, id=task_unit.batch_job_id)
+            cache.set(batch_job_cache_key(task_unit.batch_job_id), batch_job, timeout=CACHE_TIMEOUT_BATCH_JOB)
+
         batch_job_config = batch_job.configs or {}
         model = batch_job_config['gpt_model']
 
@@ -86,7 +95,6 @@ def process_task_unit(self, task_unit_id):
             task_unit.latest_response = task_unit_response
             task_unit.save()
 
-            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.COMPLETED, timeout=30)
             logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
 
         except Exception as e:
@@ -102,8 +110,6 @@ def process_task_unit(self, task_unit_id):
 
             logger.log(logging.INFO,
                        f"Celery: The request for {task_unit_id} has failed for the following reason: {str(e)}")
-
-            cache.set(task_unit_status_key(task_unit_id), TaskUnitStatus.FAILED, timeout=30)
 
             task_unit.set_status(TaskUnitStatus.FAILED)
             task_unit.latest_response = task_unit_response
