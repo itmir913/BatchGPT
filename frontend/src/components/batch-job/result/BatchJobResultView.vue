@@ -149,6 +149,7 @@ export default {
       tasks: [],
       nextPage: null,
       hasMore: true,
+
       currentPage: 1,
       totalPages: 1,
 
@@ -157,8 +158,8 @@ export default {
         inProgressTasks: [],
       },
 
-      loadingState: {fetchBatchJobLoading: false, fetchTaskLoading: false, isStartTask: false},
       messages: {success: null, error: null},
+      loadingState: {fetchBatchJobLoading: false, fetchTaskLoading: false, isStartTask: false},
 
       batchJob: {
         title: "title",
@@ -182,6 +183,7 @@ export default {
         isRunnable: !shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
       };
     },
+
     pageRange() {
       const range = [];
       const start = Math.max(this.currentPage - 3, 1);
@@ -230,6 +232,8 @@ export default {
 
       try {
         this.loadingState.fetchTaskLoading = true;
+        this.taskUnits.taskUnitChecker.stopAllChecking();
+
         const url = fetchTaskAPIUrl(this.batch_id, this.currentPage);
         const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
 
@@ -292,6 +296,7 @@ export default {
         this.handleMessages("error", errorMessage);
       }
     },
+
     async handleBatchJobStatus(batchJobId, status, result) {
       this.batchJob.batch_job_status = status;
 
@@ -310,6 +315,7 @@ export default {
     },
 
   },
+
   async mounted() {
     this.taskUnits.taskUnitChecker = new TaskUnitChecker();
 
