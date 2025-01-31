@@ -6,7 +6,7 @@ from enum import Enum
 import fitz
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
-from api.utils.files_processor.file_processor import FileProcessor, ResultType
+from api.utils.files_processor.base_processor import BaseFileProcessor, ResultType
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class PDFProcessMode(Enum):
         return item in cls._value2member_map_
 
 
-class PDFProcessor(FileProcessor):
+class PDFProcessor(BaseFileProcessor):
 
     def process(self, file, *args, **kwargs):
         try:

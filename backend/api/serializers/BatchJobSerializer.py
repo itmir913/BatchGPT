@@ -3,7 +3,7 @@ import logging
 from rest_framework import serializers
 
 from api.models import BatchJob
-from api.utils.file_settings import FileSettings
+from api.utils.files_processor.file_settings import FileSettings
 
 
 class BatchJobCreateSerializer(serializers.ModelSerializer):

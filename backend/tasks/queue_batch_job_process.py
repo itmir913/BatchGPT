@@ -3,8 +3,8 @@ import os
 
 from celery import shared_task
 
+from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
-from api.utils.files_processor.file_processor import ResultType
 from api.utils.files_processor.pdf_processor import PDFProcessor
 from tasks.celery import app
 
@@ -107,7 +107,7 @@ def process_batch_job(self, batch_job_id):
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from django.shortcuts import get_object_or_404
     from api.models import BatchJob, BatchJobStatus, TaskUnit
-    from api.utils.file_settings import FileSettings
+    from api.utils.files_processor.file_settings import FileSettings
     from api.utils.cache_keys import batch_status_key
     from backend import settings
 

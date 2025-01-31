@@ -5,7 +5,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import api.utils.file_settings
+import api.utils.files_processor.file_settings
 
 
 class Migration(migrations.Migration):
@@ -27,7 +27,8 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(blank=True, help_text='배치 작업에 대한 설명을 입력하세요. (선택 사항)', null=True,
                                                  verbose_name='Description')),
                 ('file',
-                 models.FileField(blank=True, null=True, upload_to=api.utils.file_settings.FileSettings.get_upload_path,
+                 models.FileField(blank=True, null=True,
+                                  upload_to=api.utils.files_processor.file_settings.FileSettings.get_upload_path,
                                   validators=[
                                       django.core.validators.FileExtensionValidator(allowed_extensions=['CSV', 'PDF'])],
                                   verbose_name='Uploaded File')),
@@ -51,7 +52,7 @@ class Migration(migrations.Migration):
                 ('unit_index', models.IntegerField(verbose_name='Unit Index')),
                 ('text_data', models.TextField(blank=True, null=True, verbose_name='Text Data')),
                 ('file_data', models.FileField(blank=True, null=True,
-                                               upload_to=api.utils.file_settings.FileSettings.get_task_unit_path,
+                                               upload_to=api.utils.files_processor.file_settings.FileSettings.get_task_unit_path,
                                                verbose_name='File Data')),
                 ('status', models.CharField(
                     choices=[('PENDING', 'Pending'), ('IN_PROGRESS', 'In Progress'), ('COMPLETED', 'Completed'),

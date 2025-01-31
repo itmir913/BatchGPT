@@ -19,7 +19,7 @@ from api.models import BatchJob, TaskUnitStatus, BatchJobStatus
 from api.models import TaskUnit, TaskUnitResponse
 from api.serializers.BatchJobSerializer import BatchJobSerializer, BatchJobCreateSerializer, BatchJobConfigSerializer
 from api.utils.cache_keys import batch_status_key, task_unit_status_key
-from api.utils.file_settings import FileSettings
+from api.utils.files_processor.file_settings import FileSettings
 from api.utils.files_processor.pdf_processor import PDFProcessMode
 from api.utils.generate_prompt import get_openai_result
 from api.utils.job_status_utils import get_task_status_counts

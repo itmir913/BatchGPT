@@ -3,7 +3,7 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
-import api.utils.file_settings
+import api.utils.files_processor.file_settings
 
 
 class Migration(migrations.Migration):
@@ -27,7 +27,8 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Created At')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Updated At')),
-                ('file_data', models.FileField(upload_to=api.utils.file_settings.FileSettings.get_task_unit_path,
+                ('file_data',
+                 models.FileField(upload_to=api.utils.files_processor.file_settings.FileSettings.get_task_unit_path,
                                                verbose_name='File Data')),
                 ('task_unit',
                  models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='files', to='api.taskunit',

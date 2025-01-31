@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
-from api.utils.file_settings import FileSettings
+from api.utils.files_processor.file_settings import FileSettings
 from users.models import User
 
 

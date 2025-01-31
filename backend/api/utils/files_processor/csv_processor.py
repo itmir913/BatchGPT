@@ -5,7 +5,7 @@ from typing import Generator
 import pandas as pd
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
-from api.utils.files_processor.file_processor import FileProcessor, ResultType
+from api.utils.files_processor.base_processor import BaseFileProcessor, ResultType
 from api.utils.generate_prompt import get_prompt
 from backend import settings
 
@@ -14,7 +14,7 @@ DEFAULT_ENCODING = "utf-8"
 logger = logging.getLogger(__name__)
 
 
-class CSVProcessor(FileProcessor):
+class CSVProcessor(BaseFileProcessor):
 
     def process(self, file, *args, **kwargs) -> Generator[dict, None, None]:
         """

@@ -8,7 +8,7 @@ class ResultType(str, Enum):
     FILE = "file"
 
 
-class FileProcessor(ABC):
+class BaseFileProcessor(ABC):
     @abstractmethod
     def process(self, file, *args, **kwargs):
         """파일 처리 로직"""
