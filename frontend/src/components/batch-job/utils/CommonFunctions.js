@@ -3,7 +3,7 @@ import {ERROR_MESSAGES} from "@/components/batch-job/utils/BatchJobUtils";
 export function getErrorMessage(error, message) {
     if (error.response) {
         // Server responded with an error
-        return `${message} ${error.response?.data?.error || ERROR_MESSAGES.unableConnectServer}`;
+        return `${message} ${error.response?.data?.error || error.response?.data?.detail || ERROR_MESSAGES.unableConnectServer}`;
     } else if (error.request) {
         // Request was made but no response received
         return `${ERROR_MESSAGES.unableConnectServer}`;
