@@ -98,6 +98,7 @@ import {
   fetchBatchJobConfigsAPI,
   fetchPDFSupportedModeAPI,
   fetchPreviewAPI,
+  getStepLink,
   modifyBatchJobConfigsAPI,
   shouldEditDisabled,
   SUCCESS_MESSAGES
@@ -290,7 +291,7 @@ export default {
     },
 
     goToNextStep() {
-      this.$router.push(`/batch-jobs/${this.batch_id}/run`);
+      this.$router.push(getStepLink(4, this.batch_id));
     },
   },
   async mounted() {

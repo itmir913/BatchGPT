@@ -132,7 +132,8 @@ import {
   BATCH_JOB_STATUS,
   ERROR_MESSAGES,
   fetchBatchJobListAPI,
-  getJobLink
+  getJobLink,
+  getStepLink
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
@@ -201,7 +202,7 @@ export default {
       } catch (error) {
         console.error("Error checking authentication:", error);
         this.isAuthenticated = false;
-        this.$router.push("/login");
+        this.$router.push({name: 'Login'});
       } finally {
         this.loadingState.userDataLoading = false;
       }
@@ -233,7 +234,7 @@ export default {
         };
 
         alert("You have been logged out.");
-        await this.$router.push("/login");
+        this.$router.push({name: 'Login'});
       } catch (error) {
         console.error("Error during logout:", error);
         alert("Logout failed. Please try again.");
@@ -241,7 +242,7 @@ export default {
     },
 
     goToCreateBatchJob() {
-      this.$router.push("/batch-jobs/create");
+      this.$router.push(getStepLink(0, null));
     },
 
     formatDate(dateString) {

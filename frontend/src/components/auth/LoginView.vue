@@ -181,7 +181,7 @@ export default {
         this.handleMessages('success', SUCCESS_MESSAGES.SUCCESS_LOGIN)
 
         setTimeout(() => {
-          this.$router.push('/home');
+          this.$router.push({name: 'Home'});
         }, 1000);
 
       } catch (error) {

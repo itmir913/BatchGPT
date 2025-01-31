@@ -42,7 +42,7 @@
 <script>
 import ProgressIndicator from '@/components/batch-job/common/ProgressIndicator.vue';
 import BatchJobInputFields from '@/components/batch-job/create/InputBatchJobTitleFields.vue';
-import {createBatchJobAPI} from "@/components/batch-job/utils/BatchJobUtils";
+import {createBatchJobAPI, getStepLink} from "@/components/batch-job/utils/BatchJobUtils";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 import {getErrorMessage} from "@/components/batch-job/utils/CommonFunctions";
@@ -110,7 +110,7 @@ export default {
         this.handleMessages("success", SUCCESS_MESSAGES.createBatchJob);
 
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${this.batch_id}/`);
+          this.$router.push(getStepLink(1, this.batch_id));
         }, 1000);
       } catch (error) {
         const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.createBatchJob}`);

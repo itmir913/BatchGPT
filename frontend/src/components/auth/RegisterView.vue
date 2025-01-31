@@ -156,7 +156,7 @@ export default {
 
         // Redirect to login page after 1 second
         setTimeout(() => {
-          this.$router.push("/login");
+          this.$router.push({name: 'Login'});
         }, 1000);
       } catch (error) {
         this.isButtonDisabled = false;

@@ -60,20 +60,36 @@ export const BATCH_JOB_STATUS = {
     FAILED: 'Failed',
 }
 
+
+export function getStepLink(index, batch_id) {
+    const stepLinks = [
+        `/batch-jobs/create`,
+        `/batch-jobs/${batch_id}`,
+        `/batch-jobs/${batch_id}/configs`,
+        `/batch-jobs/${batch_id}/preview`,
+        `/batch-jobs/${batch_id}/run`,
+    ];
+    return stepLinks[index] || '/';
+}
+
+export function getEditLink(batch_id) {
+    return `/batch-jobs/${batch_id}/edit`;
+}
+
 export function getJobLink(job) {
     switch (job.batch_job_status) {
         case BATCH_JOB_STATUS.PENDING:
         case BATCH_JOB_STATUS.IN_PROGRESS:
         case BATCH_JOB_STATUS.COMPLETED:
         case BATCH_JOB_STATUS.FAILED:
-            return `/batch-jobs/${job.id}/run`;
+            return getStepLink(4, job.id);
         case BATCH_JOB_STATUS.UPLOADED:
-            return `/batch-jobs/${job.id}/configs`;
+            return getStepLink(2, job.id);
         case BATCH_JOB_STATUS.CONFIGS:
-            return `/batch-jobs/${job.id}/preview`;
+            return getStepLink(3, job.id);
         case BATCH_JOB_STATUS.CREATED:
         default:
-            return `/batch-jobs/${job.id}`;
+            return getStepLink(1, job.id);
     }
 }
 

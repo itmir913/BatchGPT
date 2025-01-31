@@ -156,6 +156,8 @@ import {
   ERROR_MESSAGES,
   fetchBatchJobTitleAPI,
   fetchFileTypesAPI,
+  getEditLink,
+  getStepLink,
   shouldEditDisabled,
   SUCCESS_MESSAGES,
   uploadFilesAPI,
@@ -310,7 +312,7 @@ export default {
     },
 
     editBatchJob() {
-      this.$router.push(`/batch-jobs/${this.batch_id}/edit`);
+      this.$router.push(getEditLink(this.batch_id));
     },
 
     async deleteBatchJob() {
@@ -319,7 +321,7 @@ export default {
       try {
         await deleteBatchJobTitleAPI(this.batch_id);
         alert(SUCCESS_MESSAGES.deleteBatchJob);
-        this.$router.push(`/home`);
+        this.$router.push({name: 'Home'});
       } catch (error) {
         const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.deleteBatchJob}`);
         this.handleMessages("error", errorMessage);
@@ -331,7 +333,7 @@ export default {
         this.handleMessages("error", ERROR_MESSAGES.missingFile);
         return;
       }
-      this.$router.push(`/batch-jobs/${this.batch_id}/configs`);
+      this.$router.push(getStepLink(2, this.batch_id));
     },
 
     formatDate(dateString) {

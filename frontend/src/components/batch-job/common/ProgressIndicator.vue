@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import {BATCH_JOB_STATUS} from "@/components/batch-job/utils/BatchJobUtils";
+import {BATCH_JOB_STATUS, getStepLink} from "@/components/batch-job/utils/BatchJobUtils";
 
 export default {
   props: {
@@ -43,20 +43,9 @@ export default {
       return stepClasses[this.currentStep === index ? 2 : index < this.currentStep ? 1 : 0];
     },
 
-    getStepLink(index) {
-      const stepLinks = [
-        `/batch-jobs/create`,
-        `/batch-jobs/${this.batch_id}`,
-        `/batch-jobs/${this.batch_id}/configs`,
-        `/batch-jobs/${this.batch_id}/preview`,
-        `/batch-jobs/${this.batch_id}/run`,
-      ];
-      return stepLinks[index] || '/';
-    },
-
     getComputedLink(index) {
       if (!this.batch_status) {
-        return index <= this.currentStep ? this.getStepLink(index) : '#';
+        return index <= this.currentStep ? getStepLink(index, this.batch_id) : '#';
       }
 
       const statusLimits = {
@@ -70,7 +59,7 @@ export default {
       };
 
       const maxAllowedIndex = statusLimits[this.batch_status] ?? 0;
-      return index <= maxAllowedIndex ? this.getStepLink(index) : "#";
+      return index <= maxAllowedIndex ? getStepLink(index, this.batch_id) : "#";
     },
   },
 };

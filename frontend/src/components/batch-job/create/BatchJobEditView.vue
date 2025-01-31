@@ -44,6 +44,7 @@ import BatchJobInputFields from "@/components/batch-job/create/InputBatchJobTitl
 import {
   ERROR_MESSAGES,
   fetchBatchJobTitleAPI,
+  getStepLink,
   modifyBatchJobTitleAPI,
   SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
@@ -108,7 +109,7 @@ export default {
 
         // 수정 후 자동으로 배치 작업 상세 페이지로 리다이렉트
         setTimeout(() => {
-          this.$router.push(`/batch-jobs/${this.batch_id}/`);
+          this.$router.push(getStepLink(1, this.batch_id));
         }, 1000);
 
       } catch (error) {
@@ -129,7 +130,7 @@ export default {
 
     // 취소 버튼 처리
     cancelButton() {
-      this.$router.push(`/batch-jobs/${this.batch_id}`);
+      this.$router.push(getStepLink(1, this.batch_id));
     },
   },
 
@@ -139,6 +140,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-</style>

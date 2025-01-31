@@ -71,6 +71,7 @@ import ProgressIndicator from '@/components/batch-job/common/ProgressIndicator.v
 import {
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
+  getStepLink,
   modifyBatchJobConfigsAPI,
   shouldEditDisabled,
   SUCCESS_MESSAGES
@@ -185,7 +186,7 @@ export default {
     },
 
     goToNextStep() {
-      this.$router.push(`/batch-jobs/${this.batch_id}/preview`);
+      this.$router.push(getStepLink(3, this.batch_id));
     },
   },
   async created() {
