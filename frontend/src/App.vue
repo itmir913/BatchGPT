@@ -43,7 +43,7 @@ export default {
       el.offsetHeight;
       el.style.transition = 'opacity 1s ease-in-out';
       el.style.opacity = 1;
-      el.addEventListener('transitionend', done, {once: true});
+      done();
     },
     leave(el, done) {
       el.style.transition = 'opacity 1s ease-in-out';
