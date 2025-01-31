@@ -67,8 +67,11 @@ export function getJobLink(job) {
         case BATCH_JOB_STATUS.COMPLETED:
         case BATCH_JOB_STATUS.FAILED:
             return `/batch-jobs/${job.id}/run`;
-        case BATCH_JOB_STATUS.CONFIGS:
+        case BATCH_JOB_STATUS.UPLOADED:
             return `/batch-jobs/${job.id}/configs`;
+        case BATCH_JOB_STATUS.CONFIGS:
+            return `/batch-jobs/${job.id}/preview`;
+        case BATCH_JOB_STATUS.CREATED:
         default:
             return `/batch-jobs/${job.id}`;
     }

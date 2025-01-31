@@ -10,6 +10,7 @@
         <ProgressIndicator
             :batch_id="batch_id"
             :currentStep="3"
+            :batch_status="batchJobStatus.Status"
         />
       </div>
 
@@ -155,7 +156,8 @@ export default {
     },
     batchJobStatus() {
       return {
-        isEditDisabled: shouldEditDisabled(this.batchJob?.batch_job_status)
+        isEditDisabled: shouldEditDisabled(this.batchJob?.batch_job_status),
+        Status: this.batchJob ? this.batchJob?.batch_job_status : null,
       };
     },
     dynamicTableSupportedFileTypes() {

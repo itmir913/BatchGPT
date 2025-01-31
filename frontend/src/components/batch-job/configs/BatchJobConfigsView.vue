@@ -7,7 +7,7 @@
 
     <div class="row">
       <div class="col-md-3">
-        <ProgressIndicator :batch_id="batch_id" :currentStep="2"/>
+        <ProgressIndicator :batch_id="batch_id" :batch_status="batchJobStatus.Status" :currentStep="2"/>
       </div>
 
       <div class="col-md-9">
@@ -115,6 +115,7 @@ export default {
     batchJobStatus() {
       return {
         isEditable: shouldEditDisabled(this.batchJob?.batch_job_status),
+        Status: this.batchJob ? this.batchJob?.batch_job_status : null,
       };
     },
   },

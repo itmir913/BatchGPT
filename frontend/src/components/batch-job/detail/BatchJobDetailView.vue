@@ -7,7 +7,7 @@
 
     <div class="row">
       <div class="col-md-3">
-        <ProgressIndicator :batch_id="batch_id" :currentStep="1"/>
+        <ProgressIndicator :batch_id="batch_id" :batch_status="batchJobStatus.Status" :currentStep="1"/>
       </div>
 
       <div class="col-md-9">
@@ -182,6 +182,13 @@ export default {
         messages: {success: null, error: null},
       },
     };
+  },
+  computed: {
+    batchJobStatus() {
+      return {
+        Status: this.batchJob ? this.batchJob?.batch_job_status : null,
+      };
+    },
   },
   watch: {
     batchJob(newVal) {

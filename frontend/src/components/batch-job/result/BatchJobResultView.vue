@@ -7,7 +7,7 @@
 
     <div class="row">
       <div class="col-md-3">
-        <ProgressIndicator :batch_id="batch_id" :currentStep="4"/>
+        <ProgressIndicator :batch_id="batch_id" :batch_status="batchJobStatus.Status" :currentStep="4"/>
       </div>
       <div class="col-md-9">
         <!-- 정보 카드 -->
@@ -194,6 +194,12 @@ export default {
       }
 
       return range;
+    },
+
+    batchJobStatus() {
+      return {
+        Status: this.batchJob ? this.batchJob?.batch_job_status : null,
+      };
     },
   },
   methods: {

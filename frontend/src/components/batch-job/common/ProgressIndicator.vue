@@ -2,20 +2,22 @@
   <div class="progress-indicator-wrapper">
     <ul class="nav nav-pills flex-column my-3">
       <li v-for="(step, index) in steps" :key="index" class="nav-item">
-        <a
+        <router-link
             :class="['nav-link', getStepClass(index)]"
-            :href="index < currentStep ? getStepLink(index) : '#'"
+            :to="getComputedLink(index)"
             role="tab"
             v-bind:aria-selected="index === currentStep ? 'true' : 'false'"
         >
           {{ step }}
-        </a>
+        </router-link>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import {BATCH_JOB_STATUS} from "@/components/batch-job/utils/BatchJobUtils";
+
 export default {
   props: {
     currentStep: {
@@ -25,6 +27,9 @@ export default {
     batch_id: {
       type: Number,
       required: true,
+    },
+    batch_status: {
+      type: String,
     },
   },
   computed: {
@@ -47,6 +52,25 @@ export default {
         `/batch-jobs/${this.batch_id}/run`,
       ];
       return stepLinks[index] || '/';
+    },
+
+    getComputedLink(index) {
+      if (!this.batch_status) {
+        return index <= this.currentStep ? this.getStepLink(index) : '#';
+      }
+
+      const statusLimits = {
+        [BATCH_JOB_STATUS.CREATED]: 1,
+        [BATCH_JOB_STATUS.UPLOADED]: 2,
+        [BATCH_JOB_STATUS.CONFIGS]: 3,
+        [BATCH_JOB_STATUS.PENDING]: 4,
+        [BATCH_JOB_STATUS.IN_PROGRESS]: 4,
+        [BATCH_JOB_STATUS.COMPLETED]: 4,
+        [BATCH_JOB_STATUS.FAILED]: 4,
+      };
+
+      const maxAllowedIndex = statusLimits[this.batch_status] ?? 0;
+      return index <= maxAllowedIndex ? this.getStepLink(index) : "#";
     },
   },
 };
