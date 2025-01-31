@@ -15,15 +15,16 @@
       </div>
     </div>
   </nav>
-
-  <transition
-      name="custom-fade"
-      @enter="enter"
-      @leave="leave"
-      @before-enter="beforeEnter"
-  >
-    <router-view/>
-  </transition>
+  <router-view v-slot="{ Component }">
+    <transition
+        name="custom-fade"
+        @enter="enter"
+        @leave="leave"
+        @before-enter="beforeEnter"
+    >
+      <component :is="Component"/>
+    </transition>
+  </router-view>
 </template>
 
 <script>
