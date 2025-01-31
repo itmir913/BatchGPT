@@ -417,11 +417,6 @@ class BatchJobSupportPDFMode(APIView):
         return JsonResponse({"modes": modes})
 
 
-class TaskUnitPagination(PageNumberPagination):
-    page_size = 100
-    page_size_query_param = 'page_size'
-
-
 class TaskUnitResponsePagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'

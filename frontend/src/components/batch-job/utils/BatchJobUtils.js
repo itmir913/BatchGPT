@@ -215,7 +215,7 @@ export async function fetchTasksAPI(nextPage) {
     return {
         tasks: data.results,
         nextPage: data.next !== null ? getPageFromUrl(data.next) : null,
-        totalPages: Math.ceil(data.count / data.results.length),
+        totalPages: Math.ceil(data.count / 100),
         hasMore: !!data.next,
     };
 }
