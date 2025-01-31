@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -384,6 +385,10 @@ class BatchJobPreView(APIView):
 class BatchJobSupportFileType(APIView):
     permission_classes = [IsAuthenticated]
 
+    @method_decorator(cache_page(60 * 60), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get(self, request):
         """
         클라이언트 측에서 업로드 가능한 파일 타입을 요청하면 반환하는 기능
@@ -396,6 +401,10 @@ class BatchJobSupportFileType(APIView):
 @method_decorator(login_required, name='dispatch')
 class BatchJobSupportPDFMode(APIView):
     permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 60), name='get')
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request):
         """
