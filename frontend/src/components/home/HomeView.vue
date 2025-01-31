@@ -68,10 +68,10 @@
                     Updated: {{ formatDate(job.updated_at) }}
                   </p>
                   <span :class="{
-                  'badge bg-success': job.batch_job_status === 'Completed',
-                  'badge bg-warning text-dark': job.batch_job_status === 'In Progress',
-                  'badge bg-danger': job.batch_job_status === 'Failed',
-                  'badge bg-secondary': !['Completed', 'In Progress', 'Failed'].includes(job.batch_job_status)
+                  'badge bg-success': job.batch_job_status === BATCH_JOB_STATUS.COMPLETED,
+                  'badge bg-warning text-dark': job.batch_job_status === BATCH_JOB_STATUS.IN_PROGRESS,
+                  'badge bg-danger': job.batch_job_status === BATCH_JOB_STATUS.FAILED,
+                  'badge bg-secondary': ![BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.IN_PROGRESS, BATCH_JOB_STATUS.FAILED].includes(job.batch_job_status)
                    }">
                   {{ job.batch_job_status }}
                 </span>
@@ -128,7 +128,12 @@
 </style>
 
 <script>
-import {ERROR_MESSAGES, fetchBatchJobListAPI} from "@/components/batch-job/utils/BatchJobUtils";
+import {
+  BATCH_JOB_STATUS,
+  ERROR_MESSAGES,
+  fetchBatchJobListAPI,
+  getJobLink
+} from "@/components/batch-job/utils/BatchJobUtils";
 import {fetchAuthAPI, logoutAPI} from "@/components/auth/AuthUtils";
 import LoadingView from "@/components/batch-job/common/LoadingSpinner.vue";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
@@ -151,6 +156,9 @@ export default {
   },
 
   computed: {
+    BATCH_JOB_STATUS() {
+      return BATCH_JOB_STATUS
+    },
     formStatus() {
       return {
         isUserDataLoading: this.loadingState.userDataLoading,
@@ -160,6 +168,7 @@ export default {
   },
 
   methods: {
+    getJobLink,
     clearMessages() {
       this.messages.error = null;
       this.messages.success = null;
@@ -233,20 +242,6 @@ export default {
 
     goToCreateBatchJob() {
       this.$router.push("/batch-jobs/create");
-    },
-
-    getJobLink(job) {
-      switch (job.batch_job_status) {
-        case 'Pending':
-        case 'In Progress':
-        case 'Completed':
-        case 'Failed':
-          return `/batch-jobs/${job.id}/run`;
-        case 'Standby':
-          return `/batch-jobs/${job.id}/configs`;
-        default:
-          return `/batch-jobs/${job.id}`;
-      }
     },
 
     formatDate(dateString) {

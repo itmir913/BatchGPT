@@ -49,18 +49,41 @@ export const CONFIRM_MESSAGE = {
     deleteBatchJob: "Are you sure you want to delete this batch job?",
 }
 
-const EDIT_DISABLED_STATUSES = ['Pending', 'In Progress'];
+
+export const BATCH_JOB_STATUS = {
+    CREATED: 'Created',
+    UPLOADED: 'Uploaded',
+    CONFIGS: 'Standby',
+    PENDING: 'Pending',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed',
+    FAILED: 'Failed',
+}
+
+export function getJobLink(job) {
+    switch (job.batch_job_status) {
+        case BATCH_JOB_STATUS.PENDING:
+        case BATCH_JOB_STATUS.IN_PROGRESS:
+        case BATCH_JOB_STATUS.COMPLETED:
+        case BATCH_JOB_STATUS.FAILED:
+            return `/batch-jobs/${job.id}/run`;
+        case BATCH_JOB_STATUS.CONFIGS:
+            return `/batch-jobs/${job.id}/configs`;
+        default:
+            return `/batch-jobs/${job.id}`;
+    }
+}
 
 export function shouldEditDisabled(status) {
-    return EDIT_DISABLED_STATUSES.includes(status);
+    return [BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(status);
 }
 
 export function shouldDisableRunButton(batch_job_status) {
-    return !["Pending", "In Progress"].includes(batch_job_status);
+    return ![BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(batch_job_status);
 }
 
 export function shouldDisplayResults(batch_job_status) {
-    return ["In Progress", "Completed", "Failed"].includes(batch_job_status);
+    return [BATCH_JOB_STATUS.IN_PROGRESS, BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.FAILED].includes(batch_job_status);
 }
 
 export async function createBatchJobAPI(payload) {
