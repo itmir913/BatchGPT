@@ -76,6 +76,9 @@ export default {
           this.toastInstances.set(toastId, toastInstance);
           toastInstance.show();
 
+          // Scroll to top after showing the toast
+          window.scrollTo({top: 0, behavior: 'smooth'});
+
           const onToastHidden = () => {
             this.removeToast(toastId);
             lastToast.removeEventListener("hidden.bs.toast", onToastHidden);
