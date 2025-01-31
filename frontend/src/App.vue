@@ -1,7 +1,7 @@
 <template>
   <nav v-show="!isAuthPage" class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <router-link class="navbar-brand" to="/home">BatchGPT</router-link>
+      <router-link :to="{ name: 'Home' }" class="navbar-brand">BatchGPT</router-link>
       <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"
               class="navbar-toggler"
               data-bs-target="#navbarSupportedContent" data-bs-toggle="collapse" type="button"><span
@@ -43,7 +43,7 @@ export default {
       el.offsetHeight;
       el.style.transition = 'opacity 1s ease-in-out';
       el.style.opacity = 1;
-      done();
+      el.addEventListener('transitionend', done, {once: true});
     },
     leave(el, done) {
       el.style.transition = 'opacity 1s ease-in-out';
