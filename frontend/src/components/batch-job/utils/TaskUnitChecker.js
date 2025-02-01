@@ -1,4 +1,5 @@
 import {checkTaskUnitStatus} from "@/components/batch-job/utils/BatchJobUtils";
+import {completedTaskUnit} from "@/components/batch-job/utils/TaskUnitUtils";
 
 const MAX_CONCURRENT_TASKS = 3;  // 동시에 서버로 요청할 Task 상태 조회 개수
 const MAX_RETRIES = 10;  // 10번의 시도 후 큐의 맨 뒤로 들어감
@@ -80,8 +81,8 @@ class TaskUnitChecker {
                     this.onCompleteCallback(taskUnitId, status, result);
                 }
 
-                if (status === 'Completed') {
-                    console.log(`TaskUnit ${taskUnitId} has been completed.`);
+                if (completedTaskUnit(status)) {
+                    console.log(`TaskUnit ${taskUnitId} has been ${status}.`);
                     this.stopCheckingTaskUnit(taskUnitId);
                 }
 
