@@ -270,6 +270,7 @@ export default {
 
     async changePage(page) {
       if (page < 1 || page > this.totalPages) return;
+      if (this.currentPage === page) return;
       this.currentPage = page;
       if (this.taskUnitChecker) {
         this.taskUnitChecker.stopAllChecking();
