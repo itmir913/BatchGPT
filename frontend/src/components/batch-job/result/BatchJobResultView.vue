@@ -47,6 +47,7 @@
                      :currentPage="currentPage"
                      :tasks="tasks"
                      :totalPages="totalPages"
+                     v-model:selectedStatus="selectedStatus"
                      @change-page="changePage"/>
 
       </div>
@@ -87,7 +88,7 @@ export default {
 
       currentPage: 1,
       totalPages: 1,
-
+      selectedStatus: '',
       taskUnitChecker: null,
 
       messages: {success: null, error: null},
@@ -106,6 +107,11 @@ export default {
       },
       batchJobChecker: new BatchJobChecker(),
     };
+  },
+  watch: {
+    selectedStatus() {
+      this.changePage(1, true);
+    },
   },
   computed: {
     formStatus() {
@@ -161,7 +167,8 @@ export default {
       try {
         this.loadingState.fetchTaskLoading = true;
 
-        const url = fetchTaskAPIUrl(this.batch_id, this.currentPage);
+        const url = fetchTaskAPIUrl(this.batch_id, this.currentPage, this.selectedStatus);
+        console.log(`url: ${url}`)
         const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
 
         this.tasks = [...tasks];
@@ -174,9 +181,7 @@ export default {
         ).map(task => task.task_unit_id);
 
         if (inProgressTasks?.length > 0) {
-          if (this.taskUnitChecker) {
-            this.taskUnitChecker.stopAllChecking();
-          }
+          this.clearTaskUnitChecker();
 
           this.taskUnitChecker = new TaskUnitChecker();
           this.taskUnitChecker.setOnCompleteCallback(this.handleTaskComplete);
@@ -191,25 +196,25 @@ export default {
       }
     },
 
-    async changePage(page) {
+    async changePage(page, force = false) {
       if (page < 1 || page > this.totalPages) return;
-      if (this.currentPage === page) return;
+      if (this.currentPage === page && !force) return;
       this.currentPage = page;
+      this.clearTaskUnitChecker();
+      await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
+    },
+
+    clearTaskUnitChecker() {
       if (this.taskUnitChecker) {
         this.taskUnitChecker.stopAllChecking();
         this.taskUnitChecker = null;
       }
-      await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
     },
 
     async handleRun() {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
-
-      if (this.taskUnitChecker) {
-        this.taskUnitChecker.stopAllChecking();
-        this.taskUnitChecker = null;
-      }
+      this.clearTaskUnitChecker();
 
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
@@ -261,10 +266,7 @@ export default {
   },
 
   beforeRouteLeave() {
-    if (this.taskUnitChecker) {
-      this.taskUnitChecker.stopAllChecking();
-      this.taskUnitChecker = null;
-    }
+    this.clearTaskUnitChecker();
   }
 };
 </script>

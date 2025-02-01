@@ -1,6 +1,15 @@
 <template>
   <div class="table-responsive">
     <h2 class="mb-3">Results</h2>
+    <div class="mb-3">
+      <select :value="selectedStatus" class="form-select" @change="updateSelectedStatus($event)">
+        <option value="all">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="in_progress">In Progress</option>
+        <option value="failed">Failed</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
     <table class="table table-striped table-hover align-middle custom-table">
       <thead class="table-dark">
       <tr>
@@ -75,9 +84,10 @@
 <script>
 export default {
   props: {
-    tasks: Object,
+    tasks: Array,
     currentPage: Number,
     totalPages: Number,
+    selectedStatus: String,
   },
   computed: {
     pageRange() {
@@ -101,6 +111,10 @@ export default {
       const maxLength = 500;
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
     },
+
+    updateSelectedStatus(event) {
+      this.$emit('update:selectedStatus', event.target.value);
+    }
   }
 };
 </script>
