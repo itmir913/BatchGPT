@@ -115,13 +115,9 @@ def process_batch_job(self, batch_job_id):
             batch_job = BatchJob.objects.select_for_update(skip_locked=True).filter(id=batch_job_id).first()
 
             if not batch_job:
-                logger.info(f"Celery: The job with ID {batch_job_id} is already being processed by another worker. "
-                            f"Skipping this job.")
                 return
 
-            status = batch_job.get_batch_job_status_display()
-            if status in [BatchJobStatus.COMPLETED_DISPLAY]:
-                logger.info(f"Celery: The job with ID {batch_job_id} has already been completed.")
+            if batch_job.batch_job_status in [BatchJobStatus.COMPLETED]:
                 return
 
             TaskUnit.objects.filter(batch_job=batch_job).delete()
@@ -132,6 +128,8 @@ def process_batch_job(self, batch_job_id):
 
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
+
+        logger.info(f"Celery: The job with ID {batch_job_id} is being started.")
 
         file = batch_job.file
         if not file:
@@ -169,28 +167,15 @@ def process_batch_job(self, batch_job_id):
 
 @app.task
 def resume_pending_jobs():
-    from api.models import BatchJob, BatchJobStatus, TaskUnit
-    from api.utils.job_status_utils import get_task_status_counts
+    from api.models import BatchJob, BatchJobStatus
     from django.db import connections
 
     try:
-        pending_or_in_progress_jobs = BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
+        pending_jobs = BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
+        logger.log(logging.INFO, f"Celery: Found {len(pending_jobs)} pending jobs.")
 
-        for job in pending_or_in_progress_jobs:
-            if TaskUnit.objects.filter(batch_job=job).count() == 0:
-                process_batch_job.apply_async(args=[job.id])
-            else:
-                pending, in_progress, fail = get_task_status_counts(job)
-
-                if pending > 0 or in_progress > 0:
-                    process_batch_job.apply_async(args=[job.id])
-                    return
-                elif fail > 0:
-                    job.set_status(BatchJobStatus.FAILED)
-                    job.save()
-                else:
-                    job.set_status(BatchJobStatus.COMPLETED)
-                    job.save()
+        for job in pending_jobs:
+            process_batch_job.apply_async(args=[job.id])
 
     except Exception as e:
         logger.log(logging.INFO,

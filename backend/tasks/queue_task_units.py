@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_task_unit(self, task_unit_id):
     from django.db import connections, transaction
-    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
+    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, BatchJobStatus, TaskUnitFiles
     from backend.settings import OPENAI_API_KEY
 
     start_time = time.time()
@@ -29,23 +29,25 @@ def process_task_unit(self, task_unit_id):
             task_unit = TaskUnit.objects.select_for_update(skip_locked=True).filter(id=task_unit_id).first()
 
             if not task_unit:
-                logger.info(f"Celery: The task with ID {task_unit} is already being processed by another worker. "
-                            f"Skipping this job.")
+                return
+
+            batch_job = get_cache_or_database(
+                model=BatchJob,
+                primary_key=task_unit.batch_job_id,
+                cache_key=batch_job_cache_key(task_unit.batch_job_id),
+                timeout=CACHE_TIMEOUT_BATCH_JOB,
+            )
+
+            if batch_job.batch_job_status in [BatchJobStatus.PENDING]:
                 return
 
             if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
-                logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
                 return
 
             task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
             task_unit.save()
 
-        batch_job = get_cache_or_database(
-            model=BatchJob,
-            primary_key=task_unit.batch_job_id,
-            cache_key=batch_job_cache_key(task_unit.batch_job_id),
-            timeout=CACHE_TIMEOUT_BATCH_JOB,
-        )
+        logger.info(f"Celery: The task with ID {task_unit_id} is being started.")
 
         batch_job_config = batch_job.configs or {}
         model = batch_job_config['gpt_model']
@@ -131,15 +133,15 @@ def resume_pending_tasks():
     from django.db import connections
 
     try:
-        pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
+        pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)[:1000]
+        logger.log(logging.INFO, f"Celery: Found {len(pending_or_in_progress_tasks)} pending tasks.")
+
         for task in pending_or_in_progress_tasks:
-            logger.log(logging.INFO,
-                       f"Celery: Pending task {task.id} has been recognized and is now starting.")
             process_task_unit.apply_async(args=[task.id])
 
     except Exception as e:
         logger.log(logging.INFO,
-                   f"Celery: Unknowen Error: {str(e)}")
+                   f"Celery: Unknown Error: {str(e)}")
 
     finally:
         connections.close_all()
