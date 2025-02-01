@@ -274,36 +274,9 @@ export default {
 </script>
 
 <style scoped>
-.table-responsive {
-  margin-top: 20px;
-}
-
-.custom-table td,
-.custom-table th {
-  border-right: 1px solid #dee2e6;
-}
-
-.custom-table th:last-child,
-.custom-table td:last-child {
-  border-right: none;
-}
-
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
-}
-</style>
-
-<style scoped>
 .table td {
   padding: 0.5rem;
   vertical-align: top;
-}
-
-.text-content {
-  text-align: justify;
-  word-wrap: break-word;
-  white-space: normal;
 }
 
 img {

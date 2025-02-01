@@ -1,5 +1,5 @@
 <template>
-  <div class="table-responsive">
+  <div>
     <h2 class="mb-3">Results</h2>
     <div class="mb-3">
       <select :value="selectedStatus" class="form-select" @change="updateSelectedStatus($event)">
@@ -89,6 +89,14 @@
     </div>
   </div>
 </template>
+
+<style>
+.text-content {
+  text-align: justify;
+  word-wrap: break-word;
+  white-space: normal;
+}
+</style>
 
 <script>
 export default {
