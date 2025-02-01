@@ -25,7 +25,7 @@ export default {
       required: true,
     },
     batch_id: {
-      type: Number,
+      type: String,
       required: true,
     },
     batch_status: {
