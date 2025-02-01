@@ -49,3 +49,7 @@ def batch_job_celery_cache_key(batch_job_id):
 
 def task_unit_celery_cache_key(task_unit_id):
     return f"Celery:task_unit:request.id:{task_unit_id}"
+
+
+def locked_celery_cache_key(task_type):
+    return f"Celery:task:locking:{task_type}"

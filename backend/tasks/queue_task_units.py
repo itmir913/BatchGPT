@@ -7,7 +7,7 @@ from celery import shared_task
 from openai import OpenAI
 
 from api.utils.cache_keys import batch_job_cache_key, \
-    CACHE_TIMEOUT_BATCH_JOB, get_cache_or_database, task_unit_celery_cache_key
+    CACHE_TIMEOUT_BATCH_JOB, get_cache_or_database, task_unit_celery_cache_key, locked_celery_cache_key
 from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from tasks.celery import app
 
@@ -140,9 +140,13 @@ def process_task_unit(self, task_unit_id):
 @app.task
 def resume_pending_tasks():
     from api.models import TaskUnit, TaskUnitStatus
+    from django.core.cache import cache
     from django.db import connections
 
     try:
+        if cache.get(locked_celery_cache_key('resume_pending_tasks')): return
+        cache.set(locked_celery_cache_key('resume_pending_tasks'), True, timeout=60 * 5)
+
         pending_task_ids = list(TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
                                 .values_list("id", flat=True)[:1000])
         logger.log(logging.INFO, f"Celery: Found {len(pending_task_ids)} pending tasks.")
@@ -155,6 +159,7 @@ def resume_pending_tasks():
                    f"Celery: Unknown Error: {str(e)}")
 
     finally:
+        cache.delete(locked_celery_cache_key('resume_pending_tasks'))
         connections.close_all()
 
 

@@ -4,7 +4,7 @@ import os
 from celery import shared_task
 from celery.worker.control import revoke
 
-from api.utils.cache_keys import batch_job_celery_cache_key
+from api.utils.cache_keys import batch_job_celery_cache_key, locked_celery_cache_key
 from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
@@ -201,9 +201,13 @@ def process_batch_job(self, batch_job_id):
 @app.task
 def resume_pending_jobs():
     from api.models import BatchJob, BatchJobStatus
+    from django.core.cache import cache
     from django.db import connections
 
     try:
+        if cache.get(locked_celery_cache_key('resume_pending_jobs')): return
+        cache.set(locked_celery_cache_key('resume_pending_jobs'), True, timeout=60 * 5)
+
         pending_job_ids = list(BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
                                .values_list("id", flat=True))
         logger.log(logging.INFO,
@@ -217,4 +221,5 @@ def resume_pending_jobs():
                    f"Celery: Unknown Error: {str(e)}")
 
     finally:
+        cache.delete(locked_celery_cache_key('resume_pending_jobs'))
         connections.close_all()
