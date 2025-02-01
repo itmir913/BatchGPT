@@ -200,11 +200,11 @@ export function getPageFromUrl(url) {
     return urlParams.get('page') || null;
 }
 
-export function fetchTaskAPIUrl(batch_id, page) {
+export function fetchTaskAPIUrl(batch_id, page, selectedStatus) {
     if (page === null || page === 1) {
-        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}`;
+        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}?status=${selectedStatus}`;
     } else {
-        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}?page=${page}`;
+        return `${API_BASE_URL}${batch_id}${API_TASK_UNITS_URL}?page=${page}&status=${selectedStatus}`;
     }
 }
 

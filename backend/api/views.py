@@ -441,6 +441,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
 
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
+        status = self.request.GET.get('status')
 
         queryset = (
             TaskUnit.objects
@@ -450,6 +451,9 @@ class TaskUnitResponseListAPIView(ListAPIView):
             .only("id", "unit_index", "text_data", "has_files", "task_unit_status", "latest_response")
             .order_by("unit_index")
         )
+
+        if status:
+            queryset = queryset.filter(task_unit_status=status)
 
         return queryset
 
