@@ -41,3 +41,11 @@ def user_cache_key(user_id):
 
 def general_cache_key(model_name, object_id):
     return f"{model_name}:{object_id}"
+
+
+def batch_job_celery_cache_key(batch_job_id):
+    return f"Celery:batch_job:request.id:{batch_job_id}"
+
+
+def task_unit_celery_cache_key(task_unit_id):
+    return f"Celery:task_unit:request.id:{task_unit_id}"

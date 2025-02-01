@@ -2,7 +2,9 @@ import logging
 import os
 
 from celery import shared_task
+from celery.worker.control import revoke
 
+from api.utils.cache_keys import batch_job_celery_cache_key
 from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
@@ -13,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 def handle_request_data(index, batch_job, prompt, result_type, files=None):
     from api.models import TaskUnit, TaskUnitStatus, TaskUnitFiles
-    from tasks.queue_task_units import process_task_unit
 
     match result_type:
         case ResultType.TEXT:
@@ -32,7 +33,7 @@ def handle_request_data(index, batch_job, prompt, result_type, files=None):
                 }
             )
 
-            process_task_unit.apply_async(args=[task_unit.id])
+            return task_unit.id
 
         case ResultType.IMAGE:
             if files is None:
@@ -57,7 +58,7 @@ def handle_request_data(index, batch_job, prompt, result_type, files=None):
                     base64_image_data=file
                 )
 
-            process_task_unit.apply_async(args=[task_unit.id])
+            return task_unit.id
 
         case _:
             raise NotImplementedError
@@ -66,23 +67,28 @@ def handle_request_data(index, batch_job, prompt, result_type, files=None):
 def process_csv(processor, prompt, batch_job, file_path):
     selected_headers = batch_job.configs['selected_headers']
     selected_headers = [header.strip() for header in selected_headers]
+    task_ids = []
 
     for index, (result_type, data) in enumerate(processor.process(file_path), start=1):
-
         match result_type:
             case ResultType.TEXT:
                 columns, row = data
                 request_data = processor.process_text(prompt, columns=columns, row=row,
                                                       selected_headers=selected_headers)
-                handle_request_data(index, batch_job, request_data, result_type)
+                task_unit_id = handle_request_data(index, batch_job, request_data, result_type)
+                task_ids.append(task_unit_id)
 
             case _:
                 raise NotImplementedError
+
+    from tasks.queue_task_units import resume_pending_tasks
+    resume_pending_tasks.apply_async()
 
 
 def process_pdf(processor, prompt, batch_job, file_path):
     work_unit = batch_job.configs.get('work_unit', 1)
     pdf_mode = batch_job.configs.get('pdf_mode')
+    task_ids = []
 
     for index, (result_type, data) in \
             enumerate(processor.process(file_path, work_unit=work_unit, pdf_mode=pdf_mode),
@@ -91,18 +97,24 @@ def process_pdf(processor, prompt, batch_job, file_path):
         match result_type:
             case ResultType.TEXT:
                 request_data = processor.process_text(prompt, data=data)
-                handle_request_data(index, batch_job, request_data, result_type)
+                task_unit_id = handle_request_data(index, batch_job, request_data, result_type)
+                task_ids.append(task_unit_id)
 
             case ResultType.IMAGE:
-                handle_request_data(index, batch_job, prompt, result_type, files=data)
+                task_unit_id = handle_request_data(index, batch_job, prompt, result_type, files=data)
+                task_ids.append(task_unit_id)
 
             case _:
                 raise NotImplementedError
+
+    from tasks.queue_task_units import resume_pending_tasks
+    resume_pending_tasks.apply_async()
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_batch_job(self, batch_job_id):
     from django.db import connections, transaction
+    from django.core.cache import cache
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.files_processor.file_settings import FileSettings
@@ -110,30 +122,49 @@ def process_batch_job(self, batch_job_id):
 
     batch_job = None
 
+    logger.info(f"Celery: The job with ID {batch_job_id} is detected.")
+
     try:
+        cache.set(batch_job_celery_cache_key(batch_job_id), self.request.id, timeout=60 * 5)
+
         with transaction.atomic():
             batch_job = BatchJob.objects.select_for_update(skip_locked=True).filter(id=batch_job_id).first()
 
             if not batch_job:
+                logger.debug(f"Celery: The job with ID {batch_job_id} is already being processed by another worker. "
+                             f"Skipping this job.")
                 return
 
             if batch_job.batch_job_status in [BatchJobStatus.COMPLETED]:
+                logger.info(f"Celery: The job with ID {batch_job_id} has already been completed.")
                 return
 
-            TaskUnit.objects.filter(batch_job=batch_job).delete()
+            if batch_job.batch_job_status in [BatchJobStatus.IN_PROGRESS]:
+                logger.info(f"Celery: The job with ID {batch_job_id} has already been progressed.")
+                return
+
             prompt = batch_job.configs.get('prompt', None)
             if not prompt:
                 logger.error("Celery: Cannot generate prompts because prompt is None")
                 raise ValueError("Cannot generate prompts because prompt is None")
 
+            task_units = TaskUnit.objects.filter(batch_job=batch_job).only('id')
+            if not task_units:
+                from api.utils.cache_keys import task_unit_celery_cache_key
+                from django.core.cache import cache
+
+                for task_unit in task_units:
+                    celery_task_id = cache.get(task_unit_celery_cache_key(task_unit.id))
+                    revoke(celery_task_id, terminate=True)
+
+                task_units.delete()
+
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
-        logger.info(f"Celery: The job with ID {batch_job_id} is being started.")
-
         file = batch_job.file
         if not file:
-            logger.info(f"Celery: The job with ID {batch_job_id} does not have an associated file")
+            logger.error(f"Celery: The job with ID {batch_job_id} does not have an associated file")
             return
 
         file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
@@ -152,7 +183,7 @@ def process_batch_job(self, batch_job_id):
         logger.info(f"Celery: All tasks for job with ID {batch_job_id} have been completed.")
 
     except Exception as e:
-        logger.info(f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
+        logger.error(f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
 
         if batch_job:
             with transaction.atomic():
@@ -162,6 +193,7 @@ def process_batch_job(self, batch_job_id):
         raise self.retry(exc=e, countdown=10)
 
     finally:
+        cache.delete(batch_job_celery_cache_key(batch_job_id))
         connections.close_all()
 
 
@@ -171,14 +203,16 @@ def resume_pending_jobs():
     from django.db import connections
 
     try:
-        pending_jobs = BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
-        logger.log(logging.INFO, f"Celery: Found {len(pending_jobs)} pending jobs.")
+        pending_job_ids = list(BatchJob.objects.filter(batch_job_status=BatchJobStatus.PENDING)
+                               .values_list("id", flat=True))
+        logger.log(logging.INFO,
+                   f"Celery: Found {len(pending_job_ids)} pending jobs.")
 
-        for job in pending_jobs:
-            process_batch_job.apply_async(args=[job.id])
+        for job_id in pending_job_ids:
+            process_batch_job.apply_async(args=[job_id])
 
     except Exception as e:
-        logger.log(logging.INFO,
+        logger.log(logging.ERROR,
                    f"Celery: Unknown Error: {str(e)}")
 
     finally:

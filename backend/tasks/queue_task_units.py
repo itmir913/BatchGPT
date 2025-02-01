@@ -7,7 +7,7 @@ from celery import shared_task
 from openai import OpenAI
 
 from api.utils.cache_keys import batch_job_cache_key, \
-    CACHE_TIMEOUT_BATCH_JOB, get_cache_or_database
+    CACHE_TIMEOUT_BATCH_JOB, get_cache_or_database, task_unit_celery_cache_key
 from api.utils.gpt_processor.gpt_settings import get_gpt_processor
 from tasks.celery import app
 
@@ -16,19 +16,30 @@ logger = logging.getLogger(__name__)
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_task_unit(self, task_unit_id):
+    from django.core.cache import cache
     from django.db import connections, transaction
-    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, BatchJobStatus, TaskUnitFiles
+    from api.models import TaskUnit, TaskUnitResponse, TaskUnitStatus, BatchJob, TaskUnitFiles
     from backend.settings import OPENAI_API_KEY
 
     start_time = time.time()
     task_unit = None
     batch_job = None
 
+    logger.info(f"Celery: The task with ID {task_unit_id} is detected.")
+
     try:
+        cache.set(task_unit_celery_cache_key(task_unit_id), self.request.id, timeout=60 * 5)
+
         with transaction.atomic():
             task_unit = TaskUnit.objects.select_for_update(skip_locked=True).filter(id=task_unit_id).first()
 
             if not task_unit:
+                logger.debug(f"Celery: The task with ID {task_unit_id} is already being processed by another worker. "
+                             f"Skipping this job.")
+                return
+
+            if task_unit.task_unit_status in [TaskUnitStatus.IN_PROGRESS]:
+                logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been progressed.")
                 return
 
             batch_job = get_cache_or_database(
@@ -38,10 +49,8 @@ def process_task_unit(self, task_unit_id):
                 timeout=CACHE_TIMEOUT_BATCH_JOB,
             )
 
-            if batch_job.batch_job_status in [BatchJobStatus.PENDING]:
-                return
-
             if task_unit.task_unit_status in [TaskUnitStatus.COMPLETED]:
+                logger.log(logging.INFO, f"Celery: The task with ID {task_unit_id} has already been completed.")
                 return
 
             task_unit.set_status(TaskUnitStatus.IN_PROGRESS)
@@ -124,6 +133,7 @@ def process_task_unit(self, task_unit_id):
         raise self.retry(exc=e, countdown=10)
 
     finally:
+        cache.delete(task_unit_celery_cache_key(task_unit_id))
         connections.close_all()
 
 
@@ -133,11 +143,12 @@ def resume_pending_tasks():
     from django.db import connections
 
     try:
-        pending_or_in_progress_tasks = TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)[:1000]
-        logger.log(logging.INFO, f"Celery: Found {len(pending_or_in_progress_tasks)} pending tasks.")
+        pending_task_ids = list(TaskUnit.objects.filter(task_unit_status=TaskUnitStatus.PENDING)
+                                .values_list("id", flat=True)[:1000])
+        logger.log(logging.INFO, f"Celery: Found {len(pending_task_ids)} pending tasks.")
 
-        for task in pending_or_in_progress_tasks:
-            process_task_unit.apply_async(args=[task.id])
+        for task_id in pending_task_ids:
+            process_task_unit.apply_async(args=[task_id])
 
     except Exception as e:
         logger.log(logging.INFO,
