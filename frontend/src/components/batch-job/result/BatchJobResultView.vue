@@ -9,47 +9,49 @@
       <div class="col-md-3">
         <ProgressIndicator :batch_id="batch_id" :batch_status="batchJobStatus.Status" :currentStep="4"/>
       </div>
+
       <div class="col-md-9">
-        <!-- 정보 카드 -->
-        <h2 class="mb-3">Summary</h2>
         <LoadingView v-if="formStatus.isBatchJobLoading"/>
         <div v-else>
-          <div class="card mb-4 rounded-4">
-            <div class="card-body p-4">
-              <!-- 반응형 테이블 레이아웃 -->
-              <div class="row">
-                <!-- General Information 테이블 -->
-                <BatchJobInformationTableView :batchJob="batchJob"/>
+          <h2 class="mb-3">Summary</h2>
+          <div>
+            <div class="card mb-4 rounded-4">
+              <div class="card-body p-4">
+                <!-- 반응형 테이블 레이아웃 -->
+                <div class="row">
+                  <!-- General Information 테이블 -->
+                  <BatchJobInformationTableView :batchJob="batchJob"/>
 
-                <!-- Configuration 테이블 -->
-                <DynamicTableView :configs="batchJob.configs"/>
+                  <!-- Configuration 테이블 -->
+                  <DynamicTableView :configs="batchJob.configs"/>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-4 rounded-4">
+              <div class="card-body p-4">
+                <!-- RUNNING 버튼 -->
+                <div class="text-center">
+                  <button :disabled="formStatus.isRunnable"
+                          class="btn btn-primary"
+                          @click="handleRun">
+                    {{ formStatus.isTaskLoading ? "Loading..." : "Start Tasks" }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="card mb-4 rounded-4">
-            <div class="card-body p-4">
-              <!-- RUNNING 버튼 -->
-              <div class="text-center">
-                <button :disabled="formStatus.isRunnable"
-                        class="btn btn-primary"
-                        @click="handleRun">
-                  {{ formStatus.isTaskLoading ? "Loading..." : "Start Tasks" }}
-                </button>
-              </div>
-            </div>
-          </div>
+          <!-- 작업 결과 표시 -->
+          <LoadingView v-if="formStatus.isTaskLoading"/>
+          <ResultTable v-else
+                       v-model:selectedStatus="selectedStatus"
+                       :currentPage="currentPage"
+                       :tasks="tasks"
+                       :totalPages="totalPages"
+                       @change-page="changePage"/>
+
         </div>
-
-        <!-- 작업 결과 표시 -->
-        <LoadingView v-if="formStatus.isTaskLoading"/>
-        <ResultTable v-else-if="tasks.length > 0"
-                     :currentPage="currentPage"
-                     :tasks="tasks"
-                     :totalPages="totalPages"
-                     v-model:selectedStatus="selectedStatus"
-                     @change-page="changePage"/>
-
       </div>
     </div>
   </div>
@@ -168,7 +170,6 @@ export default {
         this.loadingState.fetchTaskLoading = true;
 
         const url = fetchTaskAPIUrl(this.batch_id, this.currentPage, this.selectedStatus);
-        console.log(`url: ${url}`)
         const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
 
         this.tasks = [...tasks];
@@ -181,7 +182,7 @@ export default {
         ).map(task => task.task_unit_id);
 
         if (inProgressTasks?.length > 0) {
-          this.clearTaskUnitChecker();
+          await this.clearTaskUnitChecker();
 
           this.taskUnitChecker = new TaskUnitChecker();
           this.taskUnitChecker.setOnCompleteCallback(this.handleTaskComplete);
@@ -197,16 +198,16 @@ export default {
     },
 
     async changePage(page, force = false) {
-      if (page < 1 || page > this.totalPages) return;
+      if (page < 1 || page > this.totalPages && !force) return;
       if (this.currentPage === page && !force) return;
       this.currentPage = page;
-      this.clearTaskUnitChecker();
+      await this.clearTaskUnitChecker();
       await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
     },
 
-    clearTaskUnitChecker() {
+    async clearTaskUnitChecker() {
       if (this.taskUnitChecker) {
-        this.taskUnitChecker.stopAllChecking();
+        await this.taskUnitChecker.stopAllChecking();
         this.taskUnitChecker = null;
       }
     },
@@ -214,7 +215,7 @@ export default {
     async handleRun() {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
-      this.clearTaskUnitChecker();
+      await this.clearTaskUnitChecker();
 
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
@@ -265,8 +266,9 @@ export default {
     }
   },
 
-  beforeRouteLeave() {
-    this.clearTaskUnitChecker();
+  async beforeRouteLeave(to, from, next) {
+    await this.clearTaskUnitChecker();
+    next();
   }
 };
 </script>
