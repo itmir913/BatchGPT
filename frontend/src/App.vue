@@ -16,12 +16,7 @@
     </div>
   </nav>
   <router-view v-slot="{ Component }">
-    <transition
-        name="custom-fade"
-        @enter="enter"
-        @leave="leave"
-        @before-enter="beforeEnter"
-    >
+    <transition>
       <component :is="Component"/>
     </transition>
   </router-view>
@@ -33,22 +28,6 @@ export default {
   computed: {
     isAuthPage() {
       return this.$route.path === '/login' || this.$route.path === '/register';
-    }
-  },
-  methods: {
-    beforeEnter(el) {
-      el.style.opacity = 0;
-    },
-    enter(el, done) {
-      el.offsetHeight;
-      el.style.transition = 'opacity 1s ease-in-out';
-      el.style.opacity = 1;
-      done();
-    },
-    leave(el, done) {
-      el.style.transition = 'opacity 1s ease-in-out';
-      el.style.opacity = 0;
-      done();
     }
   },
 }
