@@ -32,12 +32,31 @@ class TaskUnitChecker {
     }
 
     async processTasks() {
-        while (this.taskQueue.length > 0) {
+        const taskPromises = [];
+
+        while (this.taskQueue.length > 0 || taskPromises.length > 0) {
             if (this.inProgress.size < MAX_CONCURRENT_TASKS) {
                 const taskUnit = this.taskQueue.shift();
                 this.inProgress.add(taskUnit.taskUnitId);
-                await this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts);
+
+                taskPromises.push(this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts));
             }
+
+            if (taskPromises.length >= MAX_CONCURRENT_TASKS) {
+                const results = await Promise.allSettled(taskPromises);
+
+                results.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        console.error(`Task ${taskPromises[index].taskUnitId} failed:`, result.reason);
+                    }
+                });
+
+                taskPromises.length = 0;
+            }
+        }
+
+        if (taskPromises.length > 0) {
+            await Promise.all(taskPromises);
         }
     }
 
