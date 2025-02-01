@@ -153,10 +153,7 @@ export default {
       currentPage: 1,
       totalPages: 1,
 
-      taskUnits: {
-        taskUnitChecker: null,
-        inProgressTasks: [],
-      },
+      taskUnitChecker: null,
 
       messages: {success: null, error: null},
       loadingState: {fetchBatchJobLoading: false, fetchTaskLoading: false, isStartTask: false},
@@ -234,11 +231,12 @@ export default {
     },
 
     async fetchTasks() {
-      if (this.loadingState.fetchTaskLoading) return;
+      if (this.loadingState.fetchTaskLoading) {
+        return;
+      }
 
       try {
         this.loadingState.fetchTaskLoading = true;
-        this.taskUnits.taskUnitChecker.stopAllChecking();
 
         const url = fetchTaskAPIUrl(this.batch_id, this.currentPage);
         const {tasks, nextPage, totalPages, hasMore} = await fetchTasksAPI(url);
@@ -248,21 +246,18 @@ export default {
         this.hasMore = hasMore;
         this.totalPages = totalPages;
 
-        this.taskUnits.inProgressTasks = tasks.filter(task =>
+        const inProgressTasks = tasks.filter(task =>
             ['Pending', 'In Progress'].includes(task.task_unit_status)
         ).map(task => task.task_unit_id);
 
-        if (this.taskUnits.inProgressTasks?.length > 0) {
-          this.taskUnits.taskUnitChecker.startCheckingTaskUnits(this.batch_id, this.taskUnits.inProgressTasks);
-          this.taskUnits.taskUnitChecker.setOnCompleteCallback((taskId, status, result) => {
-            const previewItem = this.tasks.find(item => item.task_unit_id === taskId);
-            if (previewItem) {
-              previewItem.response_data = result;
-              previewItem.task_unit_status = status;
-            } else {
-              console.error(`Task ID ${taskId} not found in taskUnits.taskUnitChecker`);
-            }
-          });
+        if (inProgressTasks?.length > 0) {
+          if (this.taskUnitChecker) {
+            this.taskUnitChecker.stopAllChecking();
+          }
+
+          this.taskUnitChecker = new TaskUnitChecker();
+          this.taskUnitChecker.setOnCompleteCallback(this.handleTaskComplete);
+          this.taskUnitChecker.startCheckingTaskUnits(this.batch_id, inProgressTasks);
         }
 
       } catch (error) {
@@ -276,6 +271,10 @@ export default {
     async changePage(page) {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
+      if (this.taskUnitChecker) {
+        this.taskUnitChecker.stopAllChecking();
+        this.taskUnitChecker = null;
+      }
       await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
     },
 
@@ -283,11 +282,14 @@ export default {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
 
+      if (this.taskUnitChecker) {
+        this.taskUnitChecker.stopAllChecking();
+        this.taskUnitChecker = null;
+      }
+
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
       this.hasMore = true;
-
-      this.taskUnits.taskUnitChecker.stopAllChecking()
 
       try {
         this.batchJob = await runBatchJobProcess(this.batch_id);
@@ -320,11 +322,19 @@ export default {
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
     },
 
+    handleTaskComplete(taskId, status, result) {
+      const previewItem = this.tasks.find(item => item.task_unit_id === taskId);
+      if (previewItem) {
+        previewItem.response_data = result;
+        previewItem.task_unit_status = status;
+      } else {
+        console.error(`Task ID ${taskId} not found in taskUnits.taskUnitChecker`);
+      }
+    }
+
   },
 
   async mounted() {
-    this.taskUnits.taskUnitChecker = new TaskUnitChecker();
-
     await this.fetchBatchJob();
     if (shouldDisplayResults(this.batchJob.batch_job_status)) {
       await this.fetchTasks();
@@ -332,7 +342,10 @@ export default {
   },
 
   beforeUnmount() {
-    this.taskUnits.taskUnitChecker.stopAllChecking();
+    if (this.taskUnitChecker) {
+      this.taskUnitChecker.stopAllChecking();
+      this.taskUnitChecker = null;
+    }
   }
 };
 </script>
