@@ -33,7 +33,7 @@
               </span>
           </td>
           <td>
-            <div class="text-content badge bg-white text-dark border border-secondary">
+            <div class="text-content badge bg-white text-dark border border-secondary d-block">
               {{ truncateText(task.request_data.prompt) }}
             </div>
             <div v-if="task.request_data.has_files">
