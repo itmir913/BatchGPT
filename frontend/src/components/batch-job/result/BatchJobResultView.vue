@@ -260,7 +260,7 @@ export default {
     }
   },
 
-  beforeUnmount() {
+  beforeRouteLeave() {
     if (this.taskUnitChecker) {
       this.taskUnitChecker.stopAllChecking();
       this.taskUnitChecker = null;
