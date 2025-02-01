@@ -1,73 +1,74 @@
 <template>
-  <ToastView
-      ref="toast"
-      :message="messages"
-  />
+  <div>
+    <ToastView
+        ref="toast"
+        :message="messages"
+    />
 
-  <header class="py-5 bg-light border-bottom mb-4">
-    <div class="container">
-      <div class="text-center my-5">
-        <h1 class="fw-bolder">Welcome to Batch GPT!</h1>
-        <p class="lead mb-0">Your creative partner for effortless AI batch processing!</p>
-      </div>
-    </div>
-  </header>
-
-  <div class="container my-4">
-    <!-- 인증된 상태 -->
-    <div class="row">
-      <!-- 사용자 계정 정보 섹션 -->
-      <div class="col-md-4 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="text-dark"><i class="bi bi-person-circle"></i> My Account</h2>
-        </div>
-
-        <LoadingView v-if="formStatus.isUserDataLoading"/>
-        <div v-else class="p-4 bg-light rounded-3 shadow-sm">
-          <h4 class="text-primary mb-3">
-            <i class="bi bi-person-circle"></i> Welcome, {{ user.username }}!
-          </h4>
-          <ul class="list-group">
-            <li class="list-group-item bg-light">
-              <strong>Email:</strong> {{ user.email }}
-            </li>
-            <li class="list-group-item bg-light">
-              <strong>Balances:</strong> ${{ user.balance }}
-            </li>
-          </ul>
-          <button class="btn btn-outline-primary mt-3 w-100" @click="logout">
-            Logout
-          </button>
+    <header class="py-5 bg-light border-bottom mb-4">
+      <div class="container">
+        <div class="text-center my-5">
+          <h1 class="fw-bolder">Welcome to Batch GPT!</h1>
+          <p class="lead mb-0">Your creative partner for effortless AI batch processing!</p>
         </div>
       </div>
+    </header>
 
-      <!-- 배치 작업 섹션 -->
-      <div class="col-md-8 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="text-dark"><i class="bi bi-gear"></i> My Batch Jobs</h2>
-          <button class="btn btn-primary" @click="goToCreateBatchJob">
-            Add New Batch Job
-          </button>
+    <div class="container my-4">
+      <!-- 인증된 상태 -->
+      <div class="row">
+        <!-- 사용자 계정 정보 섹션 -->
+        <div class="col-md-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-dark"><i class="bi bi-person-circle"></i> My Account</h2>
+          </div>
+
+          <LoadingView v-if="formStatus.isUserDataLoading"/>
+          <div v-else class="p-4 bg-light rounded-3 shadow-sm">
+            <h4 class="text-primary mb-3">
+              <i class="bi bi-person-circle"></i> Welcome, {{ user.username }}!
+            </h4>
+            <ul class="list-group">
+              <li class="list-group-item bg-light">
+                <strong>Email:</strong> {{ user.email }}
+              </li>
+              <li class="list-group-item bg-light">
+                <strong>Balances:</strong> ${{ user.balance }}
+              </li>
+            </ul>
+            <button class="btn btn-outline-primary mt-3 w-100" @click="logout">
+              Logout
+            </button>
+          </div>
         </div>
 
-        <!-- 배치 작업 리스트 -->
-        <LoadingView v-if="formStatus.isBatchJobLoading"/>
-        <div v-else-if="batchJobs.length > 0" class="row">
-          <div v-for="job in batchJobs" :key="job.id" class="col-md-6 mb-4">
-            <router-link :to="getJobLink(job)" class="text-decoration-none">
-              <div class="card h-100 shadow-sm rounded-3 border">
-                <div class="card-body">
-                  <h5 class="card-title text-primary">
-                    <i class="bi bi-file-earmark-text"></i> {{ job.title }}
-                  </h5>
-                  <p class="card-text">
-                    {{ job.description || "No description provided." }}
-                  </p>
-                  <p class="card-text text-muted" style="font-size: 0.875rem;">
-                    Created: {{ formatDate(job.created_at) }}<br/>
-                    Updated: {{ formatDate(job.updated_at) }}
-                  </p>
-                  <span :class="{
+        <!-- 배치 작업 섹션 -->
+        <div class="col-md-8 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-dark"><i class="bi bi-gear"></i> My Batch Jobs</h2>
+            <button class="btn btn-primary" @click="goToCreateBatchJob">
+              Add New Batch Job
+            </button>
+          </div>
+
+          <!-- 배치 작업 리스트 -->
+          <LoadingView v-if="formStatus.isBatchJobLoading"/>
+          <div v-else-if="batchJobs.length > 0" class="row">
+            <div v-for="job in batchJobs" :key="job.id" class="col-md-6 mb-4">
+              <router-link :to="getJobLink(job)" class="text-decoration-none">
+                <div class="card h-100 shadow-sm rounded-3 border">
+                  <div class="card-body">
+                    <h5 class="card-title text-primary">
+                      <i class="bi bi-file-earmark-text"></i> {{ job.title }}
+                    </h5>
+                    <p class="card-text">
+                      {{ job.description || "No description provided." }}
+                    </p>
+                    <p class="card-text text-muted" style="font-size: 0.875rem;">
+                      Created: {{ formatDate(job.created_at) }}<br/>
+                      Updated: {{ formatDate(job.updated_at) }}
+                    </p>
+                    <span :class="{
                   'badge bg-success': job.batch_job_status === BATCH_JOB_STATUS.COMPLETED,
                   'badge bg-warning text-dark': job.batch_job_status === BATCH_JOB_STATUS.IN_PROGRESS,
                   'badge bg-danger': job.batch_job_status === BATCH_JOB_STATUS.FAILED,
@@ -75,14 +76,15 @@
                    }">
                   {{ job.batch_job_status }}
                 </span>
+                  </div>
                 </div>
-              </div>
-            </router-link>
+              </router-link>
+            </div>
           </div>
+          <p v-else class="text-center text-muted">
+            No batch jobs found. Start by adding one!
+          </p>
         </div>
-        <p v-else class="text-center text-muted">
-          No batch jobs found. Start by adding one!
-        </p>
       </div>
     </div>
   </div>
