@@ -1,4 +1,5 @@
 import {checkTaskUnitStatus} from "@/components/batch-job/utils/BatchJobUtils";
+import {completedTaskUnit} from "@/components/batch-job/utils/TaskUnitUtils";
 
 const MAX_CONCURRENT_TASKS = 5;  // 동시에 서버로 요청할 Task 상태 조회 개수
 const MAX_RETRIES = 10;  // 10번의 시도 후 큐의 맨 뒤로 들어감
@@ -13,6 +14,7 @@ class TaskUnitChecker {
         this.taskQueue = [];
         this.inProgress = new Set();
         this.timeoutId = null;
+        this.isStopped = false;  // Flag to indicate if checking should be stopped
     }
 
     setOnCompleteCallback(callback) {
@@ -21,9 +23,10 @@ class TaskUnitChecker {
 
     startCheckingTaskUnits(batchJobId, taskUnitIds) {
         taskUnitIds.forEach(taskUnitId => {
-            this.taskQueue.push({batchJobId, taskUnitId, attempts: 1});
+            this.taskQueue.push({batchJobId, taskUnitId, attempts: 0});
         });
 
+        this.isStopped = false; // Reset stop flag
         this.processTasks();
 
         this.timeoutId = setTimeout(() => {
@@ -32,18 +35,41 @@ class TaskUnitChecker {
     }
 
     async processTasks() {
-        while (this.taskQueue.length > 0) {
+        const taskPromises = [];
+
+        while ((this.taskQueue.length > 0 || taskPromises.length > 0) && !this.isStopped) {
             if (this.inProgress.size < MAX_CONCURRENT_TASKS) {
                 const taskUnit = this.taskQueue.shift();
+                if (!taskUnit) continue;
+
                 this.inProgress.add(taskUnit.taskUnitId);
-                await this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts);
+                const taskPromise = this.checkTaskUnitStatus(taskUnit.batchJobId, taskUnit.taskUnitId, taskUnit.attempts);
+                taskPromises.push({taskUnitId: taskUnit.taskUnitId, promise: taskPromise});
             }
+
+            if (taskPromises.length >= MAX_CONCURRENT_TASKS) {
+                const results = await Promise.allSettled(taskPromises.map(p => p.promise));
+
+                results.forEach((result, index) => {
+                    const taskUnitId = taskPromises[index].taskUnitId;
+                    if (result.status === 'rejected') {
+                        console.error(`Task ${taskUnitId} failed:`, result.reason);
+                    }
+                });
+
+                taskPromises.length = 0;
+            }
+        }
+
+        if (taskPromises.length > 0) {
+            await Promise.all(taskPromises.map(p => p.promise));
         }
     }
 
     async checkTaskUnitStatus(batchJobId, taskUnitId, attempts) {
         const tryChecking = async () => {
             try {
+                if (this.isStopped) return;  // Check if stopped before processing
                 const randomDelay = Math.floor(Math.random() * (RANDOM_DELAY_RANGE.max - RANDOM_DELAY_RANGE.min + 1)) + RANDOM_DELAY_RANGE.min;
                 await this.delay(randomDelay);
 
@@ -58,21 +84,22 @@ class TaskUnitChecker {
                     this.onCompleteCallback(taskUnitId, status, result);
                 }
 
-                if (status === 'Completed') {
-                    console.log(`TaskUnit ${taskUnitId} has been completed.`);
+                if (completedTaskUnit(status)) {
+                    console.log(`TaskUnit ${taskUnitId} has been ${status}.`);
                     this.stopCheckingTaskUnit(taskUnitId);
                 }
 
             } catch (error) {
+                if (this.isStopped) return;  // Check if stopped before processing errors
                 if (error.response && error.response.status === 404) {
                     attempts++;
                     await this.delay(DELAY_AFTER_FAILURE);
 
                     if (attempts < MAX_RETRIES) {
-                        this.taskQueue.unshift({batchJobId, taskUnitId, attempts}); // 큐의 맨 앞에 추가
+                        this.taskQueue.unshift({batchJobId, taskUnitId, attempts});
                         console.log(`TaskUnit ${taskUnitId} not found. Retrying... Attempt ${attempts}/${MAX_RETRIES}`);
                     } else {
-                        this.taskQueue.push({batchJobId, taskUnitId, attempts}); // 큐의 맨 뒤에 추가
+                        this.taskQueue.push({batchJobId, taskUnitId, attempts});
                         console.log(`TaskUnit ${taskUnitId} failed after ${MAX_RETRIES} retries.`);
                     }
                 } else {
@@ -94,29 +121,34 @@ class TaskUnitChecker {
     stopCheckingTaskUnit(taskUnitId) {
         if (this.controllers.has(taskUnitId)) {
             const controller = this.controllers.get(taskUnitId);
-            controller.abort();
+            if (!controller.signal.aborted) {
+                controller.abort();
+                console.log(`TaskUnit ${taskUnitId} stopped.`);
+            }
             this.controllers.delete(taskUnitId);
-            console.log(`TaskUnit ${taskUnitId} stopped.`);
         }
     }
 
     stopAllChecking() {
-        // 큐에 있는 대기 중인 작업들 모두 취소
+        // Prevent further tasks from being processed
+        this.isStopped = true;
+
+        // Clear queue and in-progress tasks
         this.taskQueue = [];
 
-        // 진행 중인 작업들 취소
+        this.inProgress.forEach(taskUnitId => {
+            this.stopCheckingTaskUnit(taskUnitId);
+        });
+        this.inProgress.clear();
+
         this.controllers.forEach((controller, taskUnitId) => {
             controller.abort();
             console.log(`TaskUnit ${taskUnitId} aborted.`);
         });
-
-        // 진행 중인 작업 목록과 대기 목록 초기화
         this.controllers.clear();
-        this.inProgress.clear();
 
         if (this.timeoutId) {
             clearTimeout(this.timeoutId);
-            console.log('Timeout cleared.');
         }
 
         console.log('All task unit checks stopped, including queued tasks.');

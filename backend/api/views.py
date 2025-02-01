@@ -184,6 +184,18 @@ class BatchJobDetailView(APIView):
                 status=HTTP_403_FORBIDDEN,
             )
 
+        task_units = TaskUnit.objects.filter(batch_job=batch_job).only('id')
+        if not task_units:
+            from api.utils.cache_keys import task_unit_celery_cache_key
+            from celery.worker.control import revoke
+            from django.core.cache import cache
+
+            for task_unit in task_units:
+                celery_task_id = cache.get(task_unit_celery_cache_key(task_unit.id))
+                revoke(celery_task_id, terminate=True)
+
+            task_units.delete()
+
         batch_job.delete()
         logger.log(logging.DEBUG, f"API: {request.user.email} has successfully deleted BatchJob with ID {batch_id}.")
         return Response(status=HTTP_204_NO_CONTENT)
@@ -567,7 +579,8 @@ class BatchJobRunView(APIView):
             batch_job.set_status(BatchJobStatus.PENDING)
             batch_job.save()
 
-            process_batch_job.apply_async(args=[batch_job.id])
+            process_batch_job.apply_async(args=[batch_id])
+            logger.info(f"API: BatchJob with ID {batch_id} is going to process now.")
 
             return Response(serializer.data, status=HTTP_202_ACCEPTED)
         except BatchJob.DoesNotExist:
