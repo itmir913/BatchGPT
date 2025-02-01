@@ -3,7 +3,6 @@ import os
 
 from celery import shared_task
 
-from api.utils.cache_keys import CACHE_TIMEOUT_BATCH_JOB, batch_job_cache_key, get_cache_or_database
 from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
@@ -103,64 +102,66 @@ def process_pdf(processor, prompt, batch_job, file_path):
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
 def process_batch_job(self, batch_job_id):
-    from django.db import connections
+    from django.db import connections, transaction
     from django.core.files.uploadedfile import InMemoryUploadedFile
     from api.models import BatchJob, BatchJobStatus, TaskUnit
     from api.utils.files_processor.file_settings import FileSettings
     from backend import settings
 
+    batch_job = None
+
     try:
-        batch_job = get_cache_or_database(
-            model=BatchJob,
-            primary_key=batch_job_id,
-            cache_key=batch_job_cache_key(batch_job_id),
-            timeout=CACHE_TIMEOUT_BATCH_JOB,
-        )
+        with transaction.atomic():
+            batch_job = BatchJob.objects.select_for_update(skip_locked=True).filter(id=batch_job_id).first()
 
-        status = batch_job.get_batch_job_status_display()
+            if not batch_job:
+                logger.info(f"Celery: The job with ID {batch_job_id} is already being processed by another worker. "
+                            f"Skipping this job.")
+                return
 
-        if status in [BatchJobStatus.COMPLETED_DISPLAY]:
-            logger.log(logging.INFO, f"Celery: The job with ID {batch_job_id} has already been completed.")
-            return
+            status = batch_job.get_batch_job_status_display()
+            if status in [BatchJobStatus.COMPLETED_DISPLAY]:
+                logger.info(f"Celery: The job with ID {batch_job_id} has already been completed.")
+                return
 
-        TaskUnit.objects.filter(batch_job=batch_job).delete()
-
-        try:
+            TaskUnit.objects.filter(batch_job=batch_job).delete()
             prompt = batch_job.configs.get('prompt', None)
-
-            if prompt is None:
-                logger.log(logging.ERROR, f"API: Cannot generate prompts because prompt or selected_headers is None")
-                raise ValueError("Cannot generate prompts because prompt or selected_headers is None")
+            if not prompt:
+                logger.error("Celery: Cannot generate prompts because prompt is None")
+                raise ValueError("Cannot generate prompts because prompt is None")
 
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
 
-            file = batch_job.file
-            file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
-            processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
-            if processor is None:
-                raise ValueError(f"Unsupported file extension for {file_path}")
+        file = batch_job.file
+        if not file:
+            logger.info(f"Celery: The job with ID {batch_job_id} does not have an associated file")
+            return
 
-            if isinstance(processor, CSVProcessor):
-                process_csv(processor, prompt, batch_job, file_path)
-            elif isinstance(processor, PDFProcessor):
-                process_pdf(processor, prompt, batch_job, file_path)
-            else:
-                raise NotImplementedError("Unsupported processor type")
+        file_path = file if isinstance(file, InMemoryUploadedFile) else os.path.join(settings.BASE_DIR, file.path)
+        processor = FileSettings.get_file_processor(FileSettings.get_file_extension(file_path))
 
-            logger.log(logging.INFO, f"Celery: All tasks for job with ID {batch_job_id} have been completed.")
+        if not processor:
+            raise ValueError(f"Celery: Unsupported file extension for {file_path}")
 
-        except Exception as e:
-            logger.log(logging.INFO,
-                       f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
+        if isinstance(processor, CSVProcessor):
+            process_csv(processor, prompt, batch_job, file_path)
+        elif isinstance(processor, PDFProcessor):
+            process_pdf(processor, prompt, batch_job, file_path)
+        else:
+            raise NotImplementedError("Celery: Unsupported processor type")
 
-            batch_job.set_status(BatchJobStatus.FAILED)
-            batch_job.save()
+        logger.info(f"Celery: All tasks for job with ID {batch_job_id} have been completed.")
 
-            raise self.retry(exc=e, countdown=1)
+    except Exception as e:
+        logger.info(f"Celery: The job with ID {batch_job_id} has failed for the following reason: {str(e)}")
 
-    except BatchJob.DoesNotExist as e:
-        return
+        if batch_job:
+            with transaction.atomic():
+                batch_job.set_status(BatchJobStatus.FAILED)
+                batch_job.save()
+
+        raise self.retry(exc=e, countdown=10)
 
     finally:
         connections.close_all()
