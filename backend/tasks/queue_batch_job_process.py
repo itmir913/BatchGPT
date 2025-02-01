@@ -9,6 +9,7 @@ from api.utils.files_processor.base_processor import ResultType
 from api.utils.files_processor.csv_processor import CSVProcessor
 from api.utils.files_processor.pdf_processor import PDFProcessor
 from tasks.celery import app
+from tasks.queue_task_units import process_task_unit
 
 logger = logging.getLogger(__name__)
 
@@ -81,8 +82,8 @@ def process_csv(processor, prompt, batch_job, file_path):
             case _:
                 raise NotImplementedError
 
-    from tasks.queue_task_units import resume_pending_tasks
-    resume_pending_tasks.apply_async()
+    for task_id in task_ids:
+        process_task_unit.apply_async(args=[task_id])
 
 
 def process_pdf(processor, prompt, batch_job, file_path):
@@ -107,8 +108,8 @@ def process_pdf(processor, prompt, batch_job, file_path):
             case _:
                 raise NotImplementedError
 
-    from tasks.queue_task_units import resume_pending_tasks
-    resume_pending_tasks.apply_async()
+    for task_id in task_ids:
+        process_task_unit.apply_async(args=[task_id])
 
 
 @shared_task(bind=True, max_retries=1, autoretry_for=(Exception,))
