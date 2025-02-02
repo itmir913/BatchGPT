@@ -66,7 +66,6 @@ import {
   fetchTasksAPI,
   runBatchJobProcess,
   shouldDisableRunButton,
-  shouldDisplayResults,
   SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
@@ -261,9 +260,7 @@ export default {
 
   async mounted() {
     await this.fetchBatchJob();
-    if (shouldDisplayResults(this.batchJob.batch_job_status)) {
-      await this.fetchTasks();
-    }
+    await this.fetchTasks();
   },
 
   async beforeRouteLeave(to, from, next) {
