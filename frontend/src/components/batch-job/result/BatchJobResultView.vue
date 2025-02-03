@@ -66,12 +66,11 @@ import {
   fetchTasksAPI,
   runBatchJobProcess,
   shouldDisableRunButton,
-  shouldDisplayResults,
-  SUCCESS_MESSAGES
+  SUCCESS_MESSAGES,
+  WEBSOCKET_TASK_UNITS_STATUS
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
-import TaskUnitChecker from "@/components/batch-job/utils/TaskUnitChecker";
 import ToastView from "@/components/batch-job/common/ToastView.vue";
 import BatchJobInformationTableView from "@/components/batch-job/result/InfoTable.vue";
 import DynamicTableView from "@/components/batch-job/result/ConfigTable.vue";
@@ -91,7 +90,7 @@ export default {
       currentPage: 1,
       totalPages: 1,
       selectedStatus: '',
-      taskUnitChecker: null,
+      socket: null,
 
       messages: {success: null, error: null},
       loadingState: {fetchBatchJobLoading: false, fetchTaskLoading: false, isStartTask: false},
@@ -167,6 +166,7 @@ export default {
       }
 
       try {
+        this.closeSocket();
         this.loadingState.fetchTaskLoading = true;
 
         const url = fetchTaskAPIUrl(this.batch_id, this.currentPage, this.selectedStatus);
@@ -182,11 +182,7 @@ export default {
         ).map(task => task.task_unit_id);
 
         if (inProgressTasks?.length > 0) {
-          await this.clearTaskUnitChecker();
-
-          this.taskUnitChecker = new TaskUnitChecker();
-          this.taskUnitChecker.setOnCompleteCallback(this.handleTaskComplete);
-          this.taskUnitChecker.startCheckingTaskUnits(this.batch_id, inProgressTasks);
+          this.subscribe(inProgressTasks);
         }
 
       } catch (error) {
@@ -197,25 +193,42 @@ export default {
       }
     },
 
+    subscribe(tasks) {
+      this.socket = new WebSocket(WEBSOCKET_TASK_UNITS_STATUS);
+      this.socket.onopen = () => {
+        console.log("websocket opened.")
+        this.socket.send(JSON.stringify({
+          "batch_id": this.batch_id,
+          "task_units": tasks,
+        }));
+      };
+      this.socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const previewItem = this.tasks.find(item => item.task_unit_id === data.task_unit_id);
+        if (previewItem) {
+          previewItem.response_data = data.result;
+          previewItem.task_unit_status = data.status;
+        }
+      };
+    },
+
+    closeSocket() {
+      if (this.socket) {
+        this.socket.close();
+      }
+    },
+
     async changePage(page, force = false) {
       if (page < 1 || page > this.totalPages && !force) return;
       if (this.currentPage === page && !force) return;
       this.currentPage = page;
-      await this.clearTaskUnitChecker();
       await this.fetchTasks(); // 페이지 변경 시 데이터를 로드
-    },
-
-    async clearTaskUnitChecker() {
-      if (this.taskUnitChecker) {
-        await this.taskUnitChecker.stopAllChecking();
-        this.taskUnitChecker = null;
-      }
     },
 
     async handleRun() {
       if (this.loadingState.isStartTask) return;
       this.loadingState.isStartTask = true;
-      await this.clearTaskUnitChecker();
+      this.closeSocket();
 
       this.tasks = []; // 기존 데이터를 초기화
       this.nextPage = null;
@@ -247,27 +260,15 @@ export default {
       }
     },
 
-    handleTaskComplete(taskId, status, result) {
-      const previewItem = this.tasks.find(item => item.task_unit_id === taskId);
-      if (previewItem) {
-        previewItem.response_data = result;
-        previewItem.task_unit_status = status;
-      } else {
-        console.error(`Task ID ${taskId} not found in taskUnits.taskUnitChecker`);
-      }
-    }
-
   },
 
   async mounted() {
     await this.fetchBatchJob();
-    if (shouldDisplayResults(this.batchJob.batch_job_status)) {
-      await this.fetchTasks();
-    }
+    await this.fetchTasks();
   },
 
   async beforeRouteLeave(to, from, next) {
-    await this.clearTaskUnitChecker();
+    this.closeSocket();
     next();
   }
 };

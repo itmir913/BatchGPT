@@ -4,6 +4,7 @@ import logging
 import time
 
 from celery import shared_task
+from channels.layers import get_channel_layer
 from openai import OpenAI
 
 from api.utils.cache_keys import batch_job_cache_key, \
@@ -92,6 +93,7 @@ def process_task_unit(self, task_unit_id):
         response_json = response.model_dump_json()
         gpt_response = response_json if isinstance(response_json, dict) else json.loads(response_json)
         gpt_processor = get_gpt_processor(company="openai")
+        response_data = gpt_processor.process_response(gpt_response)
 
         task_unit_response = TaskUnitResponse.objects.create(
             batch_job=batch_job,
@@ -99,7 +101,7 @@ def process_task_unit(self, task_unit_id):
             task_unit_index=task_unit.unit_index,
             task_response_status=TaskUnitStatus.COMPLETED,
             request_data=task_unit.text_data,
-            response_data=gpt_processor.process_response(gpt_response),
+            response_data=response_data,
             processing_time=calculate_processing_time(start_time)
         )
 
@@ -108,6 +110,8 @@ def process_task_unit(self, task_unit_id):
             task_unit.latest_response = task_unit_response
             task_unit.save()
 
+        notify_task_completion(batch_job.id, task_unit_id, task_unit.get_task_unit_status_display(),
+                               gpt_processor.get_content(response_data))
         logger.log(logging.INFO, f"Celery: The request for {task_unit_id} has been completed.")
 
     except Exception as e:
@@ -129,6 +133,9 @@ def process_task_unit(self, task_unit_id):
                 task_unit.set_status(TaskUnitStatus.FAILED)
                 task_unit.latest_response = task_unit_response
                 task_unit.save()
+
+            # TODO 에러 메세지 처리 메소드 필요
+            notify_task_completion(batch_job.id, task_unit_id, task_unit.get_task_unit_status_display(), str(e))
 
         raise self.retry(exc=e, countdown=10)
 
@@ -152,7 +159,7 @@ def resume_pending_tasks():
         logger.log(logging.INFO, f"Celery: Found {len(pending_task_ids)} pending tasks.")
 
         for task_id in pending_task_ids:
-            process_task_unit.apply_async(args=[task_id])
+            process_task_unit.apply_async(args=[task_id], priority=255)
 
     except Exception as e:
         logger.log(logging.INFO,
@@ -161,6 +168,29 @@ def resume_pending_tasks():
     finally:
         cache.delete(locked_celery_cache_key('resume_pending_tasks'))
         connections.close_all()
+
+
+def notify_task_completion(batch_id, task_unit_id, status, result):
+    """ Celery 작업 완료 시 WebSocket으로 특정 TaskUnit 구독자에게 알림 전송 """
+    from asgiref.sync import async_to_sync
+
+    event_data = {
+        "batch_id": batch_id,
+        "task_unit_id": task_unit_id,
+        "status": status,
+        "result": result,
+    }
+
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"batch_{batch_id}",  # 그룹 이름
+        {
+            "type": "task_status",  # 메시지 타입
+            **event_data  # 전송할 데이터
+        }
+    )
+
+    logger.log(logging.INFO, f"Celery: Batch job with ID {batch_id}'s {task_unit_id} tasks sent to Clients.")
 
 
 def calculate_processing_time(start_time):
