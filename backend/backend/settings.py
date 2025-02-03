@@ -48,6 +48,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Section: Application definition
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -70,6 +72,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",  # Vue.js Clients
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -193,6 +199,7 @@ if not REDIS_URL.endswith("/"):
 # Celery와 Django에서 사용할 Redis 주소
 REDIS_DB_CELERY = f"{REDIS_URL}0"  # Celery: DB 0 사용
 REDIS_DB_DJANGO = f"{REDIS_URL}1"  # Django: DB 1 사용
+REDIS_DB_CHANNEL = f"{REDIS_URL}2"  # Channel: DB 2 사용
 
 # Section: Celery
 CELERY_BROKER_URL = REDIS_DB_CELERY
@@ -210,6 +217,18 @@ CACHES = {
         },
         "KEY_PREFIX": "django_cache",
     }
+}
+
+# Section: ASGI Application
+ASGI_APPLICATION = "backend.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_DB_CHANNEL],
+        },
+    },
 }
 
 # Section: OPENAI_API_KEY
