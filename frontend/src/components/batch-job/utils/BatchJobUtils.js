@@ -11,8 +11,15 @@ const API_PREVIEW_POSTFIX = "/preview/";
 export const API_TASK_UNITS_URL = "/task-units/";
 const API_BATCH_JOB_RUN_URL = "/run/";
 
-export const WEBSOCKET_TASK_UNITS_STATUS = "ws://localhost:8000/ws/task_status/";
 
+export function API_WEBSOCKET_TASK_UNITS_STATUS() {
+    const WEBSOCKET_TASK_UNITS_STATUS = `/ws/task_status/`;
+
+    const protocol = window.location.protocol;
+    const host = window.location.host;
+
+    return `${protocol === 'https:' ? 'wss' : 'ws'}://${host}${WEBSOCKET_TASK_UNITS_STATUS}`;
+}
 
 export const SUCCESS_MESSAGES = {
     updatedConfigs: "Configuration updated successfully.",

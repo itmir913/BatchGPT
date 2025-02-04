@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run Server" type="CompoundRunConfigurationType">
-    <toRun name="Django" type="Python.DjangoServer" />
     <toRun name="npm serve" type="NodeJSConfigurationType" />
     <toRun name="Celery Beat" type="PythonConfigurationType" />
     <toRun name="Celery Worker" type="PythonConfigurationType" />
+    <toRun name="Django daphne" type="PythonConfigurationType" />
     <method v="2" />
   </configuration>
 </component>

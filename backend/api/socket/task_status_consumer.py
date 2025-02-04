@@ -20,7 +20,7 @@ class TaskStatusConsumer(AsyncWebsocketConsumer):
         """ 클라이언트가 WebSocket을 종료할 때 호출 """
         if self.batch_id:
             await self.channel_layer.group_discard(f"batch_{self.batch_id}", self.channel_name)
-            print(f"Batch job with ID {self.batch_id} stopped subscribe")
+            logger.log(logging.DEBUG, f"Batch job with ID {self.batch_id} stopped subscribe")
 
     async def receive(self, text_data=None, bytes_data=None):
         """ 클라이언트에서 메시지를 받았을 때 호출 """
@@ -29,14 +29,14 @@ class TaskStatusConsumer(AsyncWebsocketConsumer):
         self.task_units = set(data.get("task_units", []))
 
         await self.channel_layer.group_add(f"batch_{self.batch_id}", self.channel_name)
-        logger.debug(f"Batch job with ID {self.batch_id} started subscribe: {self.task_units}")
+        logger.log(logging.DEBUG, f"Batch job with ID {self.batch_id} started subscribe: {self.task_units}")
 
     async def task_status(self, event):
         """ 특정 TaskUnit이 완료되었을 때, 구독 중인 클라이언트에게 알림 전송 """
         task_unit_id = event["task_unit_id"]
 
         if task_unit_id in self.task_units:
-            logger.debug(f"API: task_status {task_unit_id} sent to clients !!!!!!")
+            logger.log(logging.DEBUG, f"API: task_status {task_unit_id} sent to clients !!!!!!")
             await self.send(text_data=json.dumps({
                 "batch_id": event["batch_id"],
                 "task_unit_id": task_unit_id,
