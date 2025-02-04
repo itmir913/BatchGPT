@@ -445,7 +445,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
 
         queryset = (
             TaskUnit.objects
-            .filter(batch_job_id=batch_id)
+            .filter(batch_job_id=batch_id, is_valid=True)
             .select_related("latest_response")  # latest_response 조인을 최적화
             .prefetch_related("files")  # 수정된 부분: related_name 'files' 사용
             .only("id", "unit_index", "text_data", "has_files", "task_unit_status", "latest_response")

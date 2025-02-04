@@ -260,6 +260,11 @@ class TaskUnit(TimestampedModel):
         related_name='+'
     )
 
+    is_valid = models.BooleanField(
+        default=True,
+        verbose_name="Is Valid"
+    )
+
     class Meta:
         db_table = 'task_unit'
         verbose_name = 'Task Unit'
@@ -268,6 +273,7 @@ class TaskUnit(TimestampedModel):
             models.Index(fields=['batch_job']),  # 배치 작업별 조회 최적화
             models.Index(fields=['created_at']),  # 생성 날짜별 조회 최적화
             models.Index(fields=['unit_index']),  # 작업 순서별 정렬 최적화
+            models.Index(fields=['is_valid']),  # 작업 순서별 정렬 최적화
             models.Index(fields=['task_unit_status']),  # 상태별 조회 최적화
         ]
 

@@ -31,6 +31,7 @@ def handle_request_data(index, batch_job, prompt, result_type, files=None):
                     'has_files': False,
                     'task_unit_status': TaskUnitStatus.PENDING,
                     'latest_response': None,
+                    'is_valid': True,
                 }
             )
 
@@ -49,6 +50,7 @@ def handle_request_data(index, batch_job, prompt, result_type, files=None):
                     'has_files': True,
                     'task_unit_status': TaskUnitStatus.PENDING,
                     'latest_response': None,
+                    'is_valid': True,
                 }
             )
 
@@ -149,16 +151,16 @@ def process_batch_job(self, batch_job_id):
                 logger.error("Celery: Cannot generate prompts because prompt is None")
                 raise ValueError("Cannot generate prompts because prompt is None")
 
-            task_units = TaskUnit.objects.filter(batch_job=batch_job).only('id')
-            if not task_units:
+            task_units = TaskUnit.objects.filter(batch_job=batch_job)
+            if task_units.exists():
+                task_units.update(is_valid=False)
+
                 from api.utils.cache_keys import task_unit_celery_cache_key
                 from django.core.cache import cache
 
                 for task_unit in task_units:
                     celery_task_id = cache.get(task_unit_celery_cache_key(task_unit.id))
                     revoke(celery_task_id, terminate=True)
-
-                task_units.delete()
 
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
