@@ -192,9 +192,9 @@ export default {
             ['Pending', 'In Progress'].includes(task.task_unit_status)
         ).map(task => task.task_unit_id);
 
-        // if (inProgressTasks?.length > 0) {
-        this.subscribe(inProgressTasks);
-        // }
+        if (inProgressTasks?.length > 0) {
+          this.subscribe(inProgressTasks);
+        }
 
       } catch (error) {
         const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchTasks}`);
