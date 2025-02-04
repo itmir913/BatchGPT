@@ -16,4 +16,5 @@ urlpatterns = [
     path('<int:batch_id>/task-units/<int:task_unit_id>/', batch_jobs.TaskUnitStatusView.as_view(),
          name='task-units-status'),
     path('<int:batch_id>/run/', batch_jobs.BatchJobRunView.as_view(), name='batch-job-run'),
+    path('<int:batch_id>/download/', batch_jobs.BatchJobResultDownload.as_view(), name='batch-job-result-download'),
 ]
