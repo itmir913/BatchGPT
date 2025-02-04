@@ -31,11 +31,19 @@
             <div class="card mb-4 rounded-4">
               <div class="card-body p-4">
                 <!-- RUNNING 버튼 -->
-                <div class="text-center">
+                <div class="d-flex justify-content-center gap-3">
+                  <!-- Start Tasks 버튼 -->
                   <button :disabled="formStatus.isRunnable"
                           class="btn btn-primary"
                           @click="handleRun">
                     {{ formStatus.isTaskLoading ? "Loading..." : "Start Tasks" }}
+                  </button>
+
+                  <!-- Download 버튼 -->
+                  <button :disabled="formStatus.isDownloadable"
+                          class="btn btn-success"
+                          @click="handleDownloadResult">
+                    Download
                   </button>
                 </div>
               </div>
@@ -61,6 +69,8 @@
 import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
 import {
   API_WEBSOCKET_TASK_UNITS_STATUS,
+  canDownloadResultButton,
+  downloadBatchJobResult,
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   fetchTaskAPIUrl,
@@ -119,7 +129,8 @@ export default {
       return {
         isBatchJobLoading: this.loadingState.fetchBatchJobLoading,
         isTaskLoading: this.loadingState.fetchTaskLoading,
-        isRunnable: !shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
+        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
+        isDownloadable: canDownloadResultButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
       };
     },
 
@@ -244,6 +255,15 @@ export default {
       } catch (error) {
         this.loadingState.isStartTask = false;
         const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.pendingTasks}`);
+        this.handleMessages("error", errorMessage);
+      }
+    },
+
+    async handleDownloadResult() {
+      try {
+        await downloadBatchJobResult(this.batch_id);
+      } catch (error) {
+        const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.downloadingResult}`);
         this.handleMessages("error", errorMessage);
       }
     },

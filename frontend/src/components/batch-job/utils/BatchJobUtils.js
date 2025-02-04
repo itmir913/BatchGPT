@@ -10,6 +10,7 @@ const API_CONFIG_URL = "/configs/";
 const API_PREVIEW_POSTFIX = "/preview/";
 export const API_TASK_UNITS_URL = "/task-units/";
 const API_BATCH_JOB_RUN_URL = "/run/";
+const API_BATCH_JOB_DOWNLOAD_RESULT = "/download/";
 
 
 export function API_WEBSOCKET_TASK_UNITS_STATUS() {
@@ -51,6 +52,7 @@ export const ERROR_MESSAGES = {
     loadResult: "Failed to load preview data.",
     fetchTasks: "Error fetching tasks.",
     pendingTasks: "Error starting tasks.",
+    downloadingResult: "Error downloading results.",
 }
 
 export const CONFIRM_MESSAGE = {
@@ -102,16 +104,21 @@ export function getJobLink(job) {
     }
 }
 
+/**
+ * NOT 연산
+ * 함수를 사용할 때는 절대 NOT을 사용하지 않도록 한다.
+ * 즉, 모든 논리 연산은 return하기 전에 마쳐야한다.
+ */
 export function shouldEditDisabled(status) {
     return [BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(status);
 }
 
 export function shouldDisableRunButton(batch_job_status) {
-    return ![BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(batch_job_status);
+    return [BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(batch_job_status);
 }
 
-export function shouldDisplayResults(batch_job_status) {
-    return [BATCH_JOB_STATUS.IN_PROGRESS, BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.FAILED].includes(batch_job_status);
+export function canDownloadResultButton(batch_job_status) {
+    return ![BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.FAILED].includes(batch_job_status);
 }
 
 export async function createBatchJobAPI(payload) {
@@ -236,4 +243,22 @@ export async function runBatchJobProcess(batch_id) {
 
 export async function fetchBatchJobProcessStatus(batch_id) {
     return await axios.get(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_RUN_URL}`, {withCredentials: true});
+}
+
+export async function downloadBatchJobResult(batch_id) {
+    const response = await axios.get(`${API_BASE_URL}${batch_id}${API_BATCH_JOB_DOWNLOAD_RESULT}`, {
+        withCredentials: true,
+        responseType: 'blob',
+    });
+
+    const blob = response.data;
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `batch_${batch_id}_results.csv`); // 파일 이름 설정
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 }

@@ -1,9 +1,10 @@
+import csv
 import logging
 import os
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView
@@ -445,7 +446,7 @@ class TaskUnitResponseListAPIView(ListAPIView):
 
         queryset = (
             TaskUnit.objects
-            .filter(batch_job_id=batch_id)
+            .filter(batch_job_id=batch_id, is_valid=True)
             .select_related("latest_response")  # latest_response 조인을 최적화
             .prefetch_related("files")  # 수정된 부분: related_name 'files' 사용
             .only("id", "unit_index", "text_data", "has_files", "task_unit_status", "latest_response")
@@ -624,3 +625,55 @@ class BatchJobRunView(APIView):
                 {"error": "BatchJob not found."},
                 status=HTTP_404_NOT_FOUND
             )
+
+
+@method_decorator(login_required, name='dispatch')
+class BatchJobResultDownload(APIView):
+    """
+    View to handle user's batch jobs.
+    - GET: Retrieve all batch jobs for the authenticated user.
+    - POST: Create a new batch job for the authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, batch_id):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="result_{batch_id}.csv"'
+
+        writer = csv.writer(response)
+        response.write('\ufeff')
+        writer.writerow([
+            'Index', 'Status',
+            'Request', 'Response'
+        ])
+
+        queryset = (
+            TaskUnit.objects
+            .filter(batch_job_id=batch_id, is_valid=True)
+            .select_related("latest_response")  # latest_response 조인을 최적화
+            .only("id", "unit_index", "task_unit_status", "text_data", "latest_response")
+            .order_by("unit_index")
+        )
+
+        for item in queryset:
+            latest_response = item.latest_response
+            response_data = latest_response.response_data if latest_response else None
+            gpt_processor = get_gpt_processor(company=response_data.get('Company') if response_data else None)
+
+            # 결과 목록 추가
+            results = {
+                "unit_index": item.unit_index,
+                "task_unit_status": item.get_task_unit_status_display(),
+                "request_data": item.text_data,
+                "response_data": gpt_processor.get_content(response_data) if response_data else None,
+            }
+
+            # CSV 파일에 데이터 작성
+            writer.writerow([
+                results['unit_index'],
+                results['task_unit_status'],
+                results['request_data'],
+                results['response_data'],
+            ])
+
+        return response
