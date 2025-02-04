@@ -33,7 +33,7 @@
               </span>
           </td>
           <td>
-            <div class="text-content badge bg-white text-dark border border-secondary d-block">
+            <div class="badge bg-white text-dark border border-secondary text-content ">
               {{ truncateText(task.request_data.prompt) }}
             </div>
             <div v-if="task.request_data.has_files">
@@ -94,8 +94,10 @@
 .text-content {
   text-align: justify;
   word-wrap: break-word;
-  white-space: normal;
+  white-space: pre-line !important;
 }
+
+
 </style>
 
 <script>
@@ -125,7 +127,7 @@ export default {
     },
 
     truncateText(text) {
-      const maxLength = 500;
+      const maxLength = 300;
       return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
     },
 
