@@ -160,7 +160,11 @@ def process_batch_job(self, batch_job_id):
 
                 for task_unit in task_units:
                     celery_task_id = cache.get(task_unit_celery_cache_key(task_unit.id))
-                    revoke(celery_task_id, terminate=True)
+                    if celery_task_id:
+                        try:
+                            revoke(celery_task_id, terminate=True)
+                        except Exception as e:
+                            pass
 
             batch_job.set_status(BatchJobStatus.IN_PROGRESS)
             batch_job.save()
