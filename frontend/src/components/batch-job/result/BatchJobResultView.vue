@@ -129,8 +129,8 @@ export default {
       return {
         isBatchJobLoading: this.loadingState.fetchBatchJobLoading,
         isTaskLoading: this.loadingState.fetchTaskLoading,
-        isRunnable: !shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
-        isDownloadable: !canDownloadResultButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
+        isRunnable: shouldDisableRunButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
+        isDownloadable: canDownloadResultButton(this.batchJob.batch_job_status) || this.loadingState.isStartTask,
       };
     },
 

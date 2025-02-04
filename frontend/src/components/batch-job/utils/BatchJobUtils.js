@@ -104,16 +104,21 @@ export function getJobLink(job) {
     }
 }
 
+/**
+ * NOT 연산
+ * 함수를 사용할 때는 절대 NOT을 사용하지 않도록 한다.
+ * 즉, 모든 논리 연산은 return하기 전에 마쳐야한다.
+ */
 export function shouldEditDisabled(status) {
     return [BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(status);
 }
 
 export function shouldDisableRunButton(batch_job_status) {
-    return ![BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(batch_job_status);
+    return [BATCH_JOB_STATUS.PENDING, BATCH_JOB_STATUS.IN_PROGRESS].includes(batch_job_status);
 }
 
 export function canDownloadResultButton(batch_job_status) {
-    return [BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.FAILED].includes(batch_job_status);
+    return ![BATCH_JOB_STATUS.COMPLETED, BATCH_JOB_STATUS.FAILED].includes(batch_job_status);
 }
 
 export async function createBatchJobAPI(payload) {
