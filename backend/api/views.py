@@ -443,17 +443,18 @@ class TaskUnitResponseListAPIView(ListAPIView):
     def get_queryset(self):
         batch_id = self.kwargs.get('batch_id')
         status = self.request.GET.get('status')
+        is_valid = True if status != 'DELETED' else False
 
         queryset = (
             TaskUnit.objects
-            .filter(batch_job_id=batch_id, is_valid=True)
+            .filter(batch_job_id=batch_id, is_valid=is_valid)
             .select_related("latest_response")  # latest_response 조인을 최적화
             .prefetch_related("files")  # 수정된 부분: related_name 'files' 사용
             .only("id", "unit_index", "text_data", "has_files", "task_unit_status", "latest_response")
             .order_by("unit_index")
         )
 
-        if status:
+        if status and is_valid:
             queryset = queryset.filter(task_unit_status=status)
 
         return queryset
