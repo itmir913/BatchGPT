@@ -72,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -146,6 +147,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = os.path.join(BASE_DIR, 'dist', 'static'),
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -173,15 +175,25 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
+        'django.request': {
             'handlers': ['console'],
             'level': 'ERROR',
-            'propagate': False,
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
         },
         'celery': {
             'handlers': ['console'],
             'level': 'INFO',
-            'propagate': False,
+            'propagate': True,
         },
         '': {
             'handlers': ['console'],

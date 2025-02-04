@@ -28,8 +28,8 @@ RUN apt-get update && \
 
 COPY --from=frontend-build /backend/dist /app/dist
 
+COPY supervisord.conf /etc/supervisord.conf
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-COPY supervisord.conf /etc/supervisord.conf
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT [ "sh", "-c", "/app/entrypoint.sh" ]

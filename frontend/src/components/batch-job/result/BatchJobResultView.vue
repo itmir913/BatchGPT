@@ -60,14 +60,14 @@
 <script>
 import ProgressIndicator from "@/components/batch-job/common/ProgressIndicator.vue";
 import {
+  API_WEBSOCKET_TASK_UNITS_STATUS,
   ERROR_MESSAGES,
   fetchBatchJobConfigsAPI,
   fetchTaskAPIUrl,
   fetchTasksAPI,
   runBatchJobProcess,
   shouldDisableRunButton,
-  SUCCESS_MESSAGES,
-  WEBSOCKET_TASK_UNITS_STATUS
+  SUCCESS_MESSAGES
 } from "@/components/batch-job/utils/BatchJobUtils";
 import {DEFAULT_GPT_MODEL} from "@/components/batch-job/utils/GPTUtils";
 import BatchJobChecker from "@/components/batch-job/utils/BatchJobChecker";
@@ -181,9 +181,9 @@ export default {
             ['Pending', 'In Progress'].includes(task.task_unit_status)
         ).map(task => task.task_unit_id);
 
-        if (inProgressTasks?.length > 0) {
-          this.subscribe(inProgressTasks);
-        }
+        // if (inProgressTasks?.length > 0) {
+        this.subscribe(inProgressTasks);
+        // }
 
       } catch (error) {
         const errorMessage = getErrorMessage(error, `${ERROR_MESSAGES.fetchTasks}`);
@@ -194,7 +194,7 @@ export default {
     },
 
     subscribe(tasks) {
-      this.socket = new WebSocket(WEBSOCKET_TASK_UNITS_STATUS);
+      this.socket = new WebSocket(API_WEBSOCKET_TASK_UNITS_STATUS());
       this.socket.onopen = () => {
         console.log("websocket opened.")
         this.socket.send(JSON.stringify({

@@ -1,2 +1,4 @@
 /.idea/dataSources.xml
 .env
+.env.dev
+data
