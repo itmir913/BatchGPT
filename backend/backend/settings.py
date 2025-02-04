@@ -173,15 +173,25 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
+        'django.request': {
             'handlers': ['console'],
             'level': 'ERROR',
-            'propagate': False,
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
         },
         'celery': {
             'handlers': ['console'],
             'level': 'INFO',
-            'propagate': False,
+            'propagate': True,
         },
         '': {
             'handlers': ['console'],

@@ -1,8 +1,12 @@
 #!/bin/sh
 
-python manage.py makemigrations
-python manage.py migrate
+n=0
+while [ $n -lt 5 ]
+do
+    python manage.py migrate --no-input && break
+    n=$((n+1))  # n 증가
+    echo "Failed to migrate. Retrying in 8 seconds... ($n/5)"
+    sleep 8
+done
 
-python /app/manage.py runserver 0.0.0.0:8000
-
-#exec gunicorn backend.wsgi:application --bind 0.0.0.0:8000
+exec supervisord -n -c /etc/supervisord.conf
