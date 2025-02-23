@@ -643,16 +643,16 @@ class BatchJobResultDownload(APIView):
         writer = csv.writer(response)
         response.write('\ufeff')
         writer.writerow([
-            'Index', 'Status',
+            'is_valid', 'Index', 'Status',
             'Request', 'Response'
         ])
 
         queryset = (
             TaskUnit.objects
-            .filter(batch_job_id=batch_id, is_valid=True)
+            .filter(batch_job_id=batch_id)
             .select_related("latest_response")  # latest_response 조인을 최적화
             .only("id", "unit_index", "task_unit_status", "text_data", "latest_response")
-            .order_by("unit_index")
+            .order_by('-is_valid', 'unit_index')
         )
 
         for item in queryset:
@@ -662,6 +662,7 @@ class BatchJobResultDownload(APIView):
 
             # 결과 목록 추가
             results = {
+                "is_valid": item.is_valid,
                 "unit_index": item.unit_index,
                 "task_unit_status": item.get_task_unit_status_display(),
                 "request_data": item.text_data,
@@ -670,6 +671,7 @@ class BatchJobResultDownload(APIView):
 
             # CSV 파일에 데이터 작성
             writer.writerow([
+                results['is_valid'],
                 results['unit_index'],
                 results['task_unit_status'],
                 results['request_data'],
